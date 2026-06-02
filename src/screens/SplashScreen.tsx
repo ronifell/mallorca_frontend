@@ -7,7 +7,7 @@ export function SplashScreen() {
   return (
     <View className="flex-1 bg-cream-200 items-center justify-center">
       <Logo size="lg" />
-      <Text className="text-ink-700 font-serif text-2xl mt-6">Citas Mallorca</Text>
+      <Text className="text-ink-700 text-2xl mt-6">Citas Mallorca</Text>
       <ActivityIndicator color={colors.brand[500]} className="mt-8" />
     </View>
   );

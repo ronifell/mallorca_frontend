@@ -42,7 +42,7 @@ module.exports = {
         danger: '#B82E2E',
       },
       fontFamily: {
-        serif: ['Georgia', 'serif'],
+        serif: ['NotoSerif_400Regular'],
         sans: ['System'],
       },
       borderRadius: {

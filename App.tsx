@@ -1,4 +1,9 @@
+import {
+  NotoSerif_400Regular,
+  NotoSerif_700Bold,
+} from '@expo-google-fonts/noto-serif';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { useFonts } from 'expo-font';
 import { StatusBar } from 'expo-status-bar';
 import React, { useEffect, useState } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -19,11 +24,17 @@ const queryClient = new QueryClient({
 });
 
 export default function App() {
-  const [ready, setReady] = useState(false);
+  const [i18nReady, setI18nReady] = useState(false);
+  const [fontsLoaded] = useFonts({
+    NotoSerif_400Regular,
+    NotoSerif_700Bold,
+  });
 
   useEffect(() => {
-    initI18n().then(() => setReady(true));
+    initI18n().then(() => setI18nReady(true));
   }, []);
+
+  const ready = i18nReady && fontsLoaded;
 
   useEffect(() => {
     if (!ready) return;
