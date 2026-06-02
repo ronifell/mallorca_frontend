@@ -7,7 +7,18 @@ interface Extra {
 
 const extra = (Constants.expoConfig?.extra ?? {}) as Extra;
 
+const defaultBaseUrl = 'http://localhost:4000';
+
+/** Resolved from `.env` (EXPO_PUBLIC_*), then app.config `extra`, then defaults. */
 export const env = {
-  apiBaseUrl: extra.apiBaseUrl ?? 'http://localhost:4000',
-  socketUrl: extra.socketUrl ?? extra.apiBaseUrl ?? 'http://localhost:4000',
+  apiBaseUrl:
+    process.env.EXPO_PUBLIC_API_BASE_URL ??
+    extra.apiBaseUrl ??
+    defaultBaseUrl,
+  socketUrl:
+    process.env.EXPO_PUBLIC_SOCKET_URL ??
+    process.env.EXPO_PUBLIC_API_BASE_URL ??
+    extra.socketUrl ??
+    extra.apiBaseUrl ??
+    defaultBaseUrl,
 };

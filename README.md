@@ -28,9 +28,9 @@ npx expo start                 # interactive dev server
 npm run android                # build & run on a connected device/emulator
 ```
 
-> When running on a physical phone connected to the dev machine, edit
-> `app.json → expo.extra.apiBaseUrl` to your computer's LAN IP
-> (e.g. `http://192.168.1.42:4000`) so the device can reach the backend.
+> Copy `.env.example` to `.env`. When running on a physical phone, set
+> `EXPO_PUBLIC_API_BASE_URL` (and `EXPO_PUBLIC_SOCKET_URL` if needed) to your
+> computer's LAN IP (e.g. `http://192.168.1.42:4000`), then restart Expo.
 
 ## Project layout
 
