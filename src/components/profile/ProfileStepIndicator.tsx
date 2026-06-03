@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { Text, View } from 'react-native';
 
@@ -11,21 +12,26 @@ export function ProfileStepIndicator({ currentStep, totalSteps = 4 }: Props) {
     <View className="flex-row items-center">
       {Array.from({ length: totalSteps }, (_, i) => {
         const step = i + 1;
-        const isActive = step <= currentStep;
+        const isCompleted = step < currentStep;
+        const isCurrent = step === currentStep;
         const isLast = step === totalSteps;
 
         return (
           <React.Fragment key={step}>
             <View
               className={`w-8 h-8 rounded-full items-center justify-center ${
-                isActive ? 'bg-coral-500' : 'bg-cream-300'
+                isCompleted || isCurrent ? 'bg-coral-500' : 'bg-cream-300'
               }`}
             >
-              <Text
-                className={`text-sm font-bold ${isActive ? 'text-white' : 'text-ink-400'}`}
-              >
-                {step}
-              </Text>
+              {isCompleted ? (
+                <Ionicons name="checkmark" size={18} color="#FFFFFF" />
+              ) : (
+                <Text
+                  className={`text-sm font-bold ${isCurrent ? 'text-white' : 'text-ink-400'}`}
+                >
+                  {step}
+                </Text>
+              )}
             </View>
             {!isLast ? (
               <View

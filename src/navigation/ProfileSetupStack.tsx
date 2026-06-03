@@ -26,7 +26,7 @@ export function ProfileSetupStack() {
       <Stack.Screen
         name="UploadPhotos"
         component={UploadPhotosScreen}
-        options={{ title: 'Tus fotos' }}
+        options={{ headerShown: false }}
       />
     </Stack.Navigator>
   );
