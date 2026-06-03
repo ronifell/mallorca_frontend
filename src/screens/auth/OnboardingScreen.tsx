@@ -23,7 +23,7 @@ export function OnboardingScreen({ navigation }: Props) {
   const { t } = useTranslation();
   return (
     <AuthBackground source={onboardingBackground}>
-      <SafeAreaView className="flex-1 px-6" edges={['top', 'bottom']}>
+      <SafeAreaView className="flex-1 px-6" edges={['top', 'bottom']} style={{ flex: 1, backgroundColor: 'transparent' }}>
         <View className="flex-1 items-center justify-center">
           <Logo size="lg" />
           <Text className="text-ink-700 font-serif text-3xl mt-6 text-center">

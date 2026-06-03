@@ -32,6 +32,8 @@ export interface FeedCandidate {
   age: number;
   city: string | null;
   bio: string | null;
+  gender: Gender | null;
+  interestedIn: InterestedIn | null;
   photos: Photo[];
   languages: string[];
 }

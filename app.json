@@ -25,6 +25,10 @@
       "package": "es.citasmallorca.app",
       "versionCode": 1,
       "usesCleartextTraffic": true,
+      "navigationBar": {
+        "backgroundColor": "#FFFFFF",
+        "barStyle": "dark-content"
+      },
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#B82E2E"

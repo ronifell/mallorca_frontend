@@ -27,7 +27,7 @@ export function ProfileSetupShell({
 }: Props) {
   return (
     <AuthBackground source={onboardingBackground}>
-      <SafeAreaView className="flex-1" edges={['top', 'bottom']}>
+      <SafeAreaView className="flex-1" edges={['top', 'bottom']} style={{ flex: 1, backgroundColor: 'transparent' }}>
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           className="flex-1"

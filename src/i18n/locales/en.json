@@ -97,7 +97,20 @@
     "matched": "It's a match!",
     "sayHi": "Say hi",
     "keepSwiping": "Keep swiping",
-    "loading": "Finding compatible people…"
+    "loading": "Finding compatible people…",
+    "likedYou": "Liked You",
+    "likedYouEmpty": "When someone likes you, they'll appear here.",
+    "filters": "Filters",
+    "filterComingSoon": "Advanced filters will be available soon.",
+    "openMenu": "Open menu",
+    "openFilters": "Open filters",
+    "superLike": "Super Like",
+    "superLikeComingSoon": "Super likes will be available soon.",
+    "nearby": "Nearby",
+    "woman": "Woman",
+    "man": "Man",
+    "menAndWomen": "Men & Women",
+    "noExtraInfo": "No additional profile details."
   },
   "matches": {
     "title": "Your matches",
@@ -166,6 +179,7 @@
     "discover": "Discover",
     "matches": "Matches",
     "chat": "Chat",
+    "premium": "Premium",
     "profile": "Profile"
   }
 }
