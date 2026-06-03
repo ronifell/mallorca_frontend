@@ -79,7 +79,11 @@
     "ageMin": "Min age",
     "ageMax": "Max age",
     "complete": "Complete your profile",
-    "incomplete": "To start matching you need: name, date of birth, gender, preference and at least one photo."
+    "incomplete": "To start matching you need: name, date of birth, gender, preference and at least one photo.",
+    "firstNamePlaceholder": "Enter your first name",
+    "birthDatePlaceholder": "YYYY-MM-DD",
+    "birthDateFormat": "Use format YYYY-MM-DD",
+    "cityPlaceholder": "Enter your city"
   },
   "discovery": {
     "empty": "No compatible profiles right now. Check back later.",

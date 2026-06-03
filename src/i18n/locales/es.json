@@ -79,7 +79,11 @@
     "ageMin": "Edad mínima",
     "ageMax": "Edad máxima",
     "complete": "Completa tu perfil",
-    "incomplete": "Para empezar a hacer matches necesitas: nombre, fecha de nacimiento, género, preferencia y al menos una foto."
+    "incomplete": "Para empezar a hacer matches necesitas: nombre, fecha de nacimiento, género, preferencia y al menos una foto.",
+    "firstNamePlaceholder": "Introduce tu nombre",
+    "birthDatePlaceholder": "AAAA-MM-DD",
+    "birthDateFormat": "Usa el formato AAAA-MM-DD",
+    "cityPlaceholder": "Introduce tu ciudad"
   },
   "discovery": {
     "empty": "No quedan perfiles compatibles ahora mismo. Vuelve más tarde.",

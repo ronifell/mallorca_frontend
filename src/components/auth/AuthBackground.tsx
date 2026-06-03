@@ -1,18 +1,20 @@
 import React, { ReactNode } from 'react';
-import { ImageBackground, StyleSheet, View } from 'react-native';
+import { ImageBackground, ImageSourcePropType, StyleSheet, View } from 'react-native';
 
 const loginBackground = require('../../../assets/login.png');
+const onboardingBackground = require('../../../assets/onboarding.png');
 
 interface Props {
   children: ReactNode;
+  source?: ImageSourcePropType;
 }
 
-/** Full-screen auth backdrop using the shared login.png artwork. */
-export function AuthBackground({ children }: Props) {
+/** Full-screen backdrop for auth and onboarding screens. */
+export function AuthBackground({ children, source = loginBackground }: Props) {
   return (
     <View className="flex-1 bg-cream-50">
       <ImageBackground
-        source={loginBackground}
+        source={source}
         resizeMode="cover"
         style={StyleSheet.absoluteFillObject}
       />
@@ -20,3 +22,5 @@ export function AuthBackground({ children }: Props) {
     </View>
   );
 }
+
+export { onboardingBackground };
