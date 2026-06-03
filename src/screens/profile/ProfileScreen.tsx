@@ -9,6 +9,7 @@ import { Button } from '../../components/Button';
 import { Logo } from '../../components/Logo';
 import { Screen } from '../../components/Screen';
 import { RootStackParamList } from '../../navigation/types';
+import { resolveMediaUrl } from '../../utils/mediaUrl';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
@@ -30,7 +31,7 @@ export function ProfileScreen() {
     );
   }
 
-  const cover = me.photos[0]?.url;
+  const cover = resolveMediaUrl(me.photos[0]?.url);
 
   return (
     <Screen scroll padded={false}>

@@ -10,6 +10,7 @@ import { Screen } from '../../components/Screen';
 import { ProfileSetupStackParamList } from '../../navigation/types';
 import { useAuthStore } from '../../store/auth';
 import { Photo } from '../../api/types';
+import { resolveMediaUrl } from '../../utils/mediaUrl';
 
 type Props = NativeStackScreenProps<ProfileSetupStackParamList, 'UploadPhotos'>;
 const MAX_PHOTOS = 6;
@@ -80,7 +81,7 @@ export function UploadPhotosScreen({}: Props) {
             <View key={p?.id ?? `slot-${i}`} className="w-1/3 p-1 aspect-[3/4]">
               {p ? (
                 <View className="rounded-2xl overflow-hidden bg-cream-300 w-full h-full">
-                  <Image source={{ uri: p.url }} className="w-full h-full" />
+                  <Image source={{ uri: resolveMediaUrl(p.url) }} className="w-full h-full" />
                   <Pressable
                     onPress={() => remove(p.id)}
                     className="absolute top-1 right-1 bg-brand-500 rounded-full w-7 h-7 items-center justify-center"

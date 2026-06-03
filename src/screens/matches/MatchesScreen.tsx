@@ -9,6 +9,7 @@ import { Match } from '../../api/types';
 import { Avatar } from '../../components/Avatar';
 import { Screen } from '../../components/Screen';
 import { RootStackParamList } from '../../navigation/types';
+import { resolveMediaUrl } from '../../utils/mediaUrl';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
@@ -53,7 +54,7 @@ export function MatchesScreen() {
                     <Pressable className="mr-3 items-center" onPress={() => open(item)}>
                       {item.otherUser.coverPhoto ? (
                         <Image
-                          source={{ uri: item.otherUser.coverPhoto }}
+                          source={{ uri: resolveMediaUrl(item.otherUser.coverPhoto) }}
                           className="w-20 h-28 rounded-2xl bg-cream-300"
                         />
                       ) : (

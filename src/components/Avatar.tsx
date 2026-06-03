@@ -1,5 +1,6 @@
 import React from 'react';
 import { Image, Text, View } from 'react-native';
+import { resolveMediaUrl } from '../utils/mediaUrl';
 
 interface Props {
   uri?: string | null;
@@ -9,10 +10,11 @@ interface Props {
 
 export function Avatar({ uri, name, size = 56 }: Props) {
   const initial = (name ?? '?').trim().charAt(0).toUpperCase();
-  if (uri) {
+  const resolved = resolveMediaUrl(uri);
+  if (resolved) {
     return (
       <Image
-        source={{ uri }}
+        source={{ uri: resolved }}
         style={{ width: size, height: size, borderRadius: size / 2 }}
         className="bg-cream-300"
       />

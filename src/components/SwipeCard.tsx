@@ -10,6 +10,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { FeedCandidate } from '../api/types';
+import { resolveMediaUrl } from '../utils/mediaUrl';
 
 interface Props {
   candidate: FeedCandidate;
@@ -75,7 +76,7 @@ export function SwipeCard({ candidate, onSwipe, swipeable = true }: Props) {
     opacity: interpolate(x.value, [-SWIPE_THRESHOLD, 0], [1, 0], 'clamp'),
   }));
 
-  const photo = candidate.photos[photoIdx]?.url;
+  const photo = resolveMediaUrl(candidate.photos[photoIdx]?.url);
   const photoCount = candidate.photos.length;
 
   return (

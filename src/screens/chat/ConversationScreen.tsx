@@ -20,6 +20,7 @@ import { Screen } from '../../components/Screen';
 import { RootStackParamList } from '../../navigation/types';
 import { connectSocket } from '../../services/socket';
 import { colors } from '../../theme/colors';
+import { resolveMediaUrl } from '../../utils/mediaUrl';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Conversation'>;
 
@@ -175,7 +176,7 @@ export function ConversationScreen({ route, navigation }: Props) {
               >
                 {item.type === 'image' && item.imageUrl ? (
                   <Image
-                    source={{ uri: item.imageUrl }}
+                    source={{ uri: resolveMediaUrl(item.imageUrl) }}
                     className="w-48 h-48 rounded-xl"
                     resizeMode="cover"
                   />
