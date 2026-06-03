@@ -28,6 +28,13 @@ export const colors = {
     600: '#A12626',
     700: '#7F1D1D',
   },
+  coral: {
+    50: '#FEF0EE',
+    100: '#FDE4E0',
+    400: '#F07A6E',
+    500: '#E8554E',
+    600: '#D44A42',
+  },
   white: '#FFFFFF',
   black: '#000000',
   shadow: 'rgba(58, 32, 18, 0.12)',

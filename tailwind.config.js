@@ -36,6 +36,13 @@ module.exports = {
           700: '#7F1D1D',
           800: '#601717',
         },
+        coral: {
+          50: '#FEF0EE',
+          100: '#FDE4E0',
+          400: '#F07A6E',
+          500: '#E8554E',
+          600: '#D44A42',
+        },
         // semantic
         success: '#2E7D5B',
         warning: '#C68A2E',
