@@ -3,18 +3,22 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useQuery } from '@tanstack/react-query';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Image, Pressable, ScrollView, Text, View } from 'react-native';
+import { Text, View, Pressable } from 'react-native';
 import { usersApi } from '../../api/endpoints';
 import { Button } from '../../components/Button';
-import { Logo } from '../../components/Logo';
+import { ProfileAboutSection } from '../../components/profile/ProfileAboutSection';
+import { ProfileHeroCard } from '../../components/profile/ProfileHeroCard';
+import { ProfileInterestsSection } from '../../components/profile/ProfileInterestsSection';
+import { ProfilePageHeader } from '../../components/profile/ProfilePageHeader';
+import { ProfilePhotosGallery } from '../../components/profile/ProfilePhotosGallery';
 import { Screen } from '../../components/Screen';
 import { RootStackParamList } from '../../navigation/types';
-import { resolveMediaUrl } from '../../utils/mediaUrl';
+import { extractInterestsFromBio } from '../../utils/profileDisplay';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
 export function ProfileScreen() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const nav = useNavigation<Nav>();
   const { data: me, isLoading } = useQuery({
     queryKey: ['me'],
@@ -31,73 +35,44 @@ export function ProfileScreen() {
     );
   }
 
-  const cover = resolveMediaUrl(me.photos[0]?.url);
+  const interests = extractInterestsFromBio(me.bio, i18n.language);
+  const goEdit = () => nav.navigate('EditProfile');
+  const goPremium = () => nav.navigate('Premium');
 
   return (
     <Screen scroll padded={false}>
-      <View className="bg-cream-300 h-72 w-full overflow-hidden">
-        {cover ? (
-          <Image source={{ uri: cover }} className="w-full h-full" />
-        ) : (
-          <View className="w-full h-full items-center justify-center">
-            <Logo size="lg" />
-          </View>
-        )}
-        <View
-          className="absolute bottom-0 left-0 right-0 p-4 flex-row items-end justify-between"
-          style={{ backgroundColor: 'rgba(26, 14, 7, 0.5)' }}
+      <ProfilePageHeader />
+
+      <ProfileHeroCard profile={me} onEditPress={goEdit} />
+
+      <View className="px-5 pb-8">
+        <ProfileAboutSection bio={me.bio} />
+        <ProfileInterestsSection interests={interests} />
+        <ProfilePhotosGallery photos={me.photos} onEdit={goEdit} />
+
+        <Pressable
+          onPress={goEdit}
+          className="w-full border-2 border-coral-500 rounded-2xl py-3.5 items-center bg-white active:bg-coral-50"
         >
-          <View>
-            <Text className="text-white text-3xl font-bold">
-              {me.firstName ?? '—'}
-              {me.age ? `, ${me.age}` : ''}
-            </Text>
-            {me.city ? <Text className="text-white">{me.city}</Text> : null}
-          </View>
-          {me.isPremium ? (
-            <View className="bg-brand-500 px-3 py-1 rounded-full">
-              <Text className="text-white font-bold text-xs">PREMIUM</Text>
-            </View>
-          ) : null}
-        </View>
-      </View>
-
-      <View className="px-5 pt-5">
-        {me.bio ? (
-          <View className="bg-white rounded-2xl p-4 mb-4">
-            <Text className="text-ink-700">{me.bio}</Text>
-          </View>
-        ) : null}
-
-        {me.languages.length ? (
-          <View className="mb-5">
-            <Text className="text-ink-700 font-semibold mb-2">{t('profile.languages')}</Text>
-            <View className="flex-row flex-wrap">
-              {me.languages.map((l) => (
-                <View key={l} className="bg-cream-300 px-3 py-1 rounded-pill mr-2 mb-2">
-                  <Text className="text-ink-700">{l}</Text>
-                </View>
-              ))}
-            </View>
-          </View>
-        ) : null}
-
-        <Button label={t('common.edit')} onPress={() => nav.navigate('EditProfile')} fullWidth />
-        <View className="h-3" />
-        {!me.isPremium ? (
-          <Button
-            label={t('premium.subscribe')}
-            variant="secondary"
-            onPress={() => nav.navigate('Premium')}
-            fullWidth
-          />
-        ) : null}
-        <View className="h-3" />
-        <Pressable onPress={() => nav.navigate('Settings')} className="py-3">
-          <Text className="text-brand-500 text-center font-semibold">{t('settings.title')}</Text>
+          <Text className="text-coral-500 font-semibold text-base">{t('profile.editProfile')}</Text>
         </Pressable>
+
+        {me.isPremium ? (
+          <View className="mt-4 bg-coral-50 rounded-2xl py-3.5 items-center border border-coral-100">
+            <Text className="text-coral-600 font-semibold">{t('premium.active')}</Text>
+          </View>
+        ) : (
+          <>
+            <View className="h-3" />
+            <Button
+              label={t('premium.subscribe')}
+              onPress={goPremium}
+              fullWidth
+              className="bg-coral-500 active:bg-coral-600"
+            />
+          </>
+        )}
       </View>
-      <View className="h-10" />
     </Screen>
   );
 }

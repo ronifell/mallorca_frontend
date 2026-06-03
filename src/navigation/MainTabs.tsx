@@ -87,6 +87,7 @@ export function MainTabs() {
         name="Profile"
         component={ProfileScreen}
         options={{
+          headerShown: false,
           title: t('nav.profile'),
           tabBarIcon: ({ focused }) =>
             tabIcon(focused ? 'person' : 'person-outline', focused),

@@ -88,7 +88,15 @@
     "firstNamePlaceholder": "Introduce tu nombre",
     "birthDatePlaceholder": "AAAA-MM-DD",
     "birthDateFormat": "Usa el formato AAAA-MM-DD",
-    "cityPlaceholder": "Introduce tu ciudad"
+    "cityPlaceholder": "Introduce tu ciudad",
+    "aboutMe": "Sobre mí",
+    "viewMore": "Ver más",
+    "viewLess": "Ver menos",
+    "interests": "Intereses",
+    "myPhotos": "Mis fotos",
+    "online": "En línea",
+    "editProfile": "Editar perfil",
+    "openMenu": "Abrir menú"
   },
   "discovery": {
     "empty": "No quedan perfiles compatibles ahora mismo. Vuelve más tarde.",

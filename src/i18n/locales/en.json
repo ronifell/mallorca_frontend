@@ -88,7 +88,15 @@
     "firstNamePlaceholder": "Enter your first name",
     "birthDatePlaceholder": "YYYY-MM-DD",
     "birthDateFormat": "Use format YYYY-MM-DD",
-    "cityPlaceholder": "Enter your city"
+    "cityPlaceholder": "Enter your city",
+    "aboutMe": "About me",
+    "viewMore": "View more",
+    "viewLess": "View less",
+    "interests": "Interests",
+    "myPhotos": "My photos",
+    "online": "Online",
+    "editProfile": "Edit Profile",
+    "openMenu": "Open menu"
   },
   "discovery": {
     "empty": "No compatible profiles right now. Check back later.",

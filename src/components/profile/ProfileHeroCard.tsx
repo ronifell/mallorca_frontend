@@ -1,0 +1,107 @@
+import { Ionicons } from '@expo/vector-icons';
+import React from 'react';
+import { useTranslation } from 'react-i18next';
+import { Image, Pressable, Text, View } from 'react-native';
+import { MyProfile } from '../../api/types';
+import { Logo } from '../Logo';
+import { colors } from '../../theme/colors';
+import { buildProfileDetails, formatProfileLocation } from '../../utils/profileDisplay';
+import { resolveMediaUrl } from '../../utils/mediaUrl';
+
+interface Props {
+  profile: MyProfile;
+  onEditPress?: () => void;
+}
+
+export function ProfileHeroCard({ profile, onEditPress }: Props) {
+  const { t } = useTranslation();
+  const cover = resolveMediaUrl(profile.photos[0]?.url);
+  const photoCount = profile.photos.length;
+  const details = buildProfileDetails(profile, t);
+  const locationLine = formatProfileLocation(profile.city, t);
+
+  return (
+    <View
+      className="mx-5 rounded-3xl overflow-hidden bg-white mb-6"
+      style={{
+        shadowColor: '#3D2618',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.1,
+        shadowRadius: 12,
+        elevation: 4,
+      }}
+    >
+      <View className="relative aspect-[4/5] bg-cream-200">
+        {cover ? (
+          <Image source={{ uri: cover }} className="w-full h-full" resizeMode="cover" />
+        ) : (
+          <View className="w-full h-full items-center justify-center">
+            <Logo size="lg" />
+          </View>
+        )}
+
+        <View className="absolute top-3 left-3 flex-row items-center bg-black/55 rounded-full px-3 py-1.5">
+          <View className="w-2 h-2 rounded-full bg-green-400 mr-2" />
+          <Text className="text-white text-xs font-semibold">{t('profile.online')}</Text>
+        </View>
+
+        {photoCount > 0 ? (
+          <View className="absolute bottom-3 right-3 flex-row items-center bg-black/55 rounded-full px-2.5 py-1.5">
+            <Ionicons name="camera-outline" size={12} color="#FFFFFF" />
+            <Text className="text-white text-xs font-semibold ml-1">
+              1 / {photoCount}
+            </Text>
+          </View>
+        ) : null}
+      </View>
+
+      <View className="px-4 pt-4 pb-4">
+        <View className="flex-row items-start justify-between">
+          <View className="flex-1 pr-3">
+            <View className="flex-row items-center flex-wrap">
+              <Text className="text-ink-700 text-2xl font-bold">
+                {profile.firstName ?? '—'}
+                {profile.age ? `, ${profile.age}` : ''}
+              </Text>
+              <View className="ml-2 w-6 h-6 rounded-full bg-coral-500 items-center justify-center">
+                <Ionicons name="checkmark" size={14} color="#FFFFFF" />
+              </View>
+            </View>
+
+            {locationLine ? (
+              <View className="flex-row items-center mt-1.5">
+                <Ionicons name="location-outline" size={14} color={colors.ink[400]} />
+                <Text className="text-ink-400 text-sm ml-1">{locationLine}</Text>
+              </View>
+            ) : null}
+          </View>
+
+          <Pressable
+            onPress={onEditPress}
+            className="w-11 h-11 rounded-full bg-coral-50 items-center justify-center"
+          >
+            <Ionicons name="heart" size={22} color={colors.coral[500]} />
+          </Pressable>
+        </View>
+
+        {details.length ? (
+          <View className="flex-row mt-4 pt-3 border-t border-cream-200">
+            {details.map((item, index) => (
+              <View
+                key={`${item.icon}-${item.label}`}
+                className={`flex-1 flex-row items-center justify-center px-1 ${
+                  index > 0 ? 'border-l border-cream-200' : ''
+                }`}
+              >
+                <Ionicons name={item.icon} size={14} color={colors.coral[500]} />
+                <Text className="text-ink-700 text-xs font-semibold ml-1" numberOfLines={1}>
+                  {item.label}
+                </Text>
+              </View>
+            ))}
+          </View>
+        ) : null}
+      </View>
+    </View>
+  );
+}
