@@ -92,7 +92,7 @@ export function RootNavigator() {
             <Stack.Screen
               name="EditProfile"
               component={EditProfileScreen}
-              options={{ title: 'Editar perfil' }}
+              options={{ headerShown: false }}
             />
             <Stack.Screen name="Settings" component={SettingsScreen} options={{ title: 'Ajustes' }} />
             <Stack.Screen name="Language" component={LanguageScreen} options={{ title: 'Idioma' }} />

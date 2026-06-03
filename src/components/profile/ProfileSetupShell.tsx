@@ -13,15 +13,17 @@ import { colors } from '../../theme/colors';
 import { ProfileStepIndicator } from './ProfileStepIndicator';
 
 interface Props {
-  currentStep: number;
+  currentStep?: number;
   totalSteps?: number;
+  showStepIndicator?: boolean;
   onBack?: () => void;
   children: ReactNode;
 }
 
 export function ProfileSetupShell({
-  currentStep,
+  currentStep = 1,
   totalSteps = 4,
+  showStepIndicator = true,
   onBack,
   children,
 }: Props) {
@@ -48,7 +50,11 @@ export function ProfileSetupShell({
             >
               <Ionicons name="chevron-back" size={22} color={colors.ink[700]} />
             </Pressable>
-            <ProfileStepIndicator currentStep={currentStep} totalSteps={totalSteps} />
+            {showStepIndicator ? (
+              <ProfileStepIndicator currentStep={currentStep} totalSteps={totalSteps} />
+            ) : (
+              <View className="w-10" />
+            )}
           </View>
 
           <ScrollView

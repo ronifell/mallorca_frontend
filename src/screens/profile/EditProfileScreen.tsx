@@ -4,18 +4,33 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import * as ImagePicker from 'expo-image-picker';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, Image, Pressable, Text, View } from 'react-native';
+import { Alert, Text, View } from 'react-native';
 import { extractErrorMessage } from '../../api/client';
 import { usersApi } from '../../api/endpoints';
 import { Photo } from '../../api/types';
-import { Button } from '../../components/Button';
-import { Chip } from '../../components/Chip';
+import { BioTextArea } from '../../components/profile/BioTextArea';
+import { GenderToggle } from '../../components/profile/GenderToggle';
+import { InterestPill, InterestPillRow } from '../../components/profile/InterestPill';
+import { LanguageFlagPill } from '../../components/profile/LanguageFlagPill';
+import { AddPhotoButton, PhotoUploadGrid } from '../../components/profile/PhotoUploadGrid';
+import { ProfileContinueButton } from '../../components/profile/ProfileContinueButton';
+import { ProfileSectionLabel } from '../../components/profile/ProfileSectionLabel';
+import { ProfileSetupShell } from '../../components/profile/ProfileSetupShell';
 import { Input } from '../../components/Input';
-import { Screen } from '../../components/Screen';
 import { RootStackParamList } from '../../navigation/types';
-import { resolveMediaUrl } from '../../utils/mediaUrl';
 
-const LANGS = ['English', 'Español', 'Català', 'Deutsch', 'Français', 'Italiano'];
+const LANGUAGES = [
+  { id: 'English', flag: '🇬🇧', label: 'English' },
+  { id: 'Español', flag: '🇪🇸', label: 'Español' },
+  { id: 'Català', flag: '🟡', label: 'Català' },
+  { id: 'Deutsch', flag: '🇩🇪', label: 'Deutsch' },
+  { id: 'Français', flag: '🇫🇷', label: 'Français' },
+  { id: 'Italiano', flag: '🇮🇹', label: 'Italiano' },
+] as const;
+
+function isValidIsoDate(s: string): boolean {
+  return /^\d{4}-\d{2}-\d{2}$/.test(s) && !Number.isNaN(new Date(s).getTime());
+}
 
 export function EditProfileScreen() {
   const { t } = useTranslation();
@@ -24,16 +39,22 @@ export function EditProfileScreen() {
   const { data: me } = useQuery({ queryKey: ['me'], queryFn: () => usersApi.me() });
 
   const [firstName, setFirstName] = useState('');
+  const [birthDate, setBirthDate] = useState('');
+  const [gender, setGender] = useState<'male' | 'female' | null>(null);
   const [city, setCity] = useState('');
   const [bio, setBio] = useState('');
   const [interested, setInterested] = useState<'men' | 'women' | 'both' | null>(null);
   const [languages, setLanguages] = useState<string[]>([]);
   const [photos, setPhotos] = useState<Photo[]>([]);
+  const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!me) return;
     setFirstName(me.firstName ?? '');
+    setBirthDate(me.birthDate ?? '');
+    setGender(me.gender);
     setCity(me.city ?? '');
     setBio(me.bio ?? '');
     setInterested(me.interestedIn);
@@ -41,13 +62,16 @@ export function EditProfileScreen() {
     setPhotos(me.photos);
   }, [me]);
 
-  const toggleLang = (l: string) =>
-    setLanguages((prev) => (prev.includes(l) ? prev.filter((x) => x !== l) : [...prev, l]));
+  const toggleLang = (id: string) =>
+    setLanguages((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
 
   const pick = async () => {
     if (photos.length >= 6) return;
     const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!perm.granted) return;
+    if (!perm.granted) {
+      Alert.alert(t('profile.photoPermissionTitle'), t('profile.photoPermissionMessage'));
+      return;
+    }
     const res = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       quality: 0.85,
@@ -55,11 +79,15 @@ export function EditProfileScreen() {
       aspect: [3, 4],
     });
     if (res.canceled || !res.assets[0]) return;
+
+    setUploading(true);
     try {
       const uploaded = await usersApi.uploadPhoto(res.assets[0].uri);
       setPhotos((prev) => [...prev, uploaded]);
     } catch (e) {
       Alert.alert(t('common.error'), extractErrorMessage(e));
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -73,10 +101,22 @@ export function EditProfileScreen() {
   };
 
   const save = async () => {
+    setError(null);
+    if (!firstName || !birthDate || !gender || !interested || !city) {
+      setError(t('common.error'));
+      return;
+    }
+    if (!isValidIsoDate(birthDate)) {
+      setError(t('profile.birthDateFormat'));
+      return;
+    }
+
     setSaving(true);
     try {
       await usersApi.update({
         firstName,
+        birthDate,
+        gender,
         city,
         bio,
         interestedIn: interested ?? undefined,
@@ -85,82 +125,127 @@ export function EditProfileScreen() {
       await qc.invalidateQueries({ queryKey: ['me'] });
       nav.goBack();
     } catch (e) {
-      Alert.alert(t('common.error'), extractErrorMessage(e));
+      setError(extractErrorMessage(e));
     } finally {
       setSaving(false);
     }
   };
 
-  if (!me) return null;
+  if (!me) {
+    return (
+      <ProfileSetupShell showStepIndicator={false} onBack={() => nav.goBack()}>
+        <View className="py-12 items-center">
+          <Text className="text-ink-400">{t('common.loading')}</Text>
+        </View>
+      </ProfileSetupShell>
+    );
+  }
 
   return (
-    <Screen scroll>
-      <Text className="text-ink-700 font-semibold mb-2">{t('profile.photos')}</Text>
-      <View className="flex-row flex-wrap -m-1 mb-4">
-        {Array.from({ length: 6 }).map((_, i) => {
-          const p = photos[i];
-          return (
-            <View key={p?.id ?? `slot-${i}`} className="w-1/3 p-1 aspect-[3/4]">
-              {p ? (
-                <View className="rounded-2xl overflow-hidden bg-cream-300 w-full h-full">
-                  <Image source={{ uri: resolveMediaUrl(p.url) }} className="w-full h-full" />
-                  <Pressable
-                    onPress={() => remove(p.id)}
-                    className="absolute top-1 right-1 bg-brand-500 rounded-full w-7 h-7 items-center justify-center"
-                  >
-                    <Text className="text-white font-bold">×</Text>
-                  </Pressable>
-                </View>
-              ) : (
-                <Pressable
-                  onPress={pick}
-                  className="rounded-2xl bg-white border-2 border-dashed border-cream-400 w-full h-full items-center justify-center"
-                >
-                  <Text className="text-brand-500 text-3xl">+</Text>
-                </Pressable>
-              )}
-            </View>
-          );
-        })}
+    <ProfileSetupShell showStepIndicator={false} onBack={() => nav.goBack()}>
+      <View className="mb-6">
+        <View className="flex-row items-center flex-wrap">
+          <Text className="text-ink-700 font-serif text-3xl">{t('profile.editProfile')}</Text>
+          <Text className="text-coral-500 text-xl ml-1.5">♥</Text>
+        </View>
+        <View className="h-1 w-20 bg-coral-500 rounded-full mt-2 opacity-80" />
+        <Text className="text-ink-400 text-sm mt-3 leading-5">{t('profile.editSubtitle')}</Text>
       </View>
 
-      <Input label={t('profile.firstName')} value={firstName} onChangeText={setFirstName} />
-      <Input label={t('profile.city')} value={city} onChangeText={setCity} />
-      <Input
-        label={t('profile.bio')}
-        value={bio}
-        onChangeText={setBio}
-        multiline
-        numberOfLines={4}
+      <ProfileSectionLabel label={t('profile.photos')} icon="images-outline" />
+      <PhotoUploadGrid photos={photos} onPick={pick} onRemove={remove} />
+      <AddPhotoButton
+        label={uploading ? t('common.loading') : t('profile.addPhoto')}
+        onPress={pick}
+        disabled={uploading || photos.length >= 6}
       />
 
-      <Text className="text-ink-700 font-semibold mb-2">{t('profile.interestedIn')}</Text>
-      <View className="flex-row flex-wrap mb-3">
-        <Chip
+      <ProfileSectionLabel label={t('profile.firstName')} icon="person-outline" />
+      <Input
+        elevated
+        value={firstName}
+        onChangeText={setFirstName}
+        placeholder={t('profile.firstNamePlaceholder')}
+        leftIcon="person-outline"
+        autoCapitalize="words"
+      />
+
+      <ProfileSectionLabel label={t('profile.birthDate')} icon="calendar-outline" />
+      <Input
+        elevated
+        placeholder={t('profile.birthDatePlaceholder')}
+        value={birthDate}
+        onChangeText={setBirthDate}
+        keyboardType="numbers-and-punctuation"
+        rightIcon="calendar-outline"
+      />
+
+      <ProfileSectionLabel label={t('profile.gender')} icon="male-female-outline" />
+      <GenderToggle
+        value={gender}
+        onChange={setGender}
+        maleLabel={t('profile.male')}
+        femaleLabel={t('profile.female')}
+      />
+
+      <ProfileSectionLabel label={t('profile.interestedIn')} icon="heart-outline" />
+      <InterestPillRow>
+        <InterestPill
+          type="men"
           label={t('profile.interestedMen')}
           selected={interested === 'men'}
           onPress={() => setInterested('men')}
         />
-        <Chip
+        <InterestPill
+          type="women"
           label={t('profile.interestedWomen')}
           selected={interested === 'women'}
           onPress={() => setInterested('women')}
         />
-        <Chip
+        <InterestPill
+          type="both"
           label={t('profile.interestedBoth')}
           selected={interested === 'both'}
           onPress={() => setInterested('both')}
         />
-      </View>
+      </InterestPillRow>
 
-      <Text className="text-ink-700 font-semibold mb-2">{t('profile.languages')}</Text>
+      <ProfileSectionLabel label={t('profile.city')} icon="location-outline" />
+      <Input
+        elevated
+        value={city}
+        onChangeText={setCity}
+        placeholder={t('profile.cityPlaceholder')}
+        rightIcon="chevron-forward"
+      />
+
+      <ProfileSectionLabel label={t('profile.bio')} icon="chatbubble-outline" />
+      <BioTextArea
+        value={bio}
+        onChangeText={setBio}
+        placeholder={t('profile.bioPlaceholder')}
+      />
+
+      <ProfileSectionLabel label={t('profile.languages')} icon="globe-outline" />
       <View className="flex-row flex-wrap mb-4">
-        {LANGS.map((l) => (
-          <Chip key={l} label={l} selected={languages.includes(l)} onPress={() => toggleLang(l)} />
+        {LANGUAGES.map((lang) => (
+          <LanguageFlagPill
+            key={lang.id}
+            flag={lang.flag}
+            label={lang.label}
+            selected={languages.includes(lang.id)}
+            onPress={() => toggleLang(lang.id)}
+          />
         ))}
       </View>
 
-      <Button label={t('common.save')} onPress={save} loading={saving} fullWidth />
-    </Screen>
+      {error ? (
+        <View className="bg-coral-50 rounded-2xl p-3 mb-4">
+          <Text className="text-coral-600 text-center">{error}</Text>
+        </View>
+      ) : null}
+
+      <ProfileContinueButton label={t('common.save')} loading={saving} onPress={save} />
+    </ProfileSetupShell>
   );
 }
