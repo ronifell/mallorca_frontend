@@ -11,6 +11,8 @@ interface Props extends TextInputProps {
   rightIcon?: keyof typeof Ionicons.glyphMap;
   showPasswordToggle?: boolean;
   elevated?: boolean;
+  /** When true, left icon uses the coral accent color (login form style). */
+  accentIcon?: boolean;
 }
 
 export function Input({
@@ -22,11 +24,13 @@ export function Input({
   showPasswordToggle,
   secureTextEntry,
   elevated = false,
+  accentIcon = false,
   ...rest
 }: Props) {
   const [visible, setVisible] = useState(false);
   const isSecure = secureTextEntry && !visible;
   const fieldBg = elevated ? 'bg-white' : 'bg-cream-50';
+  const leftIconColor = accentIcon ? colors.coral[500] : colors.ink[400];
 
   return (
     <View className="w-full mb-4">
@@ -50,7 +54,7 @@ export function Input({
         }
       >
         {leftIcon ? (
-          <Ionicons name={leftIcon} size={18} color={colors.ink[400]} style={{ marginRight: 8 }} />
+          <Ionicons name={leftIcon} size={18} color={leftIconColor} style={{ marginRight: 8 }} />
         ) : null}
         <TextInput
           placeholderTextColor={colors.ink[400]}

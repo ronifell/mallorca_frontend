@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AuthBackground, onboardingBackground } from '../auth/AuthBackground';
+import { useTopScreenPadding } from '../../hooks/useTopScreenPadding';
 import { colors } from '../../theme/colors';
 
 interface Props {
@@ -14,11 +15,15 @@ interface Props {
 export function SettingsShell({ children }: Props) {
   const { t } = useTranslation();
   const nav = useNavigation();
+  const topPadding = useTopScreenPadding();
 
   return (
     <AuthBackground source={onboardingBackground}>
-      <SafeAreaView className="flex-1" edges={['top', 'bottom']} style={{ flex: 1, backgroundColor: 'transparent' }}>
-        <View className="flex-row items-center justify-between px-5 pt-2 pb-1">
+      <SafeAreaView className="flex-1" edges={['bottom']} style={{ flex: 1, backgroundColor: 'transparent' }}>
+        <View
+          className="flex-row items-center justify-between px-5 pb-1"
+          style={{ paddingTop: topPadding }}
+        >
           <Pressable
             onPress={() => nav.goBack()}
             className="w-10 h-10 rounded-full bg-white items-center justify-center border border-cream-300"

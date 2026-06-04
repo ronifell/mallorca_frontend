@@ -17,6 +17,7 @@ import { AuthBrandHeader } from '../../components/auth/AuthBrandHeader';
 import { Button } from '../../components/Button';
 import { Input } from '../../components/Input';
 import { AuthStackParamList } from '../../navigation/types';
+import { useTopScreenPadding } from '../../hooks/useTopScreenPadding';
 import { useAuthStore } from '../../store/auth';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Register'>;
@@ -24,6 +25,7 @@ type Props = NativeStackScreenProps<AuthStackParamList, 'Register'>;
 export function RegisterScreen({ navigation }: Props) {
   const { t, i18n } = useTranslation();
   const setSession = useAuthStore((s) => s.setSession);
+  const topPadding = useTopScreenPadding();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -59,7 +61,7 @@ export function RegisterScreen({ navigation }: Props) {
 
   return (
     <AuthBackground>
-      <SafeAreaView className="flex-1" edges={['top', 'bottom']} style={{ flex: 1, backgroundColor: 'transparent' }}>
+      <SafeAreaView className="flex-1" edges={['bottom']} style={{ flex: 1, backgroundColor: 'transparent' }}>
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           className="flex-1"
@@ -67,7 +69,7 @@ export function RegisterScreen({ navigation }: Props) {
           <ScrollView
             className="flex-1 px-6"
             keyboardShouldPersistTaps="handled"
-            contentContainerStyle={{ paddingVertical: 24, paddingBottom: 32 }}
+            contentContainerStyle={{ paddingTop: topPadding, paddingBottom: 32 }}
             showsVerticalScrollIndicator={false}
           >
             <AuthBrandHeader />

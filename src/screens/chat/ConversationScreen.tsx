@@ -219,7 +219,7 @@ export function ConversationScreen({ route, navigation }: Props) {
   const isPremium = me?.isPremium ?? false;
 
   return (
-    <Screen padded={false} edges={['top']}>
+    <Screen padded={false} edges={['bottom']}>
       <ConversationHeader
         otherName={otherName}
         otherUserAge={otherUserAge}

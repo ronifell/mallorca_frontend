@@ -56,6 +56,8 @@ export function RootNavigator() {
           headerTintColor: colors.ink[700],
           headerTitleStyle: { fontWeight: '700' },
           headerShadowVisible: false,
+          headerStatusBarHeight: 0,
+          statusBarTranslucent: true,
           contentStyle: { backgroundColor: colors.cream[200] },
         }}
       >

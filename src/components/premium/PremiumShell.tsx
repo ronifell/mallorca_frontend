@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AuthBackground, onboardingBackground } from '../auth/AuthBackground';
+import { useTopScreenPadding } from '../../hooks/useTopScreenPadding';
 import { colors } from '../../theme/colors';
 
 interface Props {
@@ -15,11 +16,15 @@ export function PremiumShell({ children }: Props) {
   const { t } = useTranslation();
   const nav = useNavigation();
   const canGoBack = nav.canGoBack();
+  const topPadding = useTopScreenPadding();
 
   return (
     <AuthBackground source={onboardingBackground}>
-      <SafeAreaView className="flex-1" edges={['top', 'bottom']} style={{ flex: 1, backgroundColor: 'transparent' }}>
-        <View className="flex-row items-center justify-between px-5 pt-2 pb-1">
+      <SafeAreaView className="flex-1" edges={['bottom']} style={{ flex: 1, backgroundColor: 'transparent' }}>
+        <View
+          className="flex-row items-center justify-between px-5 pb-1"
+          style={{ paddingTop: topPadding }}
+        >
           {canGoBack ? (
             <Pressable
               onPress={() => nav.goBack()}

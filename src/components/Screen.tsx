@@ -8,6 +8,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTopScreenPadding } from '../hooks/useTopScreenPadding';
 import { colors } from '../theme/colors';
 
 const onboardingBackground = require('../../assets/onboarding.png');
@@ -24,17 +25,20 @@ interface Props {
 export function Screen({
   children,
   scroll = false,
-  edges = ['top'],
+  edges = ['bottom'],
   className = '',
   padded = true,
   background,
 }: Props) {
+  const topPadding = useTopScreenPadding();
   const hasBackground = background === 'onboarding';
   const surfaceColor = hasBackground ? 'transparent' : colors.cream[200];
   const containerClass = hasBackground ? `flex-1 ${className}` : `flex-1 bg-cream-200 ${className}`;
 
   const inner = (
-    <View className={padded ? 'flex-1 px-5' : 'flex-1'}>{children}</View>
+    <View className={padded ? 'flex-1 px-5' : 'flex-1'} style={{ paddingTop: topPadding }}>
+      {children}
+    </View>
   );
 
   const body = (
@@ -52,7 +56,7 @@ export function Screen({
           <ScrollView
             className={padded ? 'flex-1 px-5' : 'flex-1'}
             keyboardShouldPersistTaps="handled"
-            contentContainerStyle={{ paddingVertical: 16, flexGrow: 1 }}
+            contentContainerStyle={{ paddingTop: topPadding + 16, paddingBottom: 16, flexGrow: 1 }}
             style={{ flex: 1, backgroundColor: surfaceColor }}
           >
             {children}

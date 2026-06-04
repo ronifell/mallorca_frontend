@@ -17,7 +17,9 @@
   "auth": {
     "appNameCitas": "Citas",
     "appNameMallorca": "Mallorca",
-    "brandTagline": "Conecta. Descubre. Comparte momentos.",
+    "brandTagline": "Conexiones. Descubre. Comparte momentos.",
+    "brandTaglineLine1": "Conexiones. Descubre.",
+    "brandTaglineLine2": "Comparte momentos.",
     "welcomeBack": "Bienvenido de nuevo ❤️",
     "loginSubtitle": "Inicia sesión para continuar tu camino.",
     "emailPlaceholder": "Introduce tu correo",

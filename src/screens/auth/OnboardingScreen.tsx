@@ -8,23 +8,25 @@ import { OnboardingFeature } from '../../components/auth/OnboardingFeature';
 import { Button } from '../../components/Button';
 import { Logo } from '../../components/Logo';
 import { AuthStackParamList } from '../../navigation/types';
+import { useTopScreenPadding } from '../../hooks/useTopScreenPadding';
 import { colors } from '../../theme/colors';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Onboarding'>;
 
 export function OnboardingScreen({ navigation }: Props) {
   const { t } = useTranslation();
+  const topPadding = useTopScreenPadding();
 
   return (
     <AuthBackground source={onboardingBackground}>
       <SafeAreaView
         className="flex-1"
-        edges={['top', 'bottom']}
+        edges={['bottom']}
         style={{ flex: 1, backgroundColor: 'transparent' }}
       >
         <ScrollView
           className="flex-1"
-          contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 28, paddingTop: 12 }}
+          contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 28, paddingTop: topPadding }}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >

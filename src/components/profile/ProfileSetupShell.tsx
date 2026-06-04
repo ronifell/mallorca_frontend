@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AuthBackground, onboardingBackground } from '../auth/AuthBackground';
+import { useTopScreenPadding } from '../../hooks/useTopScreenPadding';
 import { colors } from '../../theme/colors';
 import { ProfileStepIndicator } from './ProfileStepIndicator';
 
@@ -27,14 +28,19 @@ export function ProfileSetupShell({
   onBack,
   children,
 }: Props) {
+  const topPadding = useTopScreenPadding();
+
   return (
     <AuthBackground source={onboardingBackground}>
-      <SafeAreaView className="flex-1" edges={['top', 'bottom']} style={{ flex: 1, backgroundColor: 'transparent' }}>
+      <SafeAreaView className="flex-1" edges={['bottom']} style={{ flex: 1, backgroundColor: 'transparent' }}>
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           className="flex-1"
         >
-          <View className="flex-row items-center justify-between px-5 pt-2 pb-3">
+          <View
+            className="flex-row items-center justify-between px-5 pb-3"
+            style={{ paddingTop: topPadding }}
+          >
             <Pressable
               onPress={onBack}
               className="w-10 h-10 rounded-full bg-white items-center justify-center border border-cream-300"

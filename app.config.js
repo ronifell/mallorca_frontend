@@ -11,6 +11,19 @@ const socketUrl =
 module.exports = {
   expo: {
     ...appJson.expo,
+    androidStatusBar: {
+      hidden: true,
+      translucent: true,
+      backgroundColor: '#00000000',
+    },
+    ios: {
+      ...appJson.expo.ios,
+      infoPlist: {
+        ...appJson.expo.ios?.infoPlist,
+        UIStatusBarHidden: true,
+        UIViewControllerBasedStatusBarAppearance: false,
+      },
+    },
     extra: {
       ...appJson.expo.extra,
       apiBaseUrl,

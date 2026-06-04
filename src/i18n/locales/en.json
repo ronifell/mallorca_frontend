@@ -17,7 +17,9 @@
   "auth": {
     "appNameCitas": "Citas",
     "appNameMallorca": "Mallorca",
-    "brandTagline": "Connect. Discover. Share moments.",
+    "brandTagline": "Connections. Discover. Share moments.",
+    "brandTaglineLine1": "Connections. Discover.",
+    "brandTaglineLine2": "Share moments.",
     "welcomeBack": "Welcome back ❤️",
     "loginSubtitle": "Log in to continue your journey.",
     "emailPlaceholder": "Enter your email",

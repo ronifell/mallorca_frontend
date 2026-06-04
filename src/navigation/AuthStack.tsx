@@ -17,6 +17,8 @@ export function AuthStack() {
         headerShadowVisible: false,
         headerTintColor: colors.ink[700],
         headerTitle: '',
+        headerStatusBarHeight: 0,
+        statusBarTranslucent: true,
         contentStyle: { backgroundColor: 'transparent' },
       }}
     >
