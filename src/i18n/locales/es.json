@@ -94,10 +94,17 @@
     "viewLess": "Ver menos",
     "interests": "Intereses",
     "myPhotos": "Mis fotos",
+    "theirPhotos": "Fotos",
     "online": "En línea",
     "editProfile": "Editar perfil",
     "editSubtitle": "Actualiza tus datos y fotos.",
-    "openMenu": "Abrir menú"
+    "openMenu": "Abrir menú",
+    "sendMessage": "Enviar mensaje",
+    "matchIsPremium": "Este match tiene Premium",
+    "report": "Reportar",
+    "block": "Bloquear",
+    "blockConfirm": "Dejaréis de veros. ¿Continuar?",
+    "reportComingSoon": "El reporte estará disponible pronto."
   },
   "discovery": {
     "empty": "No quedan perfiles compatibles ahora mismo. Vuelve más tarde.",
@@ -131,7 +138,8 @@
     "openMessages": "Abrir mensajes",
     "empty": "Aún no tienes matches. ¡Sigue deslizando!",
     "newMatch": "Nuevo match",
-    "unmatch": "Deshacer match"
+    "unmatch": "Deshacer match",
+    "unmatchConfirm": "Este match se eliminará. ¿Continuar?"
   },
   "chat": {
     "title": "Mensajes",
@@ -189,18 +197,26 @@
   },
   "settings": {
     "title": "Ajustes",
+    "subtitle": "Gestiona tus preferencias y la configuración de tu cuenta",
     "language": "Idioma",
+    "languageDesc": "Elige tu idioma preferido",
     "notifications": "Notificaciones",
+    "notificationsDesc": "Gestiona tus preferencias de notificaciones",
     "notificationMatches": "Nuevos matches",
     "notificationMessages": "Mensajes",
     "notificationSubscription": "Recordatorios de suscripción",
     "privacy": "Privacidad",
+    "privacyDesc": "Gestiona tu privacidad y tus datos",
     "blockedUsers": "Usuarios bloqueados",
     "exportData": "Exportar mis datos (RGPD)",
     "deleteAccount": "Eliminar cuenta",
+    "deleteAccountDesc": "Elimina tu cuenta de forma permanente",
     "deleteAccountConfirm": "Esta acción es permanente. ¿Continuar?",
     "logout": "Cerrar sesión",
-    "subscription": "Suscripción"
+    "logoutDesc": "Cierra sesión en tu cuenta",
+    "logoutConfirm": "¿Seguro que quieres cerrar sesión?",
+    "subscription": "Suscripción",
+    "subscriptionDesc": "Gestiona tu plan Premium"
   },
   "moderation": {
     "block": "Bloquear",

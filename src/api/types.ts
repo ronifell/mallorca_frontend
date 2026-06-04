@@ -60,6 +60,29 @@ export interface Match {
   unreadCount: number;
 }
 
+export interface MatchUserProfile {
+  matchId: string;
+  conversationId: string | null;
+  user: {
+    id: string;
+    firstName: string | null;
+    age: number | null;
+    gender: Gender | null;
+    city: string | null;
+    bio: string | null;
+    languages: string[];
+    photos: Photo[];
+    interestedIn: InterestedIn | null;
+    isPremium: boolean;
+  };
+}
+
+/** Shared shape for profile hero/details components. */
+export type ProfileDisplayData = Pick<
+  MyProfile,
+  'firstName' | 'age' | 'city' | 'gender' | 'bio' | 'languages' | 'photos' | 'interestedIn'
+>;
+
 export interface Message {
   id: string;
   senderId: string;

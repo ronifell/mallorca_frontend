@@ -13,7 +13,6 @@ import { SocialBrandHeader } from '../../components/social/SocialBrandHeader';
 import { SocialPageTitle } from '../../components/social/SocialPageTitle';
 import { SocialSearchBar } from '../../components/social/SocialSearchBar';
 import { MainTabParamList, RootStackParamList } from '../../navigation/types';
-import { buildConversationParams } from '../../utils/openConversation';
 import { resolveMediaUrl } from '../../utils/mediaUrl';
 
 type Nav = CompositeNavigationProp<
@@ -52,9 +51,8 @@ export function MatchesScreen() {
 
   const totalUnread = matches.reduce((sum, m) => sum + m.unreadCount, 0);
 
-  const open = async (match: Match) => {
-    const params = await buildConversationParams(match);
-    nav.navigate('Conversation', params);
+  const openProfile = (match: Match) => {
+    nav.navigate('MatchProfile', { matchId: match.matchId });
   };
 
   return (
@@ -89,7 +87,7 @@ export function MatchesScreen() {
                   showsHorizontalScrollIndicator={false}
                   className="mb-4"
                   renderItem={({ item }) => (
-                    <Pressable className="mr-3 items-center" onPress={() => open(item)}>
+                    <Pressable className="mr-3 items-center" onPress={() => openProfile(item)}>
                       {item.otherUser.coverPhoto ? (
                         <Image
                           source={{ uri: resolveMediaUrl(item.otherUser.coverPhoto) }}
@@ -121,7 +119,7 @@ export function MatchesScreen() {
           <MatchConversationRow
             match={item}
             myUserId={me?.id}
-            onPress={() => open(item)}
+            onPress={() => openProfile(item)}
           />
         )}
       />

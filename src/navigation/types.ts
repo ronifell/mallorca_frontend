@@ -32,6 +32,7 @@ export type RootStackParamList = {
     otherUserAge?: number | null;
     otherUserPhoto?: string | null;
   };
+  MatchProfile: { matchId: string };
   Premium: undefined;
   EditProfile: undefined;
   Settings: undefined;

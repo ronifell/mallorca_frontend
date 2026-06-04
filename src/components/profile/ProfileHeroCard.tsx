@@ -2,18 +2,25 @@ import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Image, Pressable, Text, View } from 'react-native';
-import { MyProfile } from '../../api/types';
+import { ProfileDisplayData } from '../../api/types';
 import { Logo } from '../Logo';
 import { colors } from '../../theme/colors';
 import { buildProfileDetails, formatProfileLocation } from '../../utils/profileDisplay';
 import { resolveMediaUrl } from '../../utils/mediaUrl';
 
 interface Props {
-  profile: MyProfile;
-  onEditPress?: () => void;
+  profile: ProfileDisplayData;
+  onActionPress?: () => void;
+  actionIcon?: keyof typeof Ionicons.glyphMap;
+  showVerified?: boolean;
 }
 
-export function ProfileHeroCard({ profile, onEditPress }: Props) {
+export function ProfileHeroCard({
+  profile,
+  onActionPress,
+  actionIcon = 'heart',
+  showVerified = true,
+}: Props) {
   const { t } = useTranslation();
   const cover = resolveMediaUrl(profile.photos[0]?.url);
   const photoCount = profile.photos.length;
@@ -63,9 +70,11 @@ export function ProfileHeroCard({ profile, onEditPress }: Props) {
                 {profile.firstName ?? '—'}
                 {profile.age ? `, ${profile.age}` : ''}
               </Text>
-              <View className="ml-2 w-6 h-6 rounded-full bg-coral-500 items-center justify-center">
-                <Ionicons name="checkmark" size={14} color="#FFFFFF" />
-              </View>
+              {showVerified ? (
+                <View className="ml-2 w-6 h-6 rounded-full bg-coral-500 items-center justify-center">
+                  <Ionicons name="checkmark" size={14} color="#FFFFFF" />
+                </View>
+              ) : null}
             </View>
 
             {locationLine ? (
@@ -76,12 +85,14 @@ export function ProfileHeroCard({ profile, onEditPress }: Props) {
             ) : null}
           </View>
 
-          <Pressable
-            onPress={onEditPress}
-            className="w-11 h-11 rounded-full bg-coral-50 items-center justify-center"
-          >
-            <Ionicons name="heart" size={22} color={colors.coral[500]} />
-          </Pressable>
+          {onActionPress ? (
+            <Pressable
+              onPress={onActionPress}
+              className="w-11 h-11 rounded-full bg-coral-50 items-center justify-center"
+            >
+              <Ionicons name={actionIcon} size={22} color={colors.coral[500]} />
+            </Pressable>
+          ) : null}
         </View>
 
         {details.length ? (

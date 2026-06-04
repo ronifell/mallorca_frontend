@@ -43,7 +43,7 @@ export function ProfileScreen() {
     <Screen scroll padded={false}>
       <ProfilePageHeader />
 
-      <ProfileHeroCard profile={me} onEditPress={goEdit} />
+      <ProfileHeroCard profile={me} onActionPress={goEdit} actionIcon="heart" />
 
       <View className="px-5 pb-8">
         <ProfileAboutSection bio={me.bio} />

@@ -6,10 +6,11 @@ import { resolveMediaUrl } from '../../utils/mediaUrl';
 
 interface Props {
   photos: Photo[];
-  onEdit: () => void;
+  onEdit?: () => void;
+  readOnly?: boolean;
 }
 
-export function ProfilePhotosGallery({ photos, onEdit }: Props) {
+export function ProfilePhotosGallery({ photos, onEdit, readOnly = false }: Props) {
   const { t } = useTranslation();
 
   if (!photos.length) return null;
@@ -17,10 +18,14 @@ export function ProfilePhotosGallery({ photos, onEdit }: Props) {
   return (
     <View className="mb-6">
       <View className="flex-row items-center justify-between mb-3">
-        <Text className="text-ink-700 text-lg font-bold">{t('profile.myPhotos')}</Text>
-        <Pressable onPress={onEdit}>
-          <Text className="text-coral-500 font-semibold text-sm">{t('common.edit')}</Text>
-        </Pressable>
+        <Text className="text-ink-700 text-lg font-bold">
+          {readOnly ? t('profile.theirPhotos') : t('profile.myPhotos')}
+        </Text>
+        {!readOnly && onEdit ? (
+          <Pressable onPress={onEdit}>
+            <Text className="text-coral-500 font-semibold text-sm">{t('common.edit')}</Text>
+          </Pressable>
+        ) : null}
       </View>
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} className="-mx-1">

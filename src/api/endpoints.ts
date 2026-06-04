@@ -3,6 +3,7 @@ import {
   AuthResult,
   FeedCandidate,
   Match,
+  MatchUserProfile,
   Message,
   MyProfile,
   SubscriptionPlan,
@@ -74,6 +75,8 @@ export const discoveryApi = {
 
 export const matchesApi = {
   list: () => api.get<{ matches: Match[] }>('/matches').then((r) => r.data.matches),
+  profile: (matchId: string) =>
+    api.get<MatchUserProfile>(`/matches/${matchId}/profile`).then((r) => r.data),
   unmatch: (id: string) => api.delete<void>(`/matches/${id}`).then((r) => r.data),
 };
 

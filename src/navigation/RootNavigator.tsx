@@ -8,6 +8,7 @@ import { MainTabs } from './MainTabs';
 import { ProfileSetupStack } from './ProfileSetupStack';
 import { SplashScreen } from '../screens/SplashScreen';
 import { ConversationScreen } from '../screens/chat/ConversationScreen';
+import { MatchProfileScreen } from '../screens/matches/MatchProfileScreen';
 import { PremiumScreen } from '../screens/premium/PremiumScreen';
 import { EditProfileScreen } from '../screens/profile/EditProfileScreen';
 import { SettingsScreen } from '../screens/settings/SettingsScreen';
@@ -78,6 +79,11 @@ export function RootNavigator() {
               options={{ headerShown: false }}
             />
             <Stack.Screen
+              name="MatchProfile"
+              component={MatchProfileScreen}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
               name="Conversation"
               component={ConversationScreen}
               options={{ headerShown: false }}
@@ -92,7 +98,7 @@ export function RootNavigator() {
               component={EditProfileScreen}
               options={{ headerShown: false }}
             />
-            <Stack.Screen name="Settings" component={SettingsScreen} options={{ title: 'Ajustes' }} />
+            <Stack.Screen name="Settings" component={SettingsScreen} options={{ headerShown: false }} />
             <Stack.Screen name="Language" component={LanguageScreen} options={{ title: 'Idioma' }} />
             <Stack.Screen
               name="Notifications"
