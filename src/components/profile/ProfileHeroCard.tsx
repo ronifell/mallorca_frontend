@@ -1,9 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Image, Pressable, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 import { ProfileDisplayData } from '../../api/types';
 import { Logo } from '../Logo';
+import { StackedPhotoDeck } from './StackedPhotoDeck';
 import { colors } from '../../theme/colors';
 import { buildProfileDetails, formatProfileLocation } from '../../utils/profileDisplay';
 import { resolveMediaUrl } from '../../utils/mediaUrl';
@@ -26,13 +27,17 @@ export function ProfileHeroCard({
 }: Props) {
   const { t } = useTranslation();
   const cover = resolveMediaUrl(profile.photos[0]?.url);
+  const backPhotoOne = resolveMediaUrl(profile.photos[1]?.url);
+  const backPhotoTwo = resolveMediaUrl(profile.photos[2]?.url);
   const photoCount = profile.photos.length;
   const details = buildProfileDetails(profile, t);
   const locationLine = formatProfileLocation(profile.city, t);
 
+  const photoAspect = compactPhoto ? 'aspect-[3/4]' : 'aspect-[4/5]';
+
   return (
     <View
-      className={`mx-5 rounded-3xl overflow-hidden bg-white ${compactPhoto ? 'mb-4' : 'mb-6'}`}
+      className={`mx-5 rounded-3xl bg-white ${compactPhoto ? 'mb-4' : 'mb-6'}`}
       style={{
         shadowColor: '#3D2618',
         shadowOffset: { width: 0, height: 4 },
@@ -41,30 +46,34 @@ export function ProfileHeroCard({
         elevation: 4,
       }}
     >
-      <View
-        className={`relative bg-cream-200 ${compactPhoto ? 'aspect-[3/4]' : 'aspect-[4/5]'}`}
-      >
-        {cover ? (
-          <Image source={{ uri: cover }} className="w-full h-full" resizeMode="cover" />
-        ) : (
-          <View className="w-full h-full items-center justify-center">
-            <Logo size="lg" />
-          </View>
-        )}
+      <View className={`px-3 pt-5 ${compactPhoto ? 'pb-2' : 'pb-3'}`}>
+        <View className={`relative w-full ${photoAspect}`} style={{ overflow: 'visible' }}>
+          <StackedPhotoDeck
+            coverUri={cover}
+            backUris={[backPhotoOne, backPhotoTwo]}
+            placeholder={<Logo size="lg" />}
+          />
 
-        <View className="absolute top-3 left-3 flex-row items-center bg-black/55 rounded-full px-3 py-1.5">
-          <View className="w-2 h-2 rounded-full bg-green-400 mr-2" />
-          <Text className="text-white text-xs font-semibold">{t('profile.online')}</Text>
+          <View
+            className="absolute top-3 left-3 flex-row items-center bg-black/55 rounded-full px-3 py-1.5"
+            style={{ zIndex: 10 }}
+          >
+            <View className="w-2 h-2 rounded-full bg-green-400 mr-2" />
+            <Text className="text-white text-xs font-semibold">{t('profile.online')}</Text>
+          </View>
+
+          {photoCount > 0 ? (
+            <View
+              className="absolute bottom-3 right-3 flex-row items-center bg-black/55 rounded-full px-2.5 py-1.5"
+              style={{ zIndex: 10 }}
+            >
+              <Ionicons name="camera-outline" size={12} color="#FFFFFF" />
+              <Text className="text-white text-xs font-semibold ml-1">
+                1 / {photoCount}
+              </Text>
+            </View>
+          ) : null}
         </View>
-
-        {photoCount > 0 ? (
-          <View className="absolute bottom-3 right-3 flex-row items-center bg-black/55 rounded-full px-2.5 py-1.5">
-            <Ionicons name="camera-outline" size={12} color="#FFFFFF" />
-            <Text className="text-white text-xs font-semibold ml-1">
-              1 / {photoCount}
-            </Text>
-          </View>
-        ) : null}
       </View>
 
       <View className={`px-4 ${compactPhoto ? 'pt-3 pb-3' : 'pt-4 pb-4'}`}>
