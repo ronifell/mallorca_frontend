@@ -3,30 +3,95 @@ import { useQuery } from '@tanstack/react-query';
 import * as ImagePicker from 'expo-image-picker';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  Alert,
-  FlatList,
-  Image,
-  Pressable,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { Alert, FlatList, Pressable, Text, View } from 'react-native';
 import { Socket } from 'socket.io-client';
 import { extractErrorMessage } from '../../api/client';
 import { chatApi, usersApi } from '../../api/endpoints';
 import { Message } from '../../api/types';
+import { ChatDateSeparator } from '../../components/chat/ChatDateSeparator';
+import { ConversationHeader } from '../../components/chat/ConversationHeader';
+import { ConversationInputBar } from '../../components/chat/ConversationInputBar';
+import { MessageBubble } from '../../components/chat/MessageBubble';
+import { PremiumConversationBanner } from '../../components/chat/PremiumConversationBanner';
 import { Screen } from '../../components/Screen';
 import { RootStackParamList } from '../../navigation/types';
 import { connectSocket } from '../../services/socket';
-import { colors } from '../../theme/colors';
-import { resolveMediaUrl } from '../../utils/mediaUrl';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Conversation'>;
 
+type ChatRow =
+  | { kind: 'date'; id: string; label: string }
+  | {
+      kind: 'message';
+      id: string;
+      message: Message;
+      showAvatar: boolean;
+      showMeta: boolean;
+      timeLabel: string;
+    };
+
+function dateLabel(iso: string, t: (key: string) => string): string {
+  const date = new Date(iso);
+  const now = new Date();
+  const yesterday = new Date(now);
+  yesterday.setDate(yesterday.getDate() - 1);
+
+  const sameDay =
+    date.getDate() === now.getDate() &&
+    date.getMonth() === now.getMonth() &&
+    date.getFullYear() === now.getFullYear();
+  if (sameDay) return t('chat.today');
+
+  const isYesterday =
+    date.getDate() === yesterday.getDate() &&
+    date.getMonth() === yesterday.getMonth() &&
+    date.getFullYear() === yesterday.getFullYear();
+  if (isYesterday) return t('chat.yesterday');
+
+  return date.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' });
+}
+
+function formatMessageTime(iso: string): string {
+  return new Date(iso).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+}
+
+function buildChatRows(messages: Message[], t: (key: string) => string): ChatRow[] {
+  const sorted = [...messages].sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+  const rows: ChatRow[] = [];
+  let lastDateKey = '';
+
+  sorted.forEach((message, index) => {
+    const dateKey = message.createdAt.slice(0, 10);
+    if (dateKey !== lastDateKey) {
+      rows.push({
+        kind: 'date',
+        id: `date-${dateKey}`,
+        label: dateLabel(message.createdAt, t),
+      });
+      lastDateKey = dateKey;
+    }
+
+    const prev = sorted[index - 1];
+    const next = sorted[index + 1];
+    const showAvatar = !prev || prev.senderId !== message.senderId;
+    const showMeta = !next || next.senderId !== message.senderId;
+
+    rows.push({
+      kind: 'message',
+      id: message.id,
+      message,
+      showAvatar,
+      showMeta,
+      timeLabel: formatMessageTime(message.createdAt),
+    });
+  });
+
+  return rows;
+}
+
 export function ConversationScreen({ route, navigation }: Props) {
   const { t } = useTranslation();
-  const { conversationId } = route.params;
+  const { conversationId, otherName, otherUserAge, otherUserPhoto } = route.params;
 
   const { data: me } = useQuery({ queryKey: ['me'], queryFn: () => usersApi.me() });
   const myId = me?.id;
@@ -37,7 +102,7 @@ export function ConversationScreen({ route, navigation }: Props) {
   const [premiumBlocked, setPremiumBlocked] = useState(false);
   const socketRef = useRef<Socket | null>(null);
   const typingTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const listRef = useRef<FlatList<Message>>(null);
+  const listRef = useRef<FlatList<ChatRow>>(null);
 
   const loadInitial = useCallback(async () => {
     try {
@@ -149,96 +214,80 @@ export function ConversationScreen({ route, navigation }: Props) {
     }, 1500);
   };
 
-  const sortedMessages = useMemo(
-    () => [...messages].sort((a, b) => a.createdAt.localeCompare(b.createdAt)),
-    [messages],
-  );
+  const chatRows = useMemo(() => buildChatRows(messages, t), [messages, t]);
+  const inputDisabled = premiumBlocked;
+  const isPremium = me?.isPremium ?? false;
 
   return (
     <Screen padded={false} edges={['top']}>
+      <ConversationHeader
+        otherName={otherName}
+        otherUserAge={otherUserAge}
+        otherUserPhoto={otherUserPhoto}
+        onBack={() => navigation.goBack()}
+      />
+
+      {isPremium && !premiumBlocked ? (
+        <PremiumConversationBanner onPress={() => navigation.navigate('Premium')} />
+      ) : null}
+
       <FlatList
         ref={listRef}
-        data={sortedMessages}
-        keyExtractor={(m) => m.id}
-        contentContainerStyle={{ padding: 16, paddingBottom: 8 }}
+        data={chatRows}
+        keyExtractor={(row) => row.id}
+        className="flex-1 bg-cream-200"
+        contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 12, paddingBottom: 8 }}
         onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: false })}
         renderItem={({ item }) => {
-          const mine = item.senderId === myId;
-          const last = sortedMessages[sortedMessages.length - 1];
+          if (item.kind === 'date') {
+            return <ChatDateSeparator label={item.label} />;
+          }
+
+          const mine = item.message.senderId === myId;
           return (
-            <View className={`mb-2 max-w-[80%] ${mine ? 'self-end' : 'self-start'}`}>
-              <View
-                className={`px-3 py-2 rounded-2xl ${
-                  mine
-                    ? 'bg-brand-500 rounded-br-md'
-                    : 'bg-white rounded-bl-md border border-cream-300'
-                }`}
-              >
-                {item.type === 'image' && item.imageUrl ? (
-                  <Image
-                    source={{ uri: resolveMediaUrl(item.imageUrl) }}
-                    className="w-48 h-48 rounded-xl"
-                    resizeMode="cover"
-                  />
-                ) : (
-                  <Text className={mine ? 'text-white' : 'text-ink-700'}>{item.text}</Text>
-                )}
-              </View>
-              {mine && item.id === last?.id ? (
-                <Text className="text-ink-400 text-xs mt-1 mr-1 self-end">
-                  {item.readAt
-                    ? `✓✓ ${t('chat.read')}`
-                    : item.deliveredAt
-                      ? '✓✓'
-                      : '✓'}
-                </Text>
-              ) : null}
-            </View>
+            <MessageBubble
+              message={item.message}
+              mine={mine}
+              showAvatar={!mine && item.showAvatar}
+              otherName={otherName}
+              otherPhoto={otherUserPhoto}
+              showMeta={item.showMeta}
+              timeLabel={item.timeLabel}
+            />
           );
         }}
         ListFooterComponent={
           otherTyping ? (
-            <View className="mb-2 self-start bg-white border border-cream-300 px-3 py-2 rounded-2xl rounded-bl-md">
-              <Text className="text-ink-400 italic">{t('chat.typing')}</Text>
+            <View className="flex-row mb-3">
+              <View className="w-8 mr-2" />
+              <View className="bg-white border border-cream-300 px-3 py-2 rounded-2xl rounded-bl-md">
+                <Text className="text-ink-400 italic">{t('chat.typing')}</Text>
+              </View>
             </View>
           ) : null
         }
       />
 
       {premiumBlocked ? (
-        <View className="bg-brand-50 border-t border-brand-100 px-5 py-4">
-          <Text className="text-brand-600 mb-2 text-center">{t('chat.premiumRequired')}</Text>
+        <View className="bg-coral-50 border-t border-coral-100 px-5 py-4">
+          <Text className="text-coral-600 mb-2 text-center">{t('chat.premiumRequired')}</Text>
           <Pressable
             onPress={() => navigation.navigate('Premium')}
-            className="bg-brand-500 py-3 rounded-pill items-center"
+            className="bg-coral-500 py-3 rounded-2xl items-center"
           >
             <Text className="text-white font-semibold">{t('chat.upgrade')}</Text>
           </Pressable>
         </View>
       ) : null}
 
-      <View className="flex-row items-end px-3 py-2 border-t border-cream-300 bg-cream-100">
-        <Pressable
-          onPress={sendImage}
-          className="w-11 h-11 rounded-full bg-white items-center justify-center mr-2 border border-cream-300"
-        >
-          <Text className="text-brand-500 text-xl">＋</Text>
-        </Pressable>
-        <TextInput
-          value={text}
-          onChangeText={onChangeText}
-          placeholder={t('chat.writeMessage')}
-          placeholderTextColor={colors.ink[400]}
-          className="flex-1 bg-white rounded-2xl px-4 py-3 text-ink-700 border border-cream-300 max-h-32"
-          multiline
-        />
-        <Pressable
-          onPress={send}
-          className="ml-2 w-11 h-11 rounded-full bg-brand-500 items-center justify-center"
-        >
-          <Text className="text-white text-lg">➤</Text>
-        </Pressable>
-      </View>
+      <ConversationInputBar
+        value={text}
+        onChangeText={onChangeText}
+        onSend={send}
+        onAttach={sendImage}
+        onPickImage={sendImage}
+        disabled={inputDisabled}
+      />
     </Screen>
   );
 }

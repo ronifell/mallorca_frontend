@@ -75,6 +75,8 @@ export function DiscoveryScreen() {
       conversationId: conv.id,
       otherName: matchPopup.name,
       otherUserId: matchPopup.id,
+      otherUserAge: null,
+      otherUserPhoto: null,
     });
   };
 

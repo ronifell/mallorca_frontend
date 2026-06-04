@@ -25,7 +25,13 @@ export type RootStackParamList = {
   Auth: NavigatorScreenParams<AuthStackParamList>;
   ProfileSetup: NavigatorScreenParams<ProfileSetupStackParamList>;
   Main: NavigatorScreenParams<MainTabParamList>;
-  Conversation: { conversationId: string; otherName: string | null; otherUserId: string };
+  Conversation: {
+    conversationId: string;
+    otherName: string | null;
+    otherUserId: string;
+    otherUserAge?: number | null;
+    otherUserPhoto?: string | null;
+  };
   Premium: undefined;
   EditProfile: undefined;
   Settings: undefined;

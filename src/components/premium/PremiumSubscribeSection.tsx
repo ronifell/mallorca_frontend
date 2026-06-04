@@ -1,4 +1,4 @@
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Alert, Pressable, Text, View } from 'react-native';
@@ -29,7 +29,7 @@ export function PremiumSubscribeSection({ onSubscribe, loading, disabled }: Prop
           <ActivityIndicator color={colors.white} />
         ) : (
           <>
-            <MaterialCommunityIcons name="crown" size={20} color={colors.white} style={{ marginRight: 8 }} />
+            <Ionicons name="ribbon" size={20} color={colors.white} style={{ marginRight: 8 }} />
             <Text className="text-white font-bold text-base">{t('premium.subscribe')}</Text>
           </>
         )}

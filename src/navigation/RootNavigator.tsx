@@ -80,9 +80,7 @@ export function RootNavigator() {
             <Stack.Screen
               name="Conversation"
               component={ConversationScreen}
-              options={({ route }) => ({
-                title: route.params.otherName ?? 'Chat',
-              })}
+              options={{ headerShown: false }}
             />
             <Stack.Screen
               name="Premium"

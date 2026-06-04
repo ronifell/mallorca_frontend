@@ -60,6 +60,7 @@ export function MainTabs() {
         name="Matches"
         component={MatchesScreen}
         options={{
+          headerShown: false,
           title: t('nav.matches'),
           tabBarIcon: ({ focused }) =>
             tabIcon(focused ? 'people' : 'people-outline', focused),
@@ -69,6 +70,7 @@ export function MainTabs() {
         name="Chat"
         component={ChatListScreen}
         options={{
+          headerShown: false,
           title: t('nav.chat'),
           tabBarIcon: ({ focused }) =>
             tabIcon(focused ? 'chatbubble' : 'chatbubble-outline', focused),
