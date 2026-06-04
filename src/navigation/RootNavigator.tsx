@@ -101,13 +101,13 @@ export function RootNavigator() {
               options={{ headerShown: false }}
             />
             <Stack.Screen name="Settings" component={SettingsScreen} options={{ headerShown: false }} />
-            <Stack.Screen name="Language" component={LanguageScreen} options={{ title: 'Idioma' }} />
+            <Stack.Screen name="Language" component={LanguageScreen} options={{ headerShown: false }} />
             <Stack.Screen
               name="Notifications"
               component={NotificationsScreen}
-              options={{ title: 'Notificaciones' }}
+              options={{ headerShown: false }}
             />
-            <Stack.Screen name="Privacy" component={PrivacyScreen} options={{ title: 'Privacidad' }} />
+            <Stack.Screen name="Privacy" component={PrivacyScreen} options={{ headerShown: false }} />
             <Stack.Screen
               name="BlockedUsers"
               component={BlockedUsersScreen}
