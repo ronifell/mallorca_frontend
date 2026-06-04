@@ -2,9 +2,10 @@ import { useNavigation } from '@react-navigation/native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, Text, View } from 'react-native';
+import { Alert } from 'react-native';
 import { extractErrorMessage } from '../../api/client';
 import { subscriptionsApi } from '../../api/endpoints';
+import { PremiumActiveCard } from '../../components/premium/PremiumActiveCard';
 import { PremiumBenefitsCard } from '../../components/premium/PremiumBenefitsCard';
 import { PremiumHero } from '../../components/premium/PremiumHero';
 import { PremiumPlanCard } from '../../components/premium/PremiumPlanCard';
@@ -54,16 +55,7 @@ export function PremiumScreen() {
       <PremiumHero />
       <PremiumBenefitsCard />
 
-      {isPremium ? (
-        <View className="bg-coral-50 border border-coral-100 rounded-2xl p-4 mb-5 items-center">
-          <Text className="text-coral-600 font-bold">{t('premium.active')}</Text>
-          {status?.expiryDate ? (
-            <Text className="text-ink-700 mt-1 text-sm">
-              {t('premium.until')}: {new Date(status.expiryDate).toLocaleDateString()}
-            </Text>
-          ) : null}
-        </View>
-      ) : null}
+      {isPremium ? <PremiumActiveCard expiryDate={status?.expiryDate} /> : null}
 
       {(plans ?? []).map((plan) => (
         <PremiumPlanCard

@@ -12,6 +12,12 @@ import { useTopScreenPadding } from '../hooks/useTopScreenPadding';
 import { colors } from '../theme/colors';
 
 const onboardingBackground = require('../../assets/onboarding.png');
+const mainTabBackground = require('../../assets/main1.png');
+
+const tabBackgrounds = {
+  onboarding: onboardingBackground,
+  main: mainTabBackground,
+} as const;
 
 interface Props {
   children: ReactNode;
@@ -19,7 +25,7 @@ interface Props {
   edges?: ('top' | 'bottom' | 'left' | 'right')[];
   className?: string;
   padded?: boolean;
-  background?: 'onboarding';
+  background?: keyof typeof tabBackgrounds;
 }
 
 export function Screen({
@@ -31,7 +37,8 @@ export function Screen({
   background,
 }: Props) {
   const topPadding = useTopScreenPadding();
-  const hasBackground = background === 'onboarding';
+  const hasBackground = background != null;
+  const backgroundSource = background ? tabBackgrounds[background] : null;
   const surfaceColor = hasBackground ? 'transparent' : colors.cream[200];
   const containerClass = hasBackground ? `flex-1 ${className}` : `flex-1 bg-cream-200 ${className}`;
 
@@ -68,14 +75,14 @@ export function Screen({
     </SafeAreaView>
   );
 
-  if (!hasBackground) {
+  if (!hasBackground || !backgroundSource) {
     return body;
   }
 
   return (
     <View style={[styles.backgroundRoot, { backgroundColor: colors.cream[50] }]}>
       <ImageBackground
-        source={onboardingBackground}
+        source={backgroundSource}
         resizeMode="cover"
         style={StyleSheet.absoluteFillObject}
       />

@@ -102,7 +102,7 @@ export function DiscoveryScreen() {
   };
 
   return (
-    <Screen padded={false} background="onboarding">
+    <Screen padded={false} background="main">
       <DiscoveryHeader />
       <DiscoveryModeToggle mode={mode} onChange={setMode} />
 

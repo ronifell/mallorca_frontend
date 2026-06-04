@@ -18,15 +18,16 @@ export function PremiumPlanCard({ plan, selected, onSelect }: Props) {
   return (
     <Pressable
       onPress={onSelect}
-      className={`rounded-2xl p-4 mb-3 border-2 flex-row items-center ${
-        selected ? 'border-coral-500 bg-coral-50' : 'border-cream-300 bg-white'
+      className={`rounded-2xl p-4 mb-3 flex-row items-center border ${
+        selected ? 'border-coral-500' : 'border-cream-300'
       }`}
+      style={{ backgroundColor: selected ? colors.coral[50] : colors.white }}
     >
       <View className="flex-1 pr-3">
         <Text className="text-ink-700 font-bold text-base">{plan.name}</Text>
-        <Text className="text-ink-400 text-sm mt-0.5">{plan.description}</Text>
+        <Text className="text-ink-400 text-sm mt-1 leading-5">{plan.description}</Text>
         {plan.id === 'annual_premium' ? (
-          <View className="self-start bg-coral-500 mt-2 px-2.5 py-1 rounded-md">
+          <View className="self-start bg-coral-500 mt-2.5 px-2.5 py-1 rounded-md">
             <Text className="text-white text-xs font-bold">{t('premium.save')}</Text>
           </View>
         ) : null}
@@ -34,7 +35,7 @@ export function PremiumPlanCard({ plan, selected, onSelect }: Props) {
 
       <View className="items-end mr-3">
         <Text className="text-ink-700 font-bold text-lg">{plan.price}</Text>
-        <Text className="text-ink-400 text-xs">{periodLabel}</Text>
+        <Text className="text-ink-400 text-xs mt-0.5">{periodLabel}</Text>
       </View>
 
       <View

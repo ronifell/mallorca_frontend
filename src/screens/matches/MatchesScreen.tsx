@@ -56,7 +56,7 @@ export function MatchesScreen() {
   };
 
   return (
-    <Screen padded={false} background="onboarding">
+    <Screen padded={false} background="main">
       <SocialBrandHeader
         onLeftPress={() => Alert.alert(t('matches.filters'), t('matches.filterComingSoon'))}
         onRightPress={() => nav.navigate('Chat')}
