@@ -2,11 +2,14 @@ import { useNavigation } from '@react-navigation/native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, Pressable, Text, View } from 'react-native';
+import { Alert, Text, View } from 'react-native';
 import { extractErrorMessage } from '../../api/client';
 import { subscriptionsApi } from '../../api/endpoints';
-import { Button } from '../../components/Button';
-import { Screen } from '../../components/Screen';
+import { PremiumBenefitsCard } from '../../components/premium/PremiumBenefitsCard';
+import { PremiumHero } from '../../components/premium/PremiumHero';
+import { PremiumPlanCard } from '../../components/premium/PremiumPlanCard';
+import { PremiumShell } from '../../components/premium/PremiumShell';
+import { PremiumSubscribeSection } from '../../components/premium/PremiumSubscribeSection';
 import { startPurchase } from '../../services/billing';
 import { useAuthStore } from '../../store/auth';
 
@@ -44,63 +47,38 @@ export function PremiumScreen() {
     }
   };
 
+  const isPremium = status?.isPremium ?? false;
+
   return (
-    <Screen scroll>
-      <View className="items-center mt-2 mb-6">
-        <Text className="text-5xl mb-2">♥</Text>
-        <Text className="text-ink-700 font-serif text-3xl">{t('premium.title')}</Text>
-        <Text className="text-ink-400 mt-2 text-center">{t('premium.subtitle')}</Text>
-      </View>
+    <PremiumShell>
+      <PremiumHero />
+      <PremiumBenefitsCard />
 
-      <View className="bg-white rounded-2xl p-4 mb-6">
-        <Text className="text-ink-700 font-bold mb-2">{t('premium.benefits')}</Text>
-        {['benefit1', 'benefit2', 'benefit3'].map((k) => (
-          <View key={k} className="flex-row items-center mb-1.5">
-            <Text className="text-brand-500 mr-2">✓</Text>
-            <Text className="text-ink-700 flex-1">{t(`premium.${k}`)}</Text>
-          </View>
-        ))}
-      </View>
-
-      {status?.isPremium ? (
-        <View className="bg-success/10 rounded-2xl p-4 mb-4 items-center">
-          <Text className="text-success font-bold">{t('premium.active')}</Text>
-          {status.expiryDate ? (
-            <Text className="text-ink-700 mt-1">
+      {isPremium ? (
+        <View className="bg-coral-50 border border-coral-100 rounded-2xl p-4 mb-5 items-center">
+          <Text className="text-coral-600 font-bold">{t('premium.active')}</Text>
+          {status?.expiryDate ? (
+            <Text className="text-ink-700 mt-1 text-sm">
               {t('premium.until')}: {new Date(status.expiryDate).toLocaleDateString()}
             </Text>
           ) : null}
         </View>
       ) : null}
 
-      {(plans ?? []).map((p) => (
-        <Pressable
-          key={p.id}
-          onPress={() => setSelected(p.id)}
-          className={`rounded-2xl p-4 mb-3 border-2 ${
-            selected === p.id ? 'border-brand-500 bg-brand-50' : 'border-cream-300 bg-white'
-          }`}
-        >
-          <View className="flex-row items-center">
-            <View className="flex-1">
-              <Text className="text-ink-700 font-bold text-lg">{p.name}</Text>
-              <Text className="text-ink-400">{p.description}</Text>
-            </View>
-            <View className="items-end">
-              <Text className="text-ink-700 font-bold text-lg">{p.price}</Text>
-              <Text className="text-ink-400 text-xs">/ {p.period === 'year' ? 'año' : 'mes'}</Text>
-              {p.id === 'annual_premium' ? (
-                <View className="bg-brand-500 mt-1 px-2 py-0.5 rounded-full">
-                  <Text className="text-white text-xs font-bold">{t('premium.save')}</Text>
-                </View>
-              ) : null}
-            </View>
-          </View>
-        </Pressable>
+      {(plans ?? []).map((plan) => (
+        <PremiumPlanCard
+          key={plan.id}
+          plan={plan}
+          selected={selected === plan.id}
+          onSelect={() => setSelected(plan.id)}
+        />
       ))}
 
-      <View className="h-2" />
-      <Button label={t('premium.subscribe')} fullWidth onPress={subscribe} loading={loading} />
-    </Screen>
+      <PremiumSubscribeSection
+        onSubscribe={subscribe}
+        loading={loading}
+        disabled={isPremium}
+      />
+    </PremiumShell>
   );
 }

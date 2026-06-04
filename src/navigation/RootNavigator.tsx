@@ -87,7 +87,7 @@ export function RootNavigator() {
             <Stack.Screen
               name="Premium"
               component={PremiumScreen}
-              options={{ title: 'Premium' }}
+              options={{ headerShown: false }}
             />
             <Stack.Screen
               name="EditProfile"

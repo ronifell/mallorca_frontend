@@ -78,6 +78,7 @@ export function MainTabs() {
         name="Premium"
         component={PremiumScreen}
         options={{
+          headerShown: false,
           title: t('nav.premium'),
           tabBarIcon: ({ focused }) =>
             tabIcon(focused ? 'ribbon' : 'ribbon-outline', focused),
