@@ -23,8 +23,7 @@ import { Input } from '../../components/Input';
 import { AuthStackParamList } from '../../navigation/types';
 import { useAuthStore } from '../../store/auth';
 import { colors } from '../../theme/colors';
-
-const loginHero = require('../../../assets/login.png');
+import { authHeroImage, authScreenStyles as styles } from './authScreenStyles';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Login'>;
 
@@ -61,7 +60,7 @@ export function LoginScreen({ navigation }: Props) {
   return (
     <View style={styles.root}>
       <ImageBackground
-        source={loginHero}
+        source={authHeroImage}
         resizeMode="cover"
         style={StyleSheet.absoluteFillObject}
         imageStyle={styles.backgroundImage}
@@ -134,7 +133,7 @@ export function LoginScreen({ navigation }: Props) {
                   className={`flex-row items-center justify-center bg-coral-500 active:bg-coral-600 rounded-2xl py-4 px-6 ${
                     loading ? 'opacity-70' : ''
                   }`}
-                  style={styles.loginButton}
+                  style={styles.primaryButton}
                 >
                   {loading ? (
                     <ActivityIndicator color={colors.white} />
@@ -145,7 +144,7 @@ export function LoginScreen({ navigation }: Props) {
                         name="arrow-forward"
                         size={20}
                         color={colors.white}
-                        style={styles.loginArrow}
+                        style={styles.primaryButtonArrow}
                       />
                     </>
                   )}
@@ -186,62 +185,3 @@ export function LoginScreen({ navigation }: Props) {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: colors.cream[100],
-  },
-  backgroundImage: {
-    width: '100%',
-    height: '100%',
-  },
-  heroFade: {
-    ...StyleSheet.absoluteFillObject,
-    justifyContent: 'flex-end',
-  },
-  fadeLayer: {
-    width: '100%',
-    backgroundColor: colors.white,
-  },
-  safeArea: {
-    flex: 1,
-    backgroundColor: 'transparent',
-  },
-  keyboardView: {
-    flex: 1,
-  },
-  body: {
-    flex: 1,
-  },
-  topSpacer: {
-    flex: 0.14,
-    minHeight: 8,
-  },
-  welcomeBlock: {
-    paddingHorizontal: 24,
-    paddingBottom: 10,
-  },
-  formCard: {
-    flex: 0.86,
-    backgroundColor: colors.white,
-    borderTopLeftRadius: 40,
-    borderTopRightRadius: 40,
-  },
-  formContent: {
-    paddingHorizontal: 24,
-    paddingTop: 22,
-    paddingBottom: 32,
-  },
-  loginButton: {
-    shadowColor: colors.coral[600],
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  loginArrow: {
-    position: 'absolute',
-    right: 22,
-  },
-});
