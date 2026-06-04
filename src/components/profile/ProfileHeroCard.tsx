@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import React from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, Text, View } from 'react-native';
 import { ProfileDisplayData } from '../../api/types';
@@ -18,6 +18,11 @@ interface Props {
   compactPhoto?: boolean;
 }
 
+function modIndex(index: number, count: number) {
+  if (count <= 0) return 0;
+  return ((index % count) + count) % count;
+}
+
 export function ProfileHeroCard({
   profile,
   onActionPress,
@@ -26,14 +31,31 @@ export function ProfileHeroCard({
   compactPhoto = false,
 }: Props) {
   const { t } = useTranslation();
-  const cover = resolveMediaUrl(profile.photos[0]?.url);
-  const backPhotoOne = resolveMediaUrl(profile.photos[1]?.url);
-  const backPhotoTwo = resolveMediaUrl(profile.photos[2]?.url);
+  const [photoIndex, setPhotoIndex] = useState(0);
   const photoCount = profile.photos.length;
+  const photoKey = useMemo(
+    () => profile.photos.map((p) => p.id).join(','),
+    [profile.photos],
+  );
+
+  const photoUrls = useMemo(
+    () =>
+      profile.photos
+        .map((p) => resolveMediaUrl(p.url))
+        .filter((url): url is string => Boolean(url)),
+    [profile.photos],
+  );
+
+  useEffect(() => {
+    setPhotoIndex(0);
+  }, [photoKey]);
+
+  const currentIndex = modIndex(photoIndex, photoCount);
+
   const details = buildProfileDetails(profile, t);
   const locationLine = formatProfileLocation(profile.city, t);
 
-  const photoAspect = compactPhoto ? 'aspect-[3/4]' : 'aspect-[4/5]';
+  const photoAspect = compactPhoto ? 'aspect-[5/6]' : 'aspect-[4/5]';
 
   return (
     <View
@@ -46,17 +68,22 @@ export function ProfileHeroCard({
         elevation: 4,
       }}
     >
-      <View className={`px-3 pt-5 ${compactPhoto ? 'pb-2' : 'pb-3'}`}>
-        <View className={`relative w-full ${photoAspect}`} style={{ overflow: 'visible' }}>
+      <View className={`px-3 ${compactPhoto ? 'pt-4 pb-2 items-center' : 'pt-5 pb-3'}`}>
+        <View
+          className={`relative ${photoAspect} ${compactPhoto ? 'w-[88%] self-center' : 'w-full'}`}
+          style={{ overflow: 'visible' }}
+        >
           <StackedPhotoDeck
-            coverUri={cover}
-            backUris={[backPhotoOne, backPhotoTwo]}
+            photoUrls={photoUrls}
+            activeIndex={currentIndex}
+            onIndexChange={setPhotoIndex}
             placeholder={<Logo size="lg" />}
           />
 
           <View
             className="absolute top-3 left-3 flex-row items-center bg-black/55 rounded-full px-3 py-1.5"
             style={{ zIndex: 10 }}
+            pointerEvents="none"
           >
             <View className="w-2 h-2 rounded-full bg-green-400 mr-2" />
             <Text className="text-white text-xs font-semibold">{t('profile.online')}</Text>
@@ -66,10 +93,11 @@ export function ProfileHeroCard({
             <View
               className="absolute bottom-3 right-3 flex-row items-center bg-black/55 rounded-full px-2.5 py-1.5"
               style={{ zIndex: 10 }}
+              pointerEvents="none"
             >
               <Ionicons name="camera-outline" size={12} color="#FFFFFF" />
               <Text className="text-white text-xs font-semibold ml-1">
-                1 / {photoCount}
+                {currentIndex + 1} / {photoCount}
               </Text>
             </View>
           ) : null}
