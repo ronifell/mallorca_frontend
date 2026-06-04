@@ -1,14 +1,28 @@
 import React from 'react';
-import { ActivityIndicator, Text, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { AuthBackground, onboardingBackground } from '../components/auth/AuthBackground';
 import { Logo } from '../components/Logo';
 import { colors } from '../theme/colors';
 
+/** Brief launch screen while fonts, i18n, or auth bootstrap load. */
 export function SplashScreen() {
   return (
-    <View className="flex-1 bg-cream-200 items-center justify-center" style={{ flex: 1, backgroundColor: colors.cream[200] }}>
-      <Logo size="lg" />
-      <Text className="text-ink-700 text-2xl mt-6">Citas Mallorca</Text>
-      <ActivityIndicator color={colors.brand[500]} className="mt-8" />
-    </View>
+    <AuthBackground source={onboardingBackground}>
+      <View style={styles.content}>
+        <Logo size={100} />
+        <ActivityIndicator color={colors.coral[500]} style={styles.spinner} />
+      </View>
+    </AuthBackground>
   );
 }
+
+const styles = StyleSheet.create({
+  content: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  spinner: {
+    marginTop: 32,
+  },
+});

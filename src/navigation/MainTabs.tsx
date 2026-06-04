@@ -33,7 +33,7 @@ export function MainTabs() {
         headerStyle: { backgroundColor: colors.cream[200] },
         headerTitleStyle: { fontWeight: '700', color: colors.ink[700] },
         headerShadowVisible: false,
-        sceneContainerStyle: { backgroundColor: colors.cream[200] },
+        sceneContainerStyle: { backgroundColor: 'transparent' },
         safeAreaInsets: { bottom: 0 },
         tabBarActiveTintColor: colors.coral[500],
         tabBarInactiveTintColor: colors.ink[400],

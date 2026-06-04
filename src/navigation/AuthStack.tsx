@@ -17,7 +17,7 @@ export function AuthStack() {
         headerShadowVisible: false,
         headerTintColor: colors.ink[700],
         headerTitle: '',
-        contentStyle: { backgroundColor: colors.cream[200] },
+        contentStyle: { backgroundColor: 'transparent' },
       }}
     >
       <Stack.Screen

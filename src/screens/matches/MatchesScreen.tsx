@@ -56,7 +56,7 @@ export function MatchesScreen() {
   };
 
   return (
-    <Screen padded={false}>
+    <Screen padded={false} background="onboarding">
       <SocialBrandHeader
         onLeftPress={() => Alert.alert(t('matches.filters'), t('matches.filterComingSoon'))}
         onRightPress={() => nav.navigate('Chat')}
@@ -66,6 +66,7 @@ export function MatchesScreen() {
       <FlatList
         data={allMatches}
         keyExtractor={(m) => m.matchId}
+        style={{ backgroundColor: 'transparent' }}
         contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 32 }}
         refreshControl={<RefreshControl refreshing={isFetching && !isLoading} onRefresh={refetch} />}
         ListHeaderComponent={
