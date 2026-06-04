@@ -2,7 +2,7 @@ import { useNavigation } from '@react-navigation/native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert } from 'react-native';
+import { Alert, View } from 'react-native';
 import { extractErrorMessage } from '../../api/client';
 import { subscriptionsApi } from '../../api/endpoints';
 import { PremiumActiveCard } from '../../components/premium/PremiumActiveCard';
@@ -52,25 +52,27 @@ export function PremiumScreen() {
 
   return (
     <PremiumShell>
-      <PremiumHero />
-      <PremiumBenefitsCard />
+      <View className="flex-1 justify-between">
+        <View>
+          <PremiumHero />
+          <PremiumBenefitsCard />
+          {isPremium ? <PremiumActiveCard expiryDate={status?.expiryDate} /> : null}
+          {(plans ?? []).map((plan) => (
+            <PremiumPlanCard
+              key={plan.id}
+              plan={plan}
+              selected={selected === plan.id}
+              onSelect={() => setSelected(plan.id)}
+            />
+          ))}
+        </View>
 
-      {isPremium ? <PremiumActiveCard expiryDate={status?.expiryDate} /> : null}
-
-      {(plans ?? []).map((plan) => (
-        <PremiumPlanCard
-          key={plan.id}
-          plan={plan}
-          selected={selected === plan.id}
-          onSelect={() => setSelected(plan.id)}
+        <PremiumSubscribeSection
+          onSubscribe={subscribe}
+          loading={loading}
+          disabled={isPremium}
         />
-      ))}
-
-      <PremiumSubscribeSection
-        onSubscribe={subscribe}
-        loading={loading}
-        disabled={isPremium}
-      />
+      </View>
     </PremiumShell>
   );
 }

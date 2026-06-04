@@ -18,12 +18,12 @@ export function PremiumSubscribeSection({ onSubscribe, loading, disabled }: Prop
   };
 
   return (
-    <View className="mt-1">
+    <View className="mt-2">
       <Pressable
         onPress={loading || disabled ? undefined : onSubscribe}
         accessibilityRole="button"
         accessibilityLabel={t('premium.continue')}
-        className={`flex-row items-center justify-center bg-coral-500 active:bg-coral-600 rounded-full py-4 px-6 w-full ${
+        className={`flex-row items-center justify-center bg-coral-500 active:bg-coral-600 rounded-full py-3.5 px-6 w-full ${
           disabled ? 'opacity-50' : ''
         } ${loading ? 'opacity-70' : ''}`}
         style={buttonShadow}
@@ -38,18 +38,18 @@ export function PremiumSubscribeSection({ onSubscribe, loading, disabled }: Prop
               name="arrow-forward"
               size={20}
               color={colors.white}
-              style={{ position: 'absolute', right: 22 }}
+              style={{ position: 'absolute', right: 20 }}
             />
           </>
         )}
       </Pressable>
 
-      <View className="flex-row items-center justify-center mt-4">
-        <Ionicons name="lock-closed-outline" size={14} color={colors.ink[400]} />
+      <View className="flex-row items-center justify-center mt-3">
+        <Ionicons name="lock-closed-outline" size={13} color={colors.ink[400]} />
         <Text className="text-ink-400 text-xs ml-1.5">{t('premium.securePayment')}</Text>
       </View>
 
-      <Pressable onPress={onRestore} className="flex-row items-center justify-center mt-3 py-2">
+      <Pressable onPress={onRestore} className="flex-row items-center justify-center mt-2 py-1">
         <Text className="text-coral-500 font-semibold text-sm">{t('premium.restore')}</Text>
         <Ionicons name="chevron-forward" size={16} color={colors.coral[500]} />
       </Pressable>
@@ -59,8 +59,8 @@ export function PremiumSubscribeSection({ onSubscribe, loading, disabled }: Prop
 
 const buttonShadow = {
   shadowColor: colors.coral[600],
-  shadowOffset: { width: 0, height: 4 },
-  shadowOpacity: 0.25,
-  shadowRadius: 8,
-  elevation: 4,
+  shadowOffset: { width: 0, height: 3 },
+  shadowOpacity: 0.22,
+  shadowRadius: 6,
+  elevation: 3,
 };

@@ -7,16 +7,16 @@ export function PremiumHero() {
   const { t } = useTranslation();
 
   return (
-    <View className="mb-5">
-      <Logo size={56} />
-      <View className="mt-3">
-        <Text className="text-ink-700 font-bold text-xl">
+    <View className="mb-3">
+      <Logo size={50} />
+      <View className="mt-2">
+        <Text className="text-ink-700 font-bold text-lg">
           {t('auth.appNameCitas')} {t('auth.appNameMallorca')}
         </Text>
-        <Text className="text-coral-500 font-bold text-[32px] leading-9 mt-0.5">
+        <Text className="text-coral-500 font-bold text-[28px] leading-8 mt-0.5">
           {t('premium.premiumLabel')}
         </Text>
-        <Text className="text-ink-400 text-sm mt-1.5 leading-5">{t('premium.subtitle')}</Text>
+        <Text className="text-ink-400 text-sm mt-1 leading-5">{t('premium.subtitle')}</Text>
       </View>
     </View>
   );

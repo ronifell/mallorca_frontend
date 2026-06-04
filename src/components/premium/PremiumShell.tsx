@@ -5,7 +5,6 @@ import { useTranslation } from 'react-i18next';
 import {
   ImageBackground,
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
   View,
@@ -44,8 +43,8 @@ export function PremiumShell({ children }: Props) {
 
       <SafeAreaView style={styles.safeArea} edges={['bottom']}>
         <View
-          className="flex-row items-center justify-between px-5 pb-2"
-          style={{ paddingTop: topPadding }}
+          className="flex-row items-center justify-between px-5"
+          style={{ paddingTop: topPadding, paddingBottom: 6 }}
         >
           {canGoBack ? (
             <Pressable
@@ -69,14 +68,7 @@ export function PremiumShell({ children }: Props) {
           <View className="w-10" />
         </View>
 
-        <ScrollView
-          className="flex-1"
-          keyboardShouldPersistTaps="handled"
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-        >
-          {children}
-        </ScrollView>
+        <View style={styles.content}>{children}</View>
       </SafeAreaView>
     </View>
   );
@@ -102,8 +94,9 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
   },
-  scrollContent: {
+  content: {
+    flex: 1,
     paddingHorizontal: 20,
-    paddingBottom: 28,
+    paddingBottom: 12,
   },
 });

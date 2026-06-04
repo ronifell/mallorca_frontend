@@ -13,6 +13,8 @@ interface Props {
   onActionPress?: () => void;
   actionIcon?: keyof typeof Ionicons.glyphMap;
   showVerified?: boolean;
+  /** Slightly shorter photo area (own profile tab). */
+  compactPhoto?: boolean;
 }
 
 export function ProfileHeroCard({
@@ -20,6 +22,7 @@ export function ProfileHeroCard({
   onActionPress,
   actionIcon = 'heart',
   showVerified = true,
+  compactPhoto = false,
 }: Props) {
   const { t } = useTranslation();
   const cover = resolveMediaUrl(profile.photos[0]?.url);
@@ -29,7 +32,7 @@ export function ProfileHeroCard({
 
   return (
     <View
-      className="mx-5 rounded-3xl overflow-hidden bg-white mb-6"
+      className={`mx-5 rounded-3xl overflow-hidden bg-white ${compactPhoto ? 'mb-4' : 'mb-6'}`}
       style={{
         shadowColor: '#3D2618',
         shadowOffset: { width: 0, height: 4 },
@@ -38,7 +41,9 @@ export function ProfileHeroCard({
         elevation: 4,
       }}
     >
-      <View className="relative aspect-[4/5] bg-cream-200">
+      <View
+        className={`relative bg-cream-200 ${compactPhoto ? 'aspect-[3/4]' : 'aspect-[4/5]'}`}
+      >
         {cover ? (
           <Image source={{ uri: cover }} className="w-full h-full" resizeMode="cover" />
         ) : (
@@ -62,7 +67,7 @@ export function ProfileHeroCard({
         ) : null}
       </View>
 
-      <View className="px-4 pt-4 pb-4">
+      <View className={`px-4 ${compactPhoto ? 'pt-3 pb-3' : 'pt-4 pb-4'}`}>
         <View className="flex-row items-start justify-between">
           <View className="flex-1 pr-3">
             <View className="flex-row items-center flex-wrap">
