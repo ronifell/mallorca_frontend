@@ -68,6 +68,7 @@ export const usersApi = {
 export const discoveryApi = {
   feed: (limit = 20) =>
     api.get<{ users: FeedCandidate[] }>(`/discovery/feed?limit=${limit}`).then((r) => r.data.users),
+  resetFeed: () => api.post<void>('/discovery/reset').then((r) => r.data),
   like: (id: string) =>
     api.post<{ matched: boolean; matchId?: string }>(`/discovery/like/${id}`).then((r) => r.data),
   pass: (id: string) => api.post<void>(`/discovery/pass/${id}`).then((r) => r.data),

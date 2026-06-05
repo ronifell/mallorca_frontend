@@ -120,6 +120,7 @@
   },
   "discovery": {
     "empty": "No compatible profiles right now. Check back later.",
+    "retryFailed": "Could not reload profiles. Please try again.",
     "like": "Like",
     "pass": "Pass",
     "matched": "It's a match!",

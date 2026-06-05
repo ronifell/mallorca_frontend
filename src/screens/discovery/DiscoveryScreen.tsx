@@ -31,6 +31,7 @@ export function DiscoveryScreen() {
   });
 
   const [deck, setDeck] = useState<FeedCandidate[]>([]);
+  const [isRetrying, setIsRetrying] = useState(false);
   const [matchPopup, setMatchPopup] = useState<{ id: string; name: string | null; matchId: string } | null>(
     null,
   );
@@ -101,6 +102,20 @@ export function DiscoveryScreen() {
     Alert.alert(t('discovery.superLike'), t('discovery.superLikeComingSoon'));
   };
 
+  const handleRetry = async () => {
+    setIsRetrying(true);
+    try {
+      await discoveryApi.resetFeed();
+      setDeck([]);
+      const { data: users } = await refetch();
+      if (users) setDeck(users);
+    } catch {
+      Alert.alert(t('common.error'), t('discovery.retryFailed'));
+    } finally {
+      setIsRetrying(false);
+    }
+  };
+
   return (
     <Screen padded={false} background="main">
       <DiscoveryHeader />
@@ -147,7 +162,12 @@ export function DiscoveryScreen() {
           <View className="flex-1 items-center justify-center">
             <Text className="text-ink-700 text-center text-lg">{t('discovery.empty')}</Text>
             <View className="h-4" />
-            <Button label={t('common.retry')} variant="secondary" onPress={() => refetch()} />
+            <Button
+              label={t('common.retry')}
+              variant="secondary"
+              onPress={handleRetry}
+              disabled={isRetrying}
+            />
           </View>
         )}
       </View>

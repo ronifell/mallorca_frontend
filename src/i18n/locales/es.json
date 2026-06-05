@@ -120,6 +120,7 @@
   },
   "discovery": {
     "empty": "No quedan perfiles compatibles ahora mismo. Vuelve más tarde.",
+    "retryFailed": "No se pudieron cargar los perfiles. Inténtalo de nuevo.",
     "like": "Me gusta",
     "pass": "Pasar",
     "matched": "¡Es un match!",
