@@ -82,7 +82,7 @@ export function EditProfileScreen() {
 
     setUploading(true);
     try {
-      const uploaded = await usersApi.uploadPhoto(res.assets[0].uri);
+      const uploaded = await usersApi.uploadPhoto(res.assets[0]);
       setPhotos((prev) => [...prev, uploaded]);
     } catch (e) {
       Alert.alert(t('common.error'), extractErrorMessage(e));

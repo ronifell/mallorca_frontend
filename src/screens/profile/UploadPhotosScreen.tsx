@@ -20,15 +20,28 @@ export function UploadPhotosScreen({ navigation }: Props) {
   const { t } = useTranslation();
   const setProfileComplete = useAuthStore((s) => s.setProfileComplete);
   const [photos, setPhotos] = useState<Photo[]>([]);
+  const [profileReady, setProfileReady] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    usersApi.me().then((me) => setPhotos(me.photos)).catch(() => undefined);
+    let cancelled = false;
+    usersApi
+      .me()
+      .then((me) => {
+        if (!cancelled) setPhotos(me.photos);
+      })
+      .catch(() => undefined)
+      .finally(() => {
+        if (!cancelled) setProfileReady(true);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const pick = async () => {
-    if (photos.length >= MAX_PHOTOS) return;
+    if (!profileReady || uploading || photos.length >= MAX_PHOTOS) return;
     const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!perm.granted) {
       Alert.alert(t('profile.photoPermissionTitle'), t('profile.photoPermissionMessage'));
@@ -45,7 +58,7 @@ export function UploadPhotosScreen({ navigation }: Props) {
     setUploading(true);
     setError(null);
     try {
-      const uploaded = await usersApi.uploadPhoto(res.assets[0].uri);
+      const uploaded = await usersApi.uploadPhoto(res.assets[0]);
       setPhotos((prev) => [...prev, uploaded]);
     } catch (e) {
       setError(extractErrorMessage(e));
@@ -80,7 +93,7 @@ export function UploadPhotosScreen({ navigation }: Props) {
       <AddPhotoButton
         label={uploading ? t('common.loading') : t('profile.addPhoto')}
         onPress={pick}
-        disabled={uploading || photos.length >= MAX_PHOTOS}
+        disabled={!profileReady || uploading || photos.length >= MAX_PHOTOS}
       />
 
       {error ? (

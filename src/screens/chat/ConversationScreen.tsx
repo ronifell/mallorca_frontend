@@ -194,7 +194,7 @@ export function ConversationScreen({ route, navigation }: Props) {
     });
     if (res.canceled || !res.assets[0]) return;
     try {
-      const { url } = await chatApi.uploadImage(conversationId, res.assets[0].uri);
+      const { url } = await chatApi.uploadImage(conversationId, res.assets[0]);
       const msg = await chatApi.send(conversationId, { type: 'image', imageUrl: url });
       setMessages((prev) => [...prev, msg]);
     } catch (e) {

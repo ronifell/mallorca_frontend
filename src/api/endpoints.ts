@@ -1,4 +1,6 @@
-import { api } from './client';
+import { ImagePickerAsset } from 'expo-image-picker';
+import { api, postMultipartFile } from './client';
+import { prepareUploadFile } from '../utils/imageUpload';
 import {
   AuthResult,
   FeedCandidate,
@@ -36,20 +38,13 @@ export const usersApi = {
     languages: string[];
     appLanguage: 'en' | 'es';
   }>) => api.patch<MyProfile>('/users/me', patch).then((r) => r.data),
-  uploadPhoto: async (uri: string) => {
-    const formData = new FormData();
-    const filename = uri.split('/').pop() ?? 'photo.jpg';
-    const ext = filename.split('.').pop()?.toLowerCase();
-    const mime =
-      ext === 'png' ? 'image/png' : ext === 'webp' ? 'image/webp' : 'image/jpeg';
-    // React Native FormData accepts the file object shape below.
-    formData.append('photo', { uri, name: filename, type: mime } as unknown as Blob);
-    const r = await api.post<{ id: string; url: string; orderIndex: number }>(
+  uploadPhoto: async (asset: ImagePickerAsset) => {
+    const file = await prepareUploadFile(asset);
+    return postMultipartFile<{ id: string; url: string; orderIndex: number }>(
       '/users/me/photos',
-      formData,
-      { headers: { 'Content-Type': 'multipart/form-data' } },
+      'photo',
+      file,
     );
-    return r.data;
   },
   deletePhoto: (id: string) => api.delete<void>(`/users/me/photos/${id}`).then((r) => r.data),
   reorderPhotos: (order: string[]) =>
@@ -101,19 +96,13 @@ export const chatApi = {
     api
       .post<Message>(`/chat/conversations/${conversationId}/messages`, input)
       .then((r) => r.data),
-  uploadImage: async (conversationId: string, uri: string) => {
-    const formData = new FormData();
-    const filename = uri.split('/').pop() ?? 'image.jpg';
-    const ext = filename.split('.').pop()?.toLowerCase();
-    const mime =
-      ext === 'png' ? 'image/png' : ext === 'webp' ? 'image/webp' : 'image/jpeg';
-    formData.append('image', { uri, name: filename, type: mime } as unknown as Blob);
-    const r = await api.post<{ url: string }>(
+  uploadImage: async (conversationId: string, asset: ImagePickerAsset) => {
+    const file = await prepareUploadFile(asset);
+    return postMultipartFile<{ url: string }>(
       `/chat/conversations/${conversationId}/images`,
-      formData,
-      { headers: { 'Content-Type': 'multipart/form-data' } },
+      'image',
+      file,
     );
-    return r.data;
   },
   markRead: (conversationId: string) =>
     api.post<void>(`/chat/conversations/${conversationId}/read`).then((r) => r.data),
