@@ -1,0 +1,21 @@
+# Dependencies and caches (EAS installs fresh on the build server)
+node_modules/
+.expo/
+.expo-shared/
+
+# Local secrets and logs
+.env
+.env.*
+*.log
+
+# IDE / OS noise
+.idea/
+.vscode/
+.DS_Store
+
+# Unused duplicate assets (not referenced in src/)
+assets/login1.png
+assets/onboarding1.png
+
+# Stray backup files
+package.json.*

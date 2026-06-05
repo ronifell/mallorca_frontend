@@ -7,18 +7,30 @@ interface Extra {
 
 const extra = (Constants.expoConfig?.extra ?? {}) as Extra;
 
-const defaultBaseUrl = 'http://localhost:4000';
+const defaultBaseUrl = 'http://54.94.85.115:4000';
 
-/** Resolved from `.env` (EXPO_PUBLIC_*), then app.config `extra`, then defaults. */
+function resolveBaseUrl(
+  fromExtra: string | undefined,
+  fromEnv: string | undefined,
+  fallback: string,
+): string {
+  const url = (fromExtra?.trim() || fromEnv?.trim() || fallback).replace(/\/$/, '');
+  return url;
+}
+
+/**
+ * Standalone APK/IPA builds bake URLs via app.config.js → expo.extra (most reliable).
+ * Expo Go / dev uses EXPO_PUBLIC_* from .env at bundle time.
+ */
 export const env = {
-  apiBaseUrl:
-    process.env.EXPO_PUBLIC_API_BASE_URL ??
-    extra.apiBaseUrl ??
+  apiBaseUrl: resolveBaseUrl(
+    extra.apiBaseUrl,
+    process.env.EXPO_PUBLIC_API_BASE_URL,
     defaultBaseUrl,
-  socketUrl:
-    process.env.EXPO_PUBLIC_SOCKET_URL ??
-    process.env.EXPO_PUBLIC_API_BASE_URL ??
-    extra.socketUrl ??
-    extra.apiBaseUrl ??
-    defaultBaseUrl,
+  ),
+  socketUrl: resolveBaseUrl(
+    extra.socketUrl,
+    process.env.EXPO_PUBLIC_SOCKET_URL ?? process.env.EXPO_PUBLIC_API_BASE_URL,
+    resolveBaseUrl(extra.apiBaseUrl, process.env.EXPO_PUBLIC_API_BASE_URL, defaultBaseUrl),
+  ),
 };

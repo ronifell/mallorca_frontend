@@ -11,6 +11,17 @@ const socketUrl =
 module.exports = {
   expo: {
     ...appJson.expo,
+    plugins: [
+      [
+        'expo-build-properties',
+        {
+          android: {
+            usesCleartextTraffic: true,
+          },
+        },
+      ],
+      ...(appJson.expo.plugins ?? []),
+    ],
     androidStatusBar: {
       hidden: true,
       translucent: true,
@@ -32,6 +43,9 @@ module.exports = {
       ...appJson.expo.extra,
       apiBaseUrl,
       socketUrl,
+      eas: {
+        projectId: '0540ab6e-9566-4a00-bf9a-b36c3f56c68a',
+      },
     },
   },
 };

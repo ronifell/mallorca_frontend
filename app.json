@@ -23,7 +23,6 @@
     },
     "android": {
       "package": "es.citasmallorca.app",
-      "versionCode": 1,
       "usesCleartextTraffic": true,
       "navigationBar": {
         "backgroundColor": "#FFFFFF",
@@ -56,8 +55,8 @@
       "expo-secure-store"
     ],
     "extra": {
-      "apiBaseUrl": "http://localhost:4000",
-      "socketUrl": "http://localhost:4000"
+      "apiBaseUrl": "http://54.94.85.115:4000",
+      "socketUrl": "http://54.94.85.115:4000"
     }
   }
 }

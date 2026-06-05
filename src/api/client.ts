@@ -158,7 +158,14 @@ export async function postMultipartFile<T>(
 export function extractErrorMessage(err: unknown): string {
   if (axios.isAxiosError(err)) {
     const data = err.response?.data as { error?: { message?: string } } | undefined;
-    return data?.error?.message ?? err.message ?? 'Request failed';
+    if (data?.error?.message) return data.error.message;
+    if (!err.response) {
+      const msg = err.message?.toLowerCase() ?? '';
+      if (msg.includes('network error') || msg.includes('network request failed')) {
+        return `Cannot reach server at ${env.apiBaseUrl}. Check your internet connection.`;
+      }
+    }
+    return err.message ?? 'Request failed';
   }
   if (err instanceof ApiRequestError) return err.message;
   if (err instanceof Error) return err.message;
