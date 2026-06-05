@@ -7,11 +7,12 @@ export async function enableFullscreenUi(): Promise<void> {
 
   if (Platform.OS === 'android') {
     RNStatusBar.setTranslucent(true);
-    RNStatusBar.setBackgroundColor('transparent', true);
+    RNStatusBar.setBackgroundColor('transparent', false);
 
     try {
       const NavigationBar = await import('expo-navigation-bar');
       await NavigationBar.setPositionAsync('absolute');
+      await NavigationBar.setVisibilityAsync('hidden');
       await NavigationBar.setBackgroundColorAsync('#00000000');
     } catch {
       // Optional on unsupported devices.

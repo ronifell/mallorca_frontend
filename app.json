@@ -8,8 +8,8 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "splash": {
-      "image": "./assets/icon.png",
-      "resizeMode": "contain",
+      "image": "./assets/splash.png",
+      "resizeMode": "cover",
       "backgroundColor": "#F2EBE0"
     },
     "assetBundlePatterns": ["**/*"],
@@ -36,6 +36,18 @@
       "permissions": ["NOTIFICATIONS", "INTERNET"]
     },
     "plugins": [
+      ["expo-splash-screen", {
+        "image": "./assets/splash.png",
+        "resizeMode": "cover",
+        "backgroundColor": "#F2EBE0",
+        "android": {
+          "statusBar": {
+            "hidden": true,
+            "translucent": true,
+            "backgroundColor": "#F2EBE0"
+          }
+        }
+      }],
       ["expo-image-picker", {
         "photosPermission": "Allow Citas Mallorca to access your photos to set up your profile."
       }],

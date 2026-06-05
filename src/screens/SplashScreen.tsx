@@ -1,28 +1,46 @@
-import React from 'react';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
-import { AuthBackground, onboardingBackground } from '../components/auth/AuthBackground';
-import { Logo } from '../components/Logo';
+import { StatusBar as ExpoStatusBar } from 'expo-status-bar';
+import React, { useLayoutEffect } from 'react';
+import { Dimensions, Image, Platform, StatusBar, StyleSheet, View } from 'react-native';
+import { enableFullscreenUi } from '../services/systemUi';
 import { colors } from '../theme/colors';
 
-/** Brief launch screen while fonts, i18n, or auth bootstrap load. */
+const splashImage = require('../../assets/splash.png');
+
+const { width: screenWidth, height: screenHeight } = Dimensions.get('screen');
+const statusBarInset = Platform.OS === 'android' ? (StatusBar.currentHeight ?? 0) : 0;
+
+/** Launch screen shown until fonts, i18n, and auth bootstrap complete. */
 export function SplashScreen() {
+  useLayoutEffect(() => {
+    StatusBar.setHidden(true, 'none');
+    if (Platform.OS === 'android') {
+      StatusBar.setTranslucent(true);
+      StatusBar.setBackgroundColor(colors.cream[200], false);
+    }
+    enableFullscreenUi().catch(() => undefined);
+  }, []);
+
   return (
-    <AuthBackground source={onboardingBackground}>
-      <View style={styles.content}>
-        <Logo size={100} />
-        <ActivityIndicator color={colors.coral[500]} style={styles.spinner} />
-      </View>
-    </AuthBackground>
+    <View style={styles.root}>
+      <ExpoStatusBar hidden />
+      <StatusBar hidden translucent backgroundColor={colors.cream[200]} />
+      <Image source={splashImage} resizeMode="cover" style={styles.image} />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  content: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+  root: {
+    position: 'absolute',
+    top: -statusBarInset,
+    left: 0,
+    width: screenWidth,
+    height: screenHeight + statusBarInset,
+    backgroundColor: colors.cream[200],
   },
-  spinner: {
-    marginTop: 32,
+  image: {
+    ...StyleSheet.absoluteFillObject,
+    width: screenWidth,
+    height: screenHeight + statusBarInset,
   },
 });

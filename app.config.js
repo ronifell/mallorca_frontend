@@ -14,6 +14,10 @@ module.exports = {
     androidStatusBar: {
       hidden: true,
       translucent: true,
+      backgroundColor: '#F2EBE0',
+    },
+    androidNavigationBar: {
+      visible: 'sticky-immersive',
       backgroundColor: '#00000000',
     },
     ios: {

@@ -1,12 +1,13 @@
 import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import React, { useEffect } from 'react';
+import React from 'react';
+import { StyleSheet, View } from 'react-native';
+import { LanguageSwitcher } from '../components/LanguageSwitcher';
 import { useAuthStore } from '../store/auth';
 import { colors } from '../theme/colors';
 import { AuthStack } from './AuthStack';
 import { MainTabs } from './MainTabs';
 import { ProfileSetupStack } from './ProfileSetupStack';
-import { SplashScreen } from '../screens/SplashScreen';
 import { ConversationScreen } from '../screens/chat/ConversationScreen';
 import { MatchProfileScreen } from '../screens/matches/MatchProfileScreen';
 import { PremiumScreen } from '../screens/premium/PremiumScreen';
@@ -17,8 +18,6 @@ import { NotificationsScreen } from '../screens/settings/NotificationsScreen';
 import { PrivacyScreen } from '../screens/settings/PrivacyScreen';
 import { BlockedUsersScreen } from '../screens/settings/BlockedUsersScreen';
 import { RootStackParamList } from './types';
-import { setOnUnauthorized } from '../api/client';
-
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 const navTheme = {
@@ -35,21 +34,11 @@ const navTheme = {
 };
 
 export function RootNavigator() {
-  const { user, initialized, bootstrap, logout } = useAuthStore();
-
-  useEffect(() => {
-    bootstrap();
-    setOnUnauthorized(() => {
-      logout();
-    });
-  }, []);
-
-  if (!initialized) {
-    return <SplashScreen />;
-  }
+  const { user } = useAuthStore();
 
   return (
     <NavigationContainer theme={navTheme}>
+      <View style={styles.root}>
       <Stack.Navigator
         screenOptions={{
           headerStyle: { backgroundColor: colors.cream[200] },
@@ -116,6 +105,14 @@ export function RootNavigator() {
           </>
         )}
       </Stack.Navigator>
+      <LanguageSwitcher />
+      </View>
     </NavigationContainer>
   );
 }
+
+const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+  },
+});
