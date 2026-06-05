@@ -3,7 +3,9 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useQuery } from '@tanstack/react-query';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { Ionicons } from '@expo/vector-icons';
 import { Text, View, Pressable } from 'react-native';
+import { colors } from '../../theme/colors';
 import { usersApi } from '../../api/endpoints';
 import { Button } from '../../components/Button';
 import { ProfileAboutSection } from '../../components/profile/ProfileAboutSection';
@@ -37,6 +39,7 @@ export function ProfileScreen() {
 
   const interests = extractInterestsFromBio(me.bio, i18n.language);
   const goEdit = () => nav.navigate('EditProfile');
+  const goSettings = () => nav.navigate('Settings');
   const goPremium = () => nav.navigate('Premium');
 
   return (
@@ -60,6 +63,14 @@ export function ProfileScreen() {
           className="w-full border-2 border-coral-500 rounded-2xl py-3.5 items-center bg-white active:bg-coral-50"
         >
           <Text className="text-coral-500 font-semibold text-base">{t('profile.editProfile')}</Text>
+        </Pressable>
+
+        <Pressable
+          onPress={goSettings}
+          className="w-full flex-row items-center justify-center border border-cream-300 rounded-2xl py-3.5 mt-3 bg-white active:bg-cream-50"
+        >
+          <Ionicons name="settings-outline" size={20} color={colors.ink[700]} />
+          <Text className="text-ink-700 font-semibold text-base ml-2">{t('settings.title')}</Text>
         </Pressable>
 
         {me.isPremium ? (

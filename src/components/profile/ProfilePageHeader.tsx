@@ -4,7 +4,7 @@ import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, Pressable, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 import { MainTabParamList, RootStackParamList } from '../../navigation/types';
 import { colors } from '../../theme/colors';
 
@@ -45,14 +45,6 @@ export function ProfilePageHeader() {
   const { t } = useTranslation();
   const nav = useNavigation<Nav>();
 
-  const openMenu = () => {
-    Alert.alert(t('settings.title'), undefined, [
-      { text: t('profile.editProfile'), onPress: () => nav.navigate('EditProfile') },
-      { text: t('settings.title'), onPress: () => nav.navigate('Settings') },
-      { text: t('common.cancel'), style: 'cancel' },
-    ]);
-  };
-
   return (
     <View className="flex-row items-center justify-between px-5 pt-2 pb-3">
       <CircleIconButton
@@ -67,9 +59,9 @@ export function ProfilePageHeader() {
       </View>
 
       <CircleIconButton
-        icon="ellipsis-horizontal"
-        accessibilityLabel={t('profile.openMenu')}
-        onPress={openMenu}
+        icon="settings-outline"
+        accessibilityLabel={t('settings.title')}
+        onPress={() => nav.navigate('Settings')}
       />
     </View>
   );

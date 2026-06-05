@@ -83,7 +83,12 @@ export function RegisterScreen({ navigation }: Props) {
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           style={styles.keyboardView}
         >
-          <View style={styles.body}>
+          <ScrollView
+            style={styles.body}
+            contentContainerStyle={styles.scrollContent}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
             <View style={styles.topSpacer} />
 
             <View style={styles.welcomeBlock}>
@@ -92,12 +97,7 @@ export function RegisterScreen({ navigation }: Props) {
             </View>
 
             <View style={styles.formCard}>
-              <ScrollView
-                style={styles.formScroll}
-                contentContainerStyle={styles.formContent}
-                keyboardShouldPersistTaps="handled"
-                showsVerticalScrollIndicator={false}
-              >
+              <View style={styles.formContent}>
                 <Input
                   label={t('auth.email')}
                   autoCapitalize="none"
@@ -175,9 +175,9 @@ export function RegisterScreen({ navigation }: Props) {
                     <Text className="text-coral-500 font-semibold">{t('auth.signIn')}</Text>
                   </Pressable>
                 </View>
-              </ScrollView>
+              </View>
             </View>
-          </View>
+          </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
     </View>

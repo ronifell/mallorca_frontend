@@ -30,22 +30,22 @@ export const authScreenStyles = StyleSheet.create({
   body: {
     flex: 1,
   },
+  scrollContent: {
+    flexGrow: 1,
+    paddingBottom: 24,
+  },
   topSpacer: {
-    flex: 0.14,
-    minHeight: 8,
+    minHeight: 16,
   },
   welcomeBlock: {
     paddingHorizontal: 24,
     paddingBottom: 10,
   },
   formCard: {
-    flex: 0.86,
     backgroundColor: colors.white,
     borderTopLeftRadius: 40,
     borderTopRightRadius: 40,
-  },
-  formScroll: {
-    flex: 1,
+    marginTop: 8,
   },
   formContent: {
     paddingHorizontal: 24,
