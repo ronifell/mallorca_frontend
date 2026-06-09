@@ -161,7 +161,13 @@ export function extractErrorMessage(err: unknown): string {
     if (data?.error?.message) return data.error.message;
     if (!err.response) {
       const msg = err.message?.toLowerCase() ?? '';
-      if (msg.includes('network error') || msg.includes('network request failed')) {
+      const code = err.code?.toLowerCase() ?? '';
+      if (
+        msg.includes('network error') ||
+        msg.includes('network request failed') ||
+        code === 'econnaborted' ||
+        msg.includes('timeout')
+      ) {
         return `Cannot reach server at ${env.apiBaseUrl}. Check your internet connection.`;
       }
     }
