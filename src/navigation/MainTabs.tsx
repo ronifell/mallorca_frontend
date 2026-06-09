@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { useChatSync } from '../hooks/useChatSync';
 import { DiscoveryScreen } from '../screens/discovery/DiscoveryScreen';
 import { MatchesScreen } from '../screens/matches/MatchesScreen';
 import { ChatListScreen } from '../screens/chat/ChatListScreen';
@@ -25,6 +26,7 @@ function tabIcon(name: keyof typeof Ionicons.glyphMap, focused: boolean) {
 
 export function MainTabs() {
   const { t } = useTranslation();
+  useChatSync();
 
   return (
     <Tab.Navigator

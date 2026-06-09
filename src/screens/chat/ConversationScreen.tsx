@@ -128,9 +128,27 @@ export function ConversationScreen({ route, navigation }: Props) {
 
       const onMessage = (m: Message & { conversationId?: string }) => {
         if (m.conversationId && m.conversationId !== conversationId) return;
-        setMessages((prev) =>
-          prev.some((x) => x.id === m.id) ? prev : [...prev, m],
-        );
+        setMessages((prev) => {
+          if (prev.some((x) => x.id === m.id)) return prev;
+          // If this is the echo of a message we just sent, replace the
+          // matching optimistic placeholder so we don't render duplicates.
+          if (m.senderId === myId) {
+            const idx = prev.findIndex(
+              (x) =>
+                x.id.startsWith('temp-') &&
+                x.senderId === m.senderId &&
+                x.type === m.type &&
+                (x.text ?? '') === (m.text ?? '') &&
+                (x.imageUrl ?? '') === (m.imageUrl ?? ''),
+            );
+            if (idx >= 0) {
+              const next = prev.slice();
+              next[idx] = m;
+              return next;
+            }
+          }
+          return [...prev, m];
+        });
         chatApi.markRead(conversationId).catch(() => undefined);
       };
       const onTyping = (p: { conversationId: string; userId: string; typing: boolean }) => {
@@ -168,24 +186,57 @@ export function ConversationScreen({ route, navigation }: Props) {
     setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 50);
   }, [messages.length]);
 
+  const makeTempId = () =>
+    `temp-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+
+  const reconcileOptimistic = (tempId: string, msg: Message) => {
+    setMessages((prev) => {
+      const withoutTemp = prev.filter((m) => m.id !== tempId);
+      if (withoutTemp.some((m) => m.id === msg.id)) return withoutTemp;
+      return [...withoutTemp, msg];
+    });
+  };
+
+  const removeOptimistic = (tempId: string) => {
+    setMessages((prev) => prev.filter((m) => m.id !== tempId));
+  };
+
   const send = async () => {
     const trimmed = text.trim();
-    if (!trimmed) return;
+    if (!trimmed || !myId) return;
+
+    const tempId = makeTempId();
+    const optimistic: Message = {
+      id: tempId,
+      senderId: myId,
+      type: 'text',
+      text: trimmed,
+      imageUrl: null,
+      deliveredAt: null,
+      readAt: null,
+      createdAt: new Date().toISOString(),
+      conversationId,
+    };
+    setMessages((prev) => [...prev, optimistic]);
+    setText('');
+
     try {
       const msg = await chatApi.send(conversationId, { type: 'text', text: trimmed });
-      setMessages((prev) => [...prev, msg]);
-      setText('');
+      reconcileOptimistic(tempId, msg);
     } catch (e) {
-      const msg = extractErrorMessage(e);
-      if (msg.toLowerCase().includes('premium')) {
+      removeOptimistic(tempId);
+      setText(trimmed);
+      const errMsg = extractErrorMessage(e);
+      if (errMsg.toLowerCase().includes('premium')) {
         setPremiumBlocked(true);
       } else {
-        Alert.alert(t('common.error'), msg);
+        Alert.alert(t('common.error'), errMsg);
       }
     }
   };
 
   const sendImage = async () => {
+    if (!myId) return;
     const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!perm.granted) return;
     const res = await ImagePicker.launchImageLibraryAsync({
@@ -193,11 +244,28 @@ export function ConversationScreen({ route, navigation }: Props) {
       quality: 0.85,
     });
     if (res.canceled || !res.assets[0]) return;
+
+    const tempId = makeTempId();
+    const localUri = res.assets[0].uri;
+    const optimistic: Message = {
+      id: tempId,
+      senderId: myId,
+      type: 'image',
+      text: null,
+      imageUrl: localUri,
+      deliveredAt: null,
+      readAt: null,
+      createdAt: new Date().toISOString(),
+      conversationId,
+    };
+    setMessages((prev) => [...prev, optimistic]);
+
     try {
       const { url } = await chatApi.uploadImage(conversationId, res.assets[0]);
       const msg = await chatApi.send(conversationId, { type: 'image', imageUrl: url });
-      setMessages((prev) => [...prev, msg]);
+      reconcileOptimistic(tempId, msg);
     } catch (e) {
+      removeOptimistic(tempId);
       const errMsg = extractErrorMessage(e);
       if (errMsg.toLowerCase().includes('premium')) setPremiumBlocked(true);
       else Alert.alert(t('common.error'), errMsg);

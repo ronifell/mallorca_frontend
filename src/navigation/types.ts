@@ -34,7 +34,7 @@ export type RootStackParamList = {
     otherUserPhoto?: string | null;
   };
   MatchProfile: { matchId: string };
-  CandidateProfile: { candidate: FeedCandidate };
+  CandidateProfile: { candidate: FeedCandidate; distanceKm?: number };
   Premium: undefined;
   EditProfile: undefined;
   Settings: undefined;

@@ -144,7 +144,10 @@
     "block": "Block",
     "blockConfirm": "You will no longer see each other. Continue?",
     "reportComingSoon": "Reporting will be available soon.",
-    "viewFullProfile": "View full profile"
+    "viewFullProfile": "View full profile",
+    "interestedInLabel": "Interested in",
+    "languagesLabel": "Languages",
+    "locationLabel": "Location"
   },
   "discovery": {
     "empty": "No compatible profiles right now. Check back later.",
@@ -165,6 +168,7 @@
     "superLike": "Super Like",
     "superLikeComingSoon": "Super likes will be available soon.",
     "nearby": "Nearby",
+    "kmAway": "{{count}} km away",
     "woman": "Woman",
     "man": "Man",
     "menAndWomen": "Everyone",

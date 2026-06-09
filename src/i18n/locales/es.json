@@ -144,7 +144,10 @@
     "block": "Bloquear",
     "blockConfirm": "Dejaréis de veros. ¿Continuar?",
     "reportComingSoon": "El reporte estará disponible pronto.",
-    "viewFullProfile": "Ver perfil completo"
+    "viewFullProfile": "Ver perfil completo",
+    "interestedInLabel": "Interesado en",
+    "languagesLabel": "Idiomas",
+    "locationLabel": "Ubicación"
   },
   "discovery": {
     "empty": "No quedan perfiles compatibles ahora mismo. Vuelve más tarde.",
@@ -165,6 +168,7 @@
     "superLike": "Super Like",
     "superLikeComingSoon": "Los super likes estarán disponibles pronto.",
     "nearby": "Cerca",
+    "kmAway": "{{count}} km de ti",
     "woman": "Mujer",
     "man": "Hombre",
     "menAndWomen": "Todos",
