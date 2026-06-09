@@ -58,6 +58,7 @@
     "verifyEmailResend": "Resend email",
     "verifyEmailResent": "If the address is registered, we've sent the link again.",
     "verifyEmailContinue": "I've already confirmed",
+    "verifyEmailNotYet": "Your email is not confirmed yet. Open the link we sent you, then tap this button again.",
     "verifyEmailFooter": "Don't see the email? Check your spam folder, or contact soporte@citasmallorca.es."
   },
   "onboarding": {

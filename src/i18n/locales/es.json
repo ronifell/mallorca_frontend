@@ -58,6 +58,7 @@
     "verifyEmailResend": "Reenviar correo",
     "verifyEmailResent": "Si la dirección está registrada, te hemos vuelto a enviar el enlace.",
     "verifyEmailContinue": "Ya he confirmado",
+    "verifyEmailNotYet": "Tu correo aún no está confirmado. Abre el enlace que te enviamos y pulsa este botón de nuevo.",
     "verifyEmailFooter": "¿No ves el correo? Revisa tu carpeta de spam o escríbenos a soporte@citasmallorca.es."
   },
   "onboarding": {

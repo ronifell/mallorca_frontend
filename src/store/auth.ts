@@ -9,6 +9,7 @@ interface AuthState {
   setSession: (input: { user: AuthUser; accessToken: string; refreshToken: string }) => Promise<void>;
   patchUser: (patch: Partial<AuthUser>) => void;
   setProfileComplete: (complete: boolean) => void;
+  refreshVerificationStatus: () => Promise<boolean>;
   logout: () => Promise<void>;
   bootstrap: () => Promise<void>;
 }
@@ -28,6 +29,23 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   setProfileComplete(complete) {
     set((s) => (s.user ? { user: { ...s.user, profileComplete: complete } } : s));
+  },
+
+  async refreshVerificationStatus() {
+    const me = await usersApi.me();
+    const verified = me.emailVerified === true;
+    set((s) =>
+      s.user
+        ? {
+            user: {
+              ...s.user,
+              emailVerified: verified,
+              isPremium: me.isPremium,
+            },
+          }
+        : s,
+    );
+    return verified;
   },
 
   async logout() {
@@ -63,7 +81,7 @@ export const useAuthStore = create<AuthState>((set) => ({
           role: 'user',
           isPremium: me.isPremium,
           profileComplete,
-          emailVerified: me.emailVerified ?? true,
+          emailVerified: me.emailVerified === true,
         },
         initialized: true,
       });

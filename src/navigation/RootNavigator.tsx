@@ -20,6 +20,7 @@ import { LegalScreen } from '../screens/settings/LegalScreen';
 import { ContactScreen } from '../screens/settings/ContactScreen';
 import { BlockedUsersScreen } from '../screens/settings/BlockedUsersScreen';
 import { CandidateProfileScreen } from '../screens/discovery/CandidateProfileScreen';
+import { VerifyEmailScreen } from '../screens/auth/VerifyEmailScreen';
 import { RootStackParamList } from './types';
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -57,6 +58,12 @@ export function RootNavigator() {
           <Stack.Screen
             name="Auth"
             component={AuthStack}
+            options={{ headerShown: false }}
+          />
+        ) : !user.emailVerified ? (
+          <Stack.Screen
+            name="VerifyEmail"
+            component={VerifyEmailScreen}
             options={{ headerShown: false }}
           />
         ) : !user.profileComplete ? (
