@@ -1,5 +1,22 @@
-export type Gender = 'male' | 'female';
+export type Gender =
+  | 'male'
+  | 'female'
+  | 'non_binary'
+  | 'gender_fluid'
+  | 'other'
+  | 'prefer_not_to_say';
+
+export const GENDER_VALUES: Gender[] = [
+  'male',
+  'female',
+  'non_binary',
+  'gender_fluid',
+  'other',
+  'prefer_not_to_say',
+];
+
 export type InterestedIn = 'men' | 'women' | 'both';
+export type InterestSelection = 'men' | 'women' | 'everyone';
 
 export interface Photo {
   id: string;
@@ -10,6 +27,7 @@ export interface Photo {
 export interface MyProfile {
   id: string;
   email: string;
+  emailVerified: boolean;
   firstName: string | null;
   birthDate: string | null;
   age: number | null;
@@ -20,6 +38,7 @@ export interface MyProfile {
   photos: Photo[];
   isPremium: boolean;
   interestedIn: InterestedIn | null;
+  interestSelections: InterestSelection[];
   minAge: number;
   maxAge: number;
   appLanguage: string;
@@ -36,6 +55,7 @@ export interface FeedCandidate {
   interestedIn: InterestedIn | null;
   photos: Photo[];
   languages: string[];
+  isPremium: boolean;
 }
 
 export interface Match {
@@ -49,6 +69,7 @@ export interface Match {
     age: number | null;
     city: string | null;
     coverPhoto: string | null;
+    isPremium: boolean;
   };
   lastMessage: {
     id: string;
@@ -81,7 +102,7 @@ export interface MatchUserProfile {
 export type ProfileDisplayData = Pick<
   MyProfile,
   'firstName' | 'age' | 'city' | 'gender' | 'bio' | 'languages' | 'photos' | 'interestedIn'
->;
+> & { isPremium?: boolean };
 
 export interface Message {
   id: string;
@@ -92,7 +113,6 @@ export interface Message {
   deliveredAt: string | null;
   readAt: string | null;
   createdAt: string;
-  // Set client-side when echoing a message we just sent.
   conversationId?: string;
   receiverId?: string;
 }
@@ -103,6 +123,8 @@ export interface SubscriptionPlan {
   description: string;
   price: string;
   period: 'month' | 'year';
+  autoRenewing?: boolean;
+  managedBy?: 'google_play' | 'app_store';
 }
 
 export interface AuthUser {
@@ -111,6 +133,7 @@ export interface AuthUser {
   role: 'user' | 'admin';
   isPremium: boolean;
   profileComplete: boolean;
+  emailVerified: boolean;
 }
 
 export interface AuthResult {

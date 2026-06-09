@@ -81,21 +81,8 @@ export function DiscoveryScreen() {
     });
   };
 
-  const showProfileInfo = (candidate: FeedCandidate) => {
-    const details = [
-      candidate.bio,
-      candidate.city ? `${t('profile.city')}: ${candidate.city}` : null,
-      candidate.languages.length
-        ? `${t('profile.languages')}: ${candidate.languages.join(', ')}`
-        : null,
-    ]
-      .filter(Boolean)
-      .join('\n\n');
-
-    Alert.alert(
-      candidate.firstName ?? t('profile.title'),
-      details || t('discovery.noExtraInfo'),
-    );
+  const openCandidateProfile = (candidate: FeedCandidate) => {
+    nav.navigate('CandidateProfile', { candidate });
   };
 
   const handleSuperLike = () => {
@@ -117,7 +104,7 @@ export function DiscoveryScreen() {
   };
 
   return (
-    <Screen padded={false} background="main">
+    <Screen padded={false}>
       <DiscoveryHeader />
       <DiscoveryModeToggle mode={mode} onChange={setMode} />
 
@@ -148,7 +135,8 @@ export function DiscoveryScreen() {
               <SwipeCard
                 candidate={top}
                 onSwipe={handleSwipe}
-                onInfoPress={() => showProfileInfo(top)}
+                onInfoPress={() => openCandidateProfile(top)}
+                onCardPress={() => openCandidateProfile(top)}
               />
             </View>
 

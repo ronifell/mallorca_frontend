@@ -12,47 +12,67 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { FeedCandidate } from '../api/types';
+import { colors } from '../theme/colors';
 import { resolveMediaUrl } from '../utils/mediaUrl';
-import { ProfileInfoTag } from './discovery/DiscoveryActionButtons';
+import {
+  genderIcon,
+  genderLabel,
+  interestedInIcon,
+  interestedInLabel,
+  languageLabel,
+} from '../utils/profileDisplay';
 
 interface Props {
   candidate: FeedCandidate;
   onSwipe: (dir: 'left' | 'right') => void;
   onInfoPress?: () => void;
+  onCardPress?: () => void;
   swipeable?: boolean;
 }
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.25;
 
-function buildTags(candidate: FeedCandidate, t: (key: string) => string) {
-  const tags: { icon: keyof typeof Ionicons.glyphMap; label: string }[] = [];
+interface QuickFact {
+  icon: keyof typeof Ionicons.glyphMap;
+  label: string;
+  value: string;
+}
 
-  if (candidate.gender === 'female') {
-    tags.push({ icon: 'female-outline', label: t('discovery.woman') });
-  } else if (candidate.gender === 'male') {
-    tags.push({ icon: 'male-outline', label: t('discovery.man') });
-  }
+function buildQuickFacts(candidate: FeedCandidate, t: (k: string) => string): QuickFact[] {
+  const facts: QuickFact[] = [];
 
-  if (candidate.interestedIn === 'men') {
-    tags.push({ icon: 'male-outline', label: t('profile.interestedMen') });
-  } else if (candidate.interestedIn === 'women') {
-    tags.push({ icon: 'female-outline', label: t('profile.interestedWomen') });
-  } else if (candidate.interestedIn === 'both') {
-    tags.push({ icon: 'people-outline', label: t('discovery.menAndWomen') });
-  }
-
-  if (candidate.languages.length) {
-    tags.push({
-      icon: 'globe-outline',
-      label: candidate.languages.slice(0, 2).join(', '),
+  if (candidate.gender) {
+    facts.push({
+      icon: genderIcon(candidate.gender),
+      label: t('profile.iAm'),
+      value: genderLabel(candidate.gender, t),
     });
   }
 
-  return tags;
+  if (candidate.interestedIn) {
+    facts.push({
+      icon: interestedInIcon(candidate.interestedIn),
+      label: t('profile.lookingFor'),
+      value: interestedInLabel(candidate.interestedIn, t),
+    });
+  }
+
+  if (candidate.languages.length) {
+    facts.push({
+      icon: 'globe-outline',
+      label: t('profile.languages'),
+      value: candidate.languages
+        .slice(0, 2)
+        .map((id) => languageLabel(id, t))
+        .join(', '),
+    });
+  }
+
+  return facts;
 }
 
-export function SwipeCard({ candidate, onSwipe, onInfoPress, swipeable = true }: Props) {
+export function SwipeCard({ candidate, onSwipe, onInfoPress, onCardPress, swipeable = true }: Props) {
   const { t } = useTranslation();
   const x = useSharedValue(0);
   const y = useSharedValue(0);
@@ -110,10 +130,10 @@ export function SwipeCard({ candidate, onSwipe, onInfoPress, swipeable = true }:
 
   const photo = resolveMediaUrl(candidate.photos[photoIdx]?.url);
   const photoCount = candidate.photos.length;
-  const tags = useMemo(() => buildTags(candidate, t), [candidate, t]);
+  const facts = useMemo(() => buildQuickFacts(candidate, t), [candidate, t]);
 
   const locationLine = candidate.city
-    ? `${candidate.city}${candidate.city.includes('Mallorca') ? '' : ', Mallorca'}`
+    ? `${candidate.city}${candidate.city.toLowerCase().includes('mallorca') ? '' : ', Mallorca'}`
     : null;
 
   return (
@@ -123,11 +143,21 @@ export function SwipeCard({ candidate, onSwipe, onInfoPress, swipeable = true }:
         className="rounded-3xl overflow-hidden bg-cream-300"
       >
         {photo ? (
-          <Image source={{ uri: photo }} className="w-full h-full" resizeMode="cover" />
+          <Pressable
+            onPress={onCardPress}
+            disabled={!onCardPress}
+            style={{ width: '100%', height: '100%' }}
+          >
+            <Image source={{ uri: photo }} className="w-full h-full" resizeMode="cover" />
+          </Pressable>
         ) : (
-          <View className="w-full h-full items-center justify-center bg-cream-300">
+          <Pressable
+            onPress={onCardPress}
+            disabled={!onCardPress}
+            className="w-full h-full items-center justify-center bg-cream-300"
+          >
             <Text className="text-5xl text-coral-500">♥</Text>
-          </View>
+          </Pressable>
         )}
 
         {photoCount > 0 ? (
@@ -141,31 +171,47 @@ export function SwipeCard({ candidate, onSwipe, onInfoPress, swipeable = true }:
           </View>
         ) : null}
 
-        {photoCount > 0 ? (
-          <View className="absolute top-10 right-3 flex-row items-center bg-black/45 rounded-full px-2.5 py-1">
-            <Ionicons name="camera-outline" size={12} color="#FFFFFF" />
-            <Text className="text-white text-xs font-semibold ml-1">
-              {photoIdx + 1}/{photoCount}
-            </Text>
-          </View>
-        ) : null}
+        <View
+          className="absolute top-10 right-3 flex-row items-center"
+          pointerEvents="none"
+        >
+          {candidate.isPremium ? (
+            <View
+              className="flex-row items-center rounded-full px-2.5 py-1 mr-2"
+              style={{ backgroundColor: colors.coral[500] }}
+            >
+              <Ionicons name="ribbon" size={11} color="#FFFFFF" />
+              <Text className="text-white text-[10px] font-bold ml-1">
+                {t('profile.premiumBadge')}
+              </Text>
+            </View>
+          ) : null}
+          {photoCount > 0 ? (
+            <View className="flex-row items-center bg-black/45 rounded-full px-2.5 py-1">
+              <Ionicons name="camera-outline" size={12} color="#FFFFFF" />
+              <Text className="text-white text-xs font-semibold ml-1">
+                {photoIdx + 1}/{photoCount}
+              </Text>
+            </View>
+          ) : null}
+        </View>
 
         {photoCount > 1 ? (
           <>
             <Pressable
               onPress={() => setPhotoIdx((i) => Math.max(0, i - 1))}
-              className="absolute top-0 bottom-24 left-0 w-1/3"
+              className="absolute top-0 bottom-44 left-0 w-1/3"
             />
             <Pressable
               onPress={() => setPhotoIdx((i) => Math.min(photoCount - 1, i + 1))}
-              className="absolute top-0 bottom-24 right-0 w-1/3"
+              className="absolute top-0 bottom-44 right-0 w-1/3"
             />
           </>
         ) : null}
 
         <View
           className="absolute bottom-0 left-0 right-0 px-4 pt-16 pb-4"
-          style={{ backgroundColor: 'rgba(26, 14, 7, 0.52)' }}
+          style={{ backgroundColor: 'rgba(26, 14, 7, 0.62)' }}
         >
           <View className="flex-row items-center mb-1">
             <Text className="text-white text-3xl font-bold">
@@ -177,17 +223,23 @@ export function SwipeCard({ candidate, onSwipe, onInfoPress, swipeable = true }:
           </View>
 
           {locationLine ? (
-            <View className="flex-row items-center mb-2">
+            <View className="flex-row items-center mb-2.5">
               <Ionicons name="location-outline" size={14} color="#FFFFFF" style={{ marginRight: 4 }} />
               <Text className="text-white text-sm">{locationLine}</Text>
               <Text className="text-white/75 text-sm ml-2">· {t('discovery.nearby')}</Text>
             </View>
           ) : null}
 
-          {tags.length ? (
-            <View className="flex-row flex-wrap mb-2">
-              {tags.map((tag) => (
-                <ProfileInfoTag key={`${tag.icon}-${tag.label}`} icon={tag.icon} label={tag.label} />
+          {facts.length ? (
+            <View className="mb-2 gap-1">
+              {facts.map((f) => (
+                <View key={`${f.label}-${f.value}`} className="flex-row items-center">
+                  <Ionicons name={f.icon} size={13} color="#FFFFFF" style={{ marginRight: 6 }} />
+                  <Text className="text-white/70 text-xs mr-1.5">{f.label}:</Text>
+                  <Text className="text-white text-xs font-semibold flex-1" numberOfLines={1}>
+                    {f.value}
+                  </Text>
+                </View>
               ))}
             </View>
           ) : null}
@@ -203,9 +255,9 @@ export function SwipeCard({ candidate, onSwipe, onInfoPress, swipeable = true }:
             {onInfoPress ? (
               <Pressable
                 onPress={onInfoPress}
-                className="w-8 h-8 rounded-full bg-white/90 items-center justify-center"
+                className="w-9 h-9 rounded-full bg-white/90 items-center justify-center"
               >
-                <Ionicons name="information-outline" size={18} color="#7A5640" />
+                <Ionicons name="open-outline" size={18} color={colors.ink[700]} />
               </Pressable>
             ) : null}
           </View>

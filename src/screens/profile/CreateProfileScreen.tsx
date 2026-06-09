@@ -1,9 +1,10 @@
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import { extractErrorMessage } from '../../api/client';
 import { usersApi } from '../../api/endpoints';
+import { Gender, InterestSelection } from '../../api/types';
 import { BioTextArea } from '../../components/profile/BioTextArea';
 import { GenderToggle } from '../../components/profile/GenderToggle';
 import { InterestPill, InterestPillRow } from '../../components/profile/InterestPill';
@@ -12,19 +13,15 @@ import { ProfileContinueButton } from '../../components/profile/ProfileContinueB
 import { ProfileSectionLabel } from '../../components/profile/ProfileSectionLabel';
 import { ProfileSetupShell } from '../../components/profile/ProfileSetupShell';
 import { Input } from '../../components/Input';
+import {
+  GENDER_LABEL_KEYS,
+  INTEREST_OPTIONS,
+  LANGUAGE_OPTIONS,
+} from '../../config/profileOptions';
 import { ProfileSetupStackParamList } from '../../navigation/types';
 import { useAuthStore } from '../../store/auth';
 
 type Props = NativeStackScreenProps<ProfileSetupStackParamList, 'CreateProfile'>;
-
-const LANGUAGES = [
-  { id: 'English', flag: '🇬🇧', label: 'English' },
-  { id: 'Español', flag: '🇪🇸', label: 'Español' },
-  { id: 'Català', flag: '🟡', label: 'Català' },
-  { id: 'Deutsch', flag: '🇩🇪', label: 'Deutsch' },
-  { id: 'Français', flag: '🇫🇷', label: 'Français' },
-  { id: 'Italiano', flag: '🇮🇹', label: 'Italiano' },
-] as const;
 
 function isValidIsoDate(s: string): boolean {
   return /^\d{4}-\d{2}-\d{2}$/.test(s) && !Number.isNaN(new Date(s).getTime());
@@ -36,20 +33,42 @@ export function CreateProfileScreen({ navigation }: Props) {
 
   const [firstName, setFirstName] = useState('');
   const [birthDate, setBirthDate] = useState('');
-  const [gender, setGender] = useState<'male' | 'female' | null>(null);
-  const [interested, setInterested] = useState<'men' | 'women' | 'both' | null>(null);
+  const [gender, setGender] = useState<Gender | null>(null);
+  const [interests, setInterests] = useState<InterestSelection[]>([]);
   const [city, setCity] = useState('');
   const [bio, setBio] = useState('');
   const [languages, setLanguages] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const genderLabels = useMemo(
+    () =>
+      ({
+        male: t(GENDER_LABEL_KEYS.male),
+        female: t(GENDER_LABEL_KEYS.female),
+        non_binary: t(GENDER_LABEL_KEYS.non_binary),
+        gender_fluid: t(GENDER_LABEL_KEYS.gender_fluid),
+        other: t(GENDER_LABEL_KEYS.other),
+        prefer_not_to_say: t(GENDER_LABEL_KEYS.prefer_not_to_say),
+      } as Record<Gender, string>),
+    [t],
+  );
+
+  const toggleInterest = (id: InterestSelection) =>
+    setInterests((prev) => {
+      if (id === 'everyone') {
+        return prev.includes('everyone') ? [] : ['everyone'];
+      }
+      const without = prev.filter((x) => x !== 'everyone');
+      return without.includes(id) ? without.filter((x) => x !== id) : [...without, id];
+    });
+
   const toggleLang = (id: string) =>
     setLanguages((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
 
   const submit = async () => {
     setError(null);
-    if (!firstName || !birthDate || !gender || !interested || !city) {
+    if (!firstName || !birthDate || !gender || !interests.length || !city) {
       setError(t('common.error'));
       return;
     }
@@ -63,7 +82,7 @@ export function CreateProfileScreen({ navigation }: Props) {
         firstName,
         birthDate,
         gender,
-        interestedIn: interested,
+        interestSelections: interests,
         city,
         bio,
         languages,
@@ -108,35 +127,23 @@ export function CreateProfileScreen({ navigation }: Props) {
         rightIcon="calendar-outline"
       />
 
-      <ProfileSectionLabel label={t('profile.gender')} icon="male-female-outline" />
-      <GenderToggle
-        value={gender}
-        onChange={setGender}
-        maleLabel={t('profile.male')}
-        femaleLabel={t('profile.female')}
-      />
+      <ProfileSectionLabel label={t('profile.iAm')} icon="person-circle-outline" />
+      <GenderToggle value={gender} onChange={setGender} labels={genderLabels} />
 
-      <ProfileSectionLabel label={t('profile.interestedIn')} icon="heart-outline" />
+      <ProfileSectionLabel label={t('profile.lookingFor')} icon="heart-outline" />
+      <Text className="text-ink-400 text-xs mb-2">{t('profile.interestedHelper')}</Text>
       <InterestPillRow>
-        <InterestPill
-          type="men"
-          label={t('profile.interestedMen')}
-          selected={interested === 'men'}
-          onPress={() => setInterested('men')}
-        />
-        <InterestPill
-          type="women"
-          label={t('profile.interestedWomen')}
-          selected={interested === 'women'}
-          onPress={() => setInterested('women')}
-        />
-        <InterestPill
-          type="both"
-          label={t('profile.interestedBoth')}
-          selected={interested === 'both'}
-          onPress={() => setInterested('both')}
-        />
+        {INTEREST_OPTIONS.map((opt) => (
+          <InterestPill
+            key={opt.id}
+            type={opt.id}
+            label={t(opt.labelKey)}
+            selected={interests.includes(opt.id)}
+            onPress={() => toggleInterest(opt.id)}
+          />
+        ))}
       </InterestPillRow>
+      <View className="mb-2" />
 
       <ProfileSectionLabel label={t('profile.city')} icon="location-outline" />
       <Input
@@ -155,12 +162,13 @@ export function CreateProfileScreen({ navigation }: Props) {
       />
 
       <ProfileSectionLabel label={t('profile.languages')} icon="globe-outline" />
+      <Text className="text-ink-400 text-xs mb-2">{t('profile.languagesHelper')}</Text>
       <View className="flex-row flex-wrap mb-4">
-        {LANGUAGES.map((lang) => (
+        {LANGUAGE_OPTIONS.map((lang) => (
           <LanguageFlagPill
             key={lang.id}
             flag={lang.flag}
-            label={lang.label}
+            label={t(lang.labelKey)}
             selected={languages.includes(lang.id)}
             onPress={() => toggleLang(lang.id)}
           />

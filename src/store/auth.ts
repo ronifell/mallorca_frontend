@@ -63,6 +63,7 @@ export const useAuthStore = create<AuthState>((set) => ({
           role: 'user',
           isPremium: me.isPremium,
           profileComplete,
+          emailVerified: me.emailVerified ?? true,
         },
         initialized: true,
       });

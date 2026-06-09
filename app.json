@@ -29,7 +29,8 @@
         "barStyle": "dark-content"
       },
       "adaptiveIcon": {
-        "foregroundImage": "./assets/icon.png",
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "monochromeImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#B82E2E"
       },
       "permissions": ["NOTIFICATIONS", "INTERNET"]

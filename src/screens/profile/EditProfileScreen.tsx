@@ -2,12 +2,12 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import * as ImagePicker from 'expo-image-picker';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Text, View } from 'react-native';
 import { extractErrorMessage } from '../../api/client';
 import { usersApi } from '../../api/endpoints';
-import { Photo } from '../../api/types';
+import { Gender, InterestSelection, Photo } from '../../api/types';
 import { BioTextArea } from '../../components/profile/BioTextArea';
 import { GenderToggle } from '../../components/profile/GenderToggle';
 import { InterestPill, InterestPillRow } from '../../components/profile/InterestPill';
@@ -17,16 +17,12 @@ import { ProfileContinueButton } from '../../components/profile/ProfileContinueB
 import { ProfileSectionLabel } from '../../components/profile/ProfileSectionLabel';
 import { ProfileSetupShell } from '../../components/profile/ProfileSetupShell';
 import { Input } from '../../components/Input';
+import {
+  GENDER_LABEL_KEYS,
+  INTEREST_OPTIONS,
+  LANGUAGE_OPTIONS,
+} from '../../config/profileOptions';
 import { RootStackParamList } from '../../navigation/types';
-
-const LANGUAGES = [
-  { id: 'English', flag: '🇬🇧', label: 'English' },
-  { id: 'Español', flag: '🇪🇸', label: 'Español' },
-  { id: 'Català', flag: '🟡', label: 'Català' },
-  { id: 'Deutsch', flag: '🇩🇪', label: 'Deutsch' },
-  { id: 'Français', flag: '🇫🇷', label: 'Français' },
-  { id: 'Italiano', flag: '🇮🇹', label: 'Italiano' },
-] as const;
 
 function isValidIsoDate(s: string): boolean {
   return /^\d{4}-\d{2}-\d{2}$/.test(s) && !Number.isNaN(new Date(s).getTime());
@@ -40,15 +36,28 @@ export function EditProfileScreen() {
 
   const [firstName, setFirstName] = useState('');
   const [birthDate, setBirthDate] = useState('');
-  const [gender, setGender] = useState<'male' | 'female' | null>(null);
+  const [gender, setGender] = useState<Gender | null>(null);
   const [city, setCity] = useState('');
   const [bio, setBio] = useState('');
-  const [interested, setInterested] = useState<'men' | 'women' | 'both' | null>(null);
+  const [interests, setInterests] = useState<InterestSelection[]>([]);
   const [languages, setLanguages] = useState<string[]>([]);
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const genderLabels = useMemo(
+    () =>
+      ({
+        male: t(GENDER_LABEL_KEYS.male),
+        female: t(GENDER_LABEL_KEYS.female),
+        non_binary: t(GENDER_LABEL_KEYS.non_binary),
+        gender_fluid: t(GENDER_LABEL_KEYS.gender_fluid),
+        other: t(GENDER_LABEL_KEYS.other),
+        prefer_not_to_say: t(GENDER_LABEL_KEYS.prefer_not_to_say),
+      } as Record<Gender, string>),
+    [t],
+  );
 
   useEffect(() => {
     if (!me) return;
@@ -57,10 +66,26 @@ export function EditProfileScreen() {
     setGender(me.gender);
     setCity(me.city ?? '');
     setBio(me.bio ?? '');
-    setInterested(me.interestedIn);
     setLanguages(me.languages);
     setPhotos(me.photos);
+
+    if (me.interestSelections.length) {
+      setInterests(me.interestSelections);
+    } else if (me.interestedIn) {
+      setInterests(me.interestedIn === 'both' ? ['everyone'] : [me.interestedIn]);
+    } else {
+      setInterests([]);
+    }
   }, [me]);
+
+  const toggleInterest = (id: InterestSelection) =>
+    setInterests((prev) => {
+      if (id === 'everyone') {
+        return prev.includes('everyone') ? [] : ['everyone'];
+      }
+      const without = prev.filter((x) => x !== 'everyone');
+      return without.includes(id) ? without.filter((x) => x !== id) : [...without, id];
+    });
 
   const toggleLang = (id: string) =>
     setLanguages((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
@@ -102,7 +127,7 @@ export function EditProfileScreen() {
 
   const save = async () => {
     setError(null);
-    if (!firstName || !birthDate || !gender || !interested || !city) {
+    if (!firstName || !birthDate || !gender || !interests.length || !city) {
       setError(t('common.error'));
       return;
     }
@@ -119,7 +144,7 @@ export function EditProfileScreen() {
         gender,
         city,
         bio,
-        interestedIn: interested ?? undefined,
+        interestSelections: interests,
         languages,
       });
       await qc.invalidateQueries({ queryKey: ['me'] });
@@ -180,34 +205,21 @@ export function EditProfileScreen() {
         rightIcon="calendar-outline"
       />
 
-      <ProfileSectionLabel label={t('profile.gender')} icon="male-female-outline" />
-      <GenderToggle
-        value={gender}
-        onChange={setGender}
-        maleLabel={t('profile.male')}
-        femaleLabel={t('profile.female')}
-      />
+      <ProfileSectionLabel label={t('profile.iAm')} icon="person-circle-outline" />
+      <GenderToggle value={gender} onChange={setGender} labels={genderLabels} />
 
-      <ProfileSectionLabel label={t('profile.interestedIn')} icon="heart-outline" />
+      <ProfileSectionLabel label={t('profile.lookingFor')} icon="heart-outline" />
+      <Text className="text-ink-400 text-xs mb-2">{t('profile.interestedHelper')}</Text>
       <InterestPillRow>
-        <InterestPill
-          type="men"
-          label={t('profile.interestedMen')}
-          selected={interested === 'men'}
-          onPress={() => setInterested('men')}
-        />
-        <InterestPill
-          type="women"
-          label={t('profile.interestedWomen')}
-          selected={interested === 'women'}
-          onPress={() => setInterested('women')}
-        />
-        <InterestPill
-          type="both"
-          label={t('profile.interestedBoth')}
-          selected={interested === 'both'}
-          onPress={() => setInterested('both')}
-        />
+        {INTEREST_OPTIONS.map((opt) => (
+          <InterestPill
+            key={opt.id}
+            type={opt.id}
+            label={t(opt.labelKey)}
+            selected={interests.includes(opt.id)}
+            onPress={() => toggleInterest(opt.id)}
+          />
+        ))}
       </InterestPillRow>
 
       <ProfileSectionLabel label={t('profile.city')} icon="location-outline" />
@@ -227,12 +239,13 @@ export function EditProfileScreen() {
       />
 
       <ProfileSectionLabel label={t('profile.languages')} icon="globe-outline" />
+      <Text className="text-ink-400 text-xs mb-2">{t('profile.languagesHelper')}</Text>
       <View className="flex-row flex-wrap mb-4">
-        {LANGUAGES.map((lang) => (
+        {LANGUAGE_OPTIONS.map((lang) => (
           <LanguageFlagPill
             key={lang.id}
             flag={lang.flag}
-            label={lang.label}
+            label={t(lang.labelKey)}
             selected={languages.includes(lang.id)}
             onPress={() => toggleLang(lang.id)}
           />

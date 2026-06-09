@@ -1,31 +1,45 @@
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { Pressable, Text, View } from 'react-native';
-
-type Gender = 'male' | 'female';
+import { Gender } from '../../api/types';
+import { colors } from '../../theme/colors';
 
 interface Props {
   value: Gender | null;
   onChange: (value: Gender) => void;
-  maleLabel: string;
-  femaleLabel: string;
+  /** Translated labels for the inclusive gender options. */
+  labels: Record<Gender, string>;
 }
 
-function ToggleOption({
+interface OptionConfig {
+  id: Gender;
+  icon: keyof typeof Ionicons.glyphMap;
+}
+
+const OPTIONS: OptionConfig[] = [
+  { id: 'male', icon: 'male-outline' },
+  { id: 'female', icon: 'female-outline' },
+  { id: 'non_binary', icon: 'transgender-outline' },
+  { id: 'gender_fluid', icon: 'sparkles-outline' },
+  { id: 'other', icon: 'ellipse-outline' },
+  { id: 'prefer_not_to_say', icon: 'eye-off-outline' },
+];
+
+function GenderOption({
+  config,
   selected,
-  icon,
   label,
   onPress,
 }: {
+  config: OptionConfig;
   selected: boolean;
-  icon: keyof typeof Ionicons.glyphMap;
   label: string;
   onPress: () => void;
 }) {
   return (
     <Pressable
       onPress={onPress}
-      className={`flex-1 flex-row items-center justify-center py-2.5 rounded-2xl border mx-1 ${
+      className={`flex-row items-center px-3.5 py-2 rounded-pill border mr-2 mb-2 ${
         selected ? 'bg-coral-500 border-coral-500' : 'bg-white border-cream-300'
       }`}
       style={
@@ -40,34 +54,31 @@ function ToggleOption({
             }
       }
     >
-      <Ionicons name={icon} size={18} color={selected ? '#FFFFFF' : '#7A5640'} />
+      <Ionicons name={config.icon} size={16} color={selected ? '#FFFFFF' : colors.ink[400]} />
       <Text
-        className={`font-semibold text-base ml-2 ${selected ? 'text-white' : 'text-ink-700'}`}
+        className={`font-semibold text-sm ml-2 ${selected ? 'text-white' : 'text-ink-700'}`}
       >
         {label}
       </Text>
       {selected ? (
-        <Ionicons name="checkmark-circle" size={18} color="#FFFFFF" style={{ marginLeft: 6 }} />
+        <Ionicons name="checkmark-circle" size={15} color="#FFFFFF" style={{ marginLeft: 6 }} />
       ) : null}
     </Pressable>
   );
 }
 
-export function GenderToggle({ value, onChange, maleLabel, femaleLabel }: Props) {
+export function GenderToggle({ value, onChange, labels }: Props) {
   return (
-    <View className="flex-row mb-4 -mx-1">
-      <ToggleOption
-        selected={value === 'male'}
-        icon="male-outline"
-        label={maleLabel}
-        onPress={() => onChange('male')}
-      />
-      <ToggleOption
-        selected={value === 'female'}
-        icon="female-outline"
-        label={femaleLabel}
-        onPress={() => onChange('female')}
-      />
+    <View className="flex-row flex-wrap mb-4">
+      {OPTIONS.map((opt) => (
+        <GenderOption
+          key={opt.id}
+          config={opt}
+          selected={value === opt.id}
+          label={labels[opt.id]}
+          onPress={() => onChange(opt.id)}
+        />
+      ))}
     </View>
   );
 }

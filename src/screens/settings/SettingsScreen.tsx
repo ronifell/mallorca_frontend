@@ -81,6 +81,22 @@ export function SettingsScreen() {
 
       <SettingsCard>
         <SettingsRow
+          icon="document-text-outline"
+          title={t('settings.legal')}
+          description={t('settings.legalDesc')}
+          onPress={() => nav.navigate('Legal')}
+        />
+        <SettingsRow
+          icon="mail-outline"
+          title={t('settings.contact')}
+          description={t('settings.contactDesc')}
+          onPress={() => nav.navigate('Contact')}
+          isLast
+        />
+      </SettingsCard>
+
+      <SettingsCard>
+        <SettingsRow
           icon="log-out-outline"
           title={t('settings.logout')}
           description={t('settings.logoutDesc')}

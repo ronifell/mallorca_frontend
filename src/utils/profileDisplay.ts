@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Gender, InterestedIn, MyProfile } from '../api/types';
+import { Gender, InterestedIn } from '../api/types';
+import { GENDER_LABEL_KEYS, LANGUAGE_OPTIONS } from '../config/profileOptions';
 
 export interface ProfileDetailItem {
   icon: keyof typeof Ionicons.glyphMap;
@@ -26,30 +27,64 @@ const INTEREST_CATALOG: {
   { pattern: /sport|deporte/i, icon: 'football-outline', labelEn: 'Sports', labelEs: 'Deportes' },
 ];
 
+const GENDER_ICON: Record<Gender, keyof typeof Ionicons.glyphMap> = {
+  male: 'male-outline',
+  female: 'female-outline',
+  non_binary: 'transgender-outline',
+  gender_fluid: 'sparkles-outline',
+  other: 'ellipse-outline',
+  prefer_not_to_say: 'eye-off-outline',
+};
+
+export function genderIcon(g: Gender): keyof typeof Ionicons.glyphMap {
+  return GENDER_ICON[g] ?? 'person-outline';
+}
+
+export function genderLabel(g: Gender, t: (key: string) => string): string {
+  return t(GENDER_LABEL_KEYS[g]);
+}
+
+export function interestedInIcon(value: InterestedIn): keyof typeof Ionicons.glyphMap {
+  if (value === 'men') return 'male-outline';
+  if (value === 'women') return 'female-outline';
+  return 'people-outline';
+}
+
+export function interestedInLabel(value: InterestedIn, t: (key: string) => string): string {
+  if (value === 'men') return t('profile.interestedMen');
+  if (value === 'women') return t('profile.interestedWomen');
+  return t('profile.interestedBoth');
+}
+
+export function languageLabel(id: string, t: (key: string) => string): string {
+  const opt = LANGUAGE_OPTIONS.find((o) => o.id === id);
+  return opt ? t(opt.labelKey) : id;
+}
+
 export function buildProfileDetails(
-  profile: Pick<MyProfile, 'gender' | 'interestedIn' | 'languages'>,
+  profile: { gender: Gender | null; interestedIn: InterestedIn | null; languages: string[] },
   t: (key: string) => string,
 ): ProfileDetailItem[] {
   const items: ProfileDetailItem[] = [];
 
-  if (profile.gender === 'female') {
-    items.push({ icon: 'female-outline', label: t('discovery.woman') });
-  } else if (profile.gender === 'male') {
-    items.push({ icon: 'male-outline', label: t('discovery.man') });
+  if (profile.gender) {
+    items.push({ icon: genderIcon(profile.gender), label: genderLabel(profile.gender, t) });
   }
 
-  if (profile.interestedIn === 'men') {
-    items.push({ icon: 'male-outline', label: t('profile.interestedMen') });
-  } else if (profile.interestedIn === 'women') {
-    items.push({ icon: 'female-outline', label: t('profile.interestedWomen') });
-  } else if (profile.interestedIn === 'both') {
-    items.push({ icon: 'people-outline', label: t('discovery.menAndWomen') });
+  if (profile.interestedIn) {
+    items.push({
+      icon: interestedInIcon(profile.interestedIn),
+      label: interestedInLabel(profile.interestedIn, t),
+    });
   }
 
   if (profile.languages.length) {
     items.push({
       icon: 'globe-outline',
-      label: profile.languages.slice(0, 2).join(', '),
+      label: profile.languages
+        .slice(0, 2)
+        .map((id) => languageLabel(id, t))
+        .join(', '),
     });
   }
 

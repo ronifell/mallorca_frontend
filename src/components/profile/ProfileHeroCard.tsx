@@ -6,7 +6,14 @@ import { ProfileDisplayData } from '../../api/types';
 import { Logo } from '../Logo';
 import { StackedPhotoDeck } from './StackedPhotoDeck';
 import { colors } from '../../theme/colors';
-import { buildProfileDetails, formatProfileLocation } from '../../utils/profileDisplay';
+import {
+  formatProfileLocation,
+  genderIcon,
+  genderLabel,
+  interestedInIcon,
+  interestedInLabel,
+  languageLabel,
+} from '../../utils/profileDisplay';
 import { resolveMediaUrl } from '../../utils/mediaUrl';
 
 interface Props {
@@ -21,6 +28,32 @@ interface Props {
 function modIndex(index: number, count: number) {
   if (count <= 0) return 0;
   return ((index % count) + count) % count;
+}
+
+interface FactRowProps {
+  iconBg: string;
+  icon: keyof typeof Ionicons.glyphMap;
+  label: string;
+  value: string;
+}
+
+function FactRow({ iconBg, icon, label, value }: FactRowProps) {
+  return (
+    <View className="flex-row items-center py-1.5">
+      <View
+        className="w-9 h-9 rounded-xl items-center justify-center mr-3"
+        style={{ backgroundColor: iconBg }}
+      >
+        <Ionicons name={icon} size={16} color={colors.coral[500]} />
+      </View>
+      <View className="flex-1">
+        <Text className="text-ink-400 text-[11px] uppercase tracking-wide">{label}</Text>
+        <Text className="text-ink-700 font-semibold text-sm" numberOfLines={1}>
+          {value}
+        </Text>
+      </View>
+    </View>
+  );
 }
 
 export function ProfileHeroCard({
@@ -52,10 +85,15 @@ export function ProfileHeroCard({
 
   const currentIndex = modIndex(photoIndex, photoCount);
 
-  const details = buildProfileDetails(profile, t);
   const locationLine = formatProfileLocation(profile.city, t);
 
   const photoAspect = compactPhoto ? 'aspect-[5/6]' : 'aspect-[4/5]';
+
+  const showLanguages = profile.languages && profile.languages.length > 0;
+  const languagesValue = useMemo(
+    () => profile.languages.map((id) => languageLabel(id, t)).join(', '),
+    [profile.languages, t],
+  );
 
   return (
     <View
@@ -88,6 +126,19 @@ export function ProfileHeroCard({
             <View className="w-2 h-2 rounded-full bg-green-400 mr-2" />
             <Text className="text-white text-xs font-semibold">{t('profile.online')}</Text>
           </View>
+
+          {profile.isPremium ? (
+            <View
+              className="absolute top-3 right-3 flex-row items-center rounded-full px-2.5 py-1.5"
+              style={{ backgroundColor: colors.coral[500], zIndex: 10 }}
+              pointerEvents="none"
+            >
+              <Ionicons name="ribbon" size={12} color="#FFFFFF" />
+              <Text className="text-white text-xs font-bold ml-1">
+                {t('profile.premiumBadge')}
+              </Text>
+            </View>
+          ) : null}
 
           {photoCount > 0 ? (
             <View
@@ -137,23 +188,32 @@ export function ProfileHeroCard({
           ) : null}
         </View>
 
-        {details.length ? (
-          <View className="flex-row mt-4 pt-3 border-t border-cream-200">
-            {details.map((item, index) => (
-              <View
-                key={`${item.icon}-${item.label}`}
-                className={`flex-1 flex-row items-center justify-center px-1 ${
-                  index > 0 ? 'border-l border-cream-200' : ''
-                }`}
-              >
-                <Ionicons name={item.icon} size={14} color={colors.coral[500]} />
-                <Text className="text-ink-700 text-xs font-semibold ml-1" numberOfLines={1}>
-                  {item.label}
-                </Text>
-              </View>
-            ))}
-          </View>
-        ) : null}
+        <View className="mt-4 pt-3 border-t border-cream-200">
+          {profile.gender ? (
+            <FactRow
+              iconBg={colors.coral[50]}
+              icon={genderIcon(profile.gender)}
+              label={t('profile.iAm')}
+              value={genderLabel(profile.gender, t)}
+            />
+          ) : null}
+          {profile.interestedIn ? (
+            <FactRow
+              iconBg={colors.coral[50]}
+              icon={interestedInIcon(profile.interestedIn)}
+              label={t('profile.lookingFor')}
+              value={interestedInLabel(profile.interestedIn, t)}
+            />
+          ) : null}
+          {showLanguages ? (
+            <FactRow
+              iconBg={colors.coral[50]}
+              icon="globe-outline"
+              label={t('profile.languages')}
+              value={languagesValue}
+            />
+          ) : null}
+        </View>
       </View>
     </View>
   );

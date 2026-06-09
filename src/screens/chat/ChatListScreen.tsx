@@ -56,7 +56,7 @@ export function ChatListScreen() {
   };
 
   return (
-    <Screen padded={false} background="main">
+    <Screen padded={false}>
       <SocialBrandHeader
         onLeftPress={() => Alert.alert(t('matches.filters'), t('matches.filterComingSoon'))}
         onRightPress={() => nav.navigate('Matches')}

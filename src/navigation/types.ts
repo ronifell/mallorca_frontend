@@ -1,4 +1,5 @@
 import { NavigatorScreenParams } from '@react-navigation/native';
+import { FeedCandidate } from '../api/types';
 
 export type AuthStackParamList = {
   Onboarding: undefined;
@@ -33,11 +34,15 @@ export type RootStackParamList = {
     otherUserPhoto?: string | null;
   };
   MatchProfile: { matchId: string };
+  CandidateProfile: { candidate: FeedCandidate };
   Premium: undefined;
   EditProfile: undefined;
   Settings: undefined;
   Language: undefined;
   Notifications: undefined;
   Privacy: undefined;
+  Legal: undefined;
+  Contact: undefined;
   BlockedUsers: undefined;
+  VerifyEmail: undefined;
 };

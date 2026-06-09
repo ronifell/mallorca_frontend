@@ -34,13 +34,14 @@ export function OnboardingScreen({ navigation }: Props) {
             <Logo size={100} />
 
             <Text
-              className="text-ink-700 text-[28px] leading-9 text-center mt-8 px-2"
+              className="text-ink-700 text-[24px] leading-8 text-center mt-8 px-2"
               style={{ fontFamily: 'NotoSerif_700Bold' }}
             >
               {t('onboarding.headlineBefore')}{' '}
               <Text className="text-coral-500" style={{ fontFamily: 'NotoSerif_700Bold' }}>
                 {t('onboarding.headlineAccent')}
               </Text>
+              <Text style={{ fontFamily: 'NotoSerif_700Bold' }}>.</Text>
             </Text>
 
             <View

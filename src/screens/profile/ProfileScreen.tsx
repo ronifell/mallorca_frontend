@@ -47,7 +47,17 @@ export function ProfileScreen() {
       <ProfilePageHeader />
 
       <ProfileHeroCard
-        profile={me}
+        profile={{
+          firstName: me.firstName,
+          age: me.age,
+          city: me.city,
+          gender: me.gender,
+          bio: me.bio,
+          languages: me.languages,
+          photos: me.photos,
+          interestedIn: me.interestedIn,
+          isPremium: me.isPremium,
+        }}
         onActionPress={goEdit}
         actionIcon="heart"
         compactPhoto

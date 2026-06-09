@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Alert, Pressable, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Linking, Pressable, Text, View } from 'react-native';
 import { colors } from '../../theme/colors';
 
 interface Props {
@@ -10,11 +10,17 @@ interface Props {
   disabled?: boolean;
 }
 
+const GOOGLE_PLAY_SUBS_URL = 'https://play.google.com/store/account/subscriptions';
+
 export function PremiumSubscribeSection({ onSubscribe, loading, disabled }: Props) {
   const { t } = useTranslation();
 
   const onRestore = () => {
     Alert.alert(t('premium.restore'), t('premium.restoreComingSoon'));
+  };
+
+  const onManage = () => {
+    Linking.openURL(GOOGLE_PLAY_SUBS_URL).catch(() => undefined);
   };
 
   return (
@@ -44,15 +50,45 @@ export function PremiumSubscribeSection({ onSubscribe, loading, disabled }: Prop
         )}
       </Pressable>
 
+      <View className="bg-cream-100 rounded-2xl px-4 py-3 mt-3 border border-cream-300">
+        <View className="flex-row items-start mb-2">
+          <Ionicons
+            name="refresh-outline"
+            size={16}
+            color={colors.coral[500]}
+            style={{ marginTop: 2, marginRight: 8 }}
+          />
+          <Text className="flex-1 text-ink-700 text-xs leading-5 font-semibold">
+            {t('premium.autoRenewNotice')}
+          </Text>
+        </View>
+        <View className="flex-row items-start">
+          <Ionicons
+            name="logo-google-playstore"
+            size={16}
+            color={colors.ink[700]}
+            style={{ marginTop: 2, marginRight: 8 }}
+          />
+          <Text className="flex-1 text-ink-400 text-xs leading-5">
+            {t('premium.managedByGooglePlay')}
+          </Text>
+        </View>
+      </View>
+
       <View className="flex-row items-center justify-center mt-3">
         <Ionicons name="lock-closed-outline" size={13} color={colors.ink[400]} />
         <Text className="text-ink-400 text-xs ml-1.5">{t('premium.securePayment')}</Text>
       </View>
 
-      <Pressable onPress={onRestore} className="flex-row items-center justify-center mt-2 py-1">
-        <Text className="text-coral-500 font-semibold text-sm">{t('premium.restore')}</Text>
-        <Ionicons name="chevron-forward" size={16} color={colors.coral[500]} />
-      </Pressable>
+      <View className="flex-row items-center justify-center mt-2 gap-4">
+        <Pressable onPress={onRestore} className="flex-row items-center py-1">
+          <Text className="text-coral-500 font-semibold text-sm">{t('premium.restore')}</Text>
+        </Pressable>
+        <Pressable onPress={onManage} className="flex-row items-center py-1">
+          <Text className="text-coral-500 font-semibold text-sm">Google Play</Text>
+          <Ionicons name="open-outline" size={14} color={colors.coral[500]} style={{ marginLeft: 4 }} />
+        </Pressable>
+      </View>
     </View>
   );
 }

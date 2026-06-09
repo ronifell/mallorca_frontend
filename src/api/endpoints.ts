@@ -4,6 +4,8 @@ import { prepareUploadFile } from '../utils/imageUpload';
 import {
   AuthResult,
   FeedCandidate,
+  Gender,
+  InterestSelection,
   Match,
   MatchUserProfile,
   Message,
@@ -12,8 +14,13 @@ import {
 } from './types';
 
 export const authApi = {
-  register: (input: { email: string; password: string; acceptedTerms: true; language?: 'en' | 'es' }) =>
-    api.post<AuthResult>('/auth/register', input).then((r) => r.data),
+  register: (input: {
+    email: string;
+    password: string;
+    acceptedTerms: true;
+    acceptedPrivacy: true;
+    language?: 'en' | 'es';
+  }) => api.post<AuthResult>('/auth/register', input).then((r) => r.data),
   login: (input: { email: string; password: string }) =>
     api.post<AuthResult>('/auth/login', input).then((r) => r.data),
   logout: (refreshToken: string) =>
@@ -22,6 +29,16 @@ export const authApi = {
     api.post<void>('/auth/forgot-password', { email }).then((r) => r.data),
   resetPassword: (token: string, password: string) =>
     api.post<void>('/auth/reset-password', { token, password }).then((r) => r.data),
+  resendVerification: (email: string) =>
+    api.post<void>('/auth/resend-verification', { email }).then((r) => r.data),
+  verifyEmail: (token: string) =>
+    api
+      .post<{ verified: boolean }>(
+        '/auth/verify-email',
+        { token },
+        { headers: { Accept: 'application/json' } },
+      )
+      .then((r) => r.data),
 };
 
 export const usersApi = {
@@ -29,8 +46,9 @@ export const usersApi = {
   update: (patch: Partial<{
     firstName: string;
     birthDate: string;
-    gender: 'male' | 'female';
+    gender: Gender;
     interestedIn: 'men' | 'women' | 'both';
+    interestSelections: InterestSelection[];
     minAge: number;
     maxAge: number;
     city: string;

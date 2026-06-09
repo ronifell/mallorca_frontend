@@ -16,11 +16,13 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { extractErrorMessage } from '../../api/client';
 import { authApi } from '../../api/endpoints';
+import { LegalCheckbox } from '../../components/auth/LegalCheckbox';
 import { LoginBrandHeader } from '../../components/auth/LoginBrandHeader';
 import { Input } from '../../components/Input';
 import { AuthStackParamList } from '../../navigation/types';
 import { useAuthStore } from '../../store/auth';
 import { colors } from '../../theme/colors';
+import { LEGAL_LINKS } from '../../config/legal';
 import { authHeroImage, authScreenStyles as styles } from './authScreenStyles';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Register'>;
@@ -31,13 +33,18 @@ export function RegisterScreen({ navigation }: Props) {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [accepted, setAccepted] = useState(false);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [acceptedPrivacy, setAcceptedPrivacy] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const onSubmit = async () => {
-    if (!accepted) {
+    if (!acceptedTerms) {
       setError(t('auth.termsRequired'));
+      return;
+    }
+    if (!acceptedPrivacy) {
+      setError(t('auth.privacyRequired'));
       return;
     }
     setLoading(true);
@@ -47,6 +54,7 @@ export function RegisterScreen({ navigation }: Props) {
         email: email.trim(),
         password,
         acceptedTerms: true,
+        acceptedPrivacy: true,
         language: (i18n.language as 'en' | 'es') ?? 'es',
       });
       await setSession({
@@ -123,21 +131,24 @@ export function RegisterScreen({ navigation }: Props) {
                   hint={t('auth.passwordHint')}
                 />
 
-                <Pressable
-                  onPress={() => setAccepted((v) => !v)}
-                  className="flex-row items-center mb-4 mt-1"
-                  accessibilityRole="checkbox"
-                  accessibilityState={{ checked: accepted }}
-                >
-                  <View
-                    className={`w-6 h-6 rounded-md mr-3 items-center justify-center border-2 ${
-                      accepted ? 'bg-coral-500 border-coral-500' : 'bg-white border-cream-300'
-                    }`}
-                  >
-                    {accepted ? <Text className="text-white text-sm font-bold">✓</Text> : null}
-                  </View>
-                  <Text className="text-ink-700 flex-1 text-sm leading-5">{t('auth.termsAccept')}</Text>
-                </Pressable>
+                <View className="mt-1 mb-2">
+                  <LegalCheckbox
+                    checked={acceptedTerms}
+                    onToggle={() => setAcceptedTerms((v) => !v)}
+                    intro={t('auth.termsAcceptIntro')}
+                    linkLabel={t('auth.termsOfService')}
+                    linkUrl={LEGAL_LINKS.terms}
+                    testID="register-terms-checkbox"
+                  />
+                  <LegalCheckbox
+                    checked={acceptedPrivacy}
+                    onToggle={() => setAcceptedPrivacy((v) => !v)}
+                    intro={t('auth.privacyAcceptIntro')}
+                    linkLabel={t('auth.privacyPolicy')}
+                    linkUrl={LEGAL_LINKS.privacy}
+                    testID="register-privacy-checkbox"
+                  />
+                </View>
 
                 {error ? (
                   <View className="bg-coral-50 rounded-2xl p-3 mb-3">

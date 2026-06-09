@@ -16,7 +16,10 @@ import { SettingsScreen } from '../screens/settings/SettingsScreen';
 import { LanguageScreen } from '../screens/settings/LanguageScreen';
 import { NotificationsScreen } from '../screens/settings/NotificationsScreen';
 import { PrivacyScreen } from '../screens/settings/PrivacyScreen';
+import { LegalScreen } from '../screens/settings/LegalScreen';
+import { ContactScreen } from '../screens/settings/ContactScreen';
 import { BlockedUsersScreen } from '../screens/settings/BlockedUsersScreen';
+import { CandidateProfileScreen } from '../screens/discovery/CandidateProfileScreen';
 import { RootStackParamList } from './types';
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -97,6 +100,13 @@ export function RootNavigator() {
               options={{ headerShown: false }}
             />
             <Stack.Screen name="Privacy" component={PrivacyScreen} options={{ headerShown: false }} />
+            <Stack.Screen name="Legal" component={LegalScreen} options={{ headerShown: false }} />
+            <Stack.Screen name="Contact" component={ContactScreen} options={{ headerShown: false }} />
+            <Stack.Screen
+              name="CandidateProfile"
+              component={CandidateProfileScreen}
+              options={{ headerShown: false }}
+            />
             <Stack.Screen
               name="BlockedUsers"
               component={BlockedUsersScreen}

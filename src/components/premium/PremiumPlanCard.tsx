@@ -38,6 +38,12 @@ export function PremiumPlanCard({ plan, selected, onSelect }: Props) {
       <View className="items-end mr-2.5">
         <Text className="text-ink-700 font-bold text-lg">{plan.price}</Text>
         <Text className="text-ink-400 text-xs mt-0.5">{periodLabel}</Text>
+        {plan.autoRenewing ? (
+          <View className="flex-row items-center mt-0.5">
+            <Ionicons name="refresh" size={10} color={colors.ink[400]} />
+            <Text className="text-ink-400 text-[10px] ml-0.5">auto-renewing</Text>
+          </View>
+        ) : null}
       </View>
 
       <View
