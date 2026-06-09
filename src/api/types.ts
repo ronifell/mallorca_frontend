@@ -58,6 +58,10 @@ export interface FeedCandidate {
   isPremium: boolean;
 }
 
+export interface LikedUser extends FeedCandidate {
+  likedAt: string;
+}
+
 export interface Match {
   matchId: string;
   matchedAt: string;

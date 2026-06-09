@@ -6,6 +6,7 @@ import {
   FeedCandidate,
   Gender,
   InterestSelection,
+  LikedUser,
   Match,
   MatchUserProfile,
   Message,
@@ -85,6 +86,12 @@ export const discoveryApi = {
   like: (id: string) =>
     api.post<{ matched: boolean; matchId?: string }>(`/discovery/like/${id}`).then((r) => r.data),
   pass: (id: string) => api.post<void>(`/discovery/pass/${id}`).then((r) => r.data),
+  sentLikes: () =>
+    api.get<{ users: LikedUser[] }>('/discovery/likes/sent').then((r) => r.data.users),
+  receivedLikes: () =>
+    api.get<{ users: LikedUser[] }>('/discovery/likes/received').then((r) => r.data.users),
+  unlike: (id: string) =>
+    api.delete<void>(`/discovery/likes/sent/${id}`).then((r) => r.data),
 };
 
 export const matchesApi = {

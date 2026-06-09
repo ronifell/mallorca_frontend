@@ -14,6 +14,7 @@ import {
   DiscoveryMode,
   DiscoveryModeToggle,
 } from '../../components/discovery/DiscoveryModeToggle';
+import { LikesView } from '../../components/discovery/LikesView';
 import { MatchModal } from '../../components/discovery/MatchModal';
 import { Screen } from '../../components/Screen';
 import { SwipeCard } from '../../components/SwipeCard';
@@ -109,57 +110,54 @@ export function DiscoveryScreen() {
       <DiscoveryHeader />
       <DiscoveryModeToggle mode={mode} onChange={setMode} />
 
-      <View className="flex-1 px-5">
-        {mode === 'likedYou' ? (
-          <View className="flex-1 items-center justify-center px-4">
-            <Text className="text-ink-700 text-center text-lg font-semibold mb-2">
-              {t('discovery.likedYou')}
-            </Text>
-            <Text className="text-ink-400 text-center">{t('discovery.likedYouEmpty')}</Text>
-          </View>
-        ) : isLoading ? (
-          <View className="flex-1 items-center justify-center">
-            <Text className="text-ink-400">{t('discovery.loading')}</Text>
-          </View>
-        ) : top ? (
-          <View className="flex-1 items-center justify-center">
-            <View className="w-full max-w-md relative">
-              {next ? (
-                <View
-                  className="absolute inset-0 opacity-50"
-                  style={{ transform: [{ scale: 0.96 }] }}
-                  pointerEvents="none"
-                >
-                  <SwipeCard candidate={next} onSwipe={() => undefined} swipeable={false} />
-                </View>
-              ) : null}
-              <SwipeCard
-                candidate={top}
-                onSwipe={handleSwipe}
-                onInfoPress={() => openCandidateProfile(top)}
-                onCardPress={() => openCandidateProfile(top)}
+      {mode === 'likedYou' ? (
+        <LikesView />
+      ) : (
+        <View className="flex-1 px-5">
+          {isLoading ? (
+            <View className="flex-1 items-center justify-center">
+              <Text className="text-ink-400">{t('discovery.loading')}</Text>
+            </View>
+          ) : top ? (
+            <View className="flex-1 items-center justify-center">
+              <View className="w-full max-w-md relative">
+                {next ? (
+                  <View
+                    className="absolute inset-0 opacity-50"
+                    style={{ transform: [{ scale: 0.96 }] }}
+                    pointerEvents="none"
+                  >
+                    <SwipeCard candidate={next} onSwipe={() => undefined} swipeable={false} />
+                  </View>
+                ) : null}
+                <SwipeCard
+                  candidate={top}
+                  onSwipe={handleSwipe}
+                  onInfoPress={() => openCandidateProfile(top)}
+                  onCardPress={() => openCandidateProfile(top)}
+                />
+              </View>
+
+              <DiscoveryActionButtons
+                onPass={() => handleSwipe('left')}
+                onLike={() => handleSwipe('right')}
+                onSuperLike={handleSuperLike}
               />
             </View>
-
-            <DiscoveryActionButtons
-              onPass={() => handleSwipe('left')}
-              onLike={() => handleSwipe('right')}
-              onSuperLike={handleSuperLike}
-            />
-          </View>
-        ) : (
-          <View className="flex-1 items-center justify-center">
-            <Text className="text-ink-700 text-center text-lg">{t('discovery.empty')}</Text>
-            <View className="h-4" />
-            <Button
-              label={t('common.retry')}
-              variant="secondary"
-              onPress={handleRetry}
-              disabled={isRetrying}
-            />
-          </View>
-        )}
-      </View>
+          ) : (
+            <View className="flex-1 items-center justify-center">
+              <Text className="text-ink-700 text-center text-lg">{t('discovery.empty')}</Text>
+              <View className="h-4" />
+              <Button
+                label={t('common.retry')}
+                variant="secondary"
+                onPress={handleRetry}
+                disabled={isRetrying}
+              />
+            </View>
+          )}
+        </View>
+      )}
 
       <MatchModal
         visible={matchPopup != null}
