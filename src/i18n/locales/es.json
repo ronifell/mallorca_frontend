@@ -152,6 +152,7 @@
     "like": "Me gusta",
     "pass": "Pasar",
     "matched": "¡Es un match!",
+    "matchSubtitle": "A ti y a {{name}} os habéis gustado.",
     "sayHi": "Saluda",
     "keepSwiping": "Seguir explorando",
     "loading": "Buscando personas compatibles…",

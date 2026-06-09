@@ -14,6 +14,7 @@ import {
   DiscoveryMode,
   DiscoveryModeToggle,
 } from '../../components/discovery/DiscoveryModeToggle';
+import { MatchModal } from '../../components/discovery/MatchModal';
 import { Screen } from '../../components/Screen';
 import { SwipeCard } from '../../components/SwipeCard';
 import { RootStackParamList } from '../../navigation/types';
@@ -160,30 +161,12 @@ export function DiscoveryScreen() {
         )}
       </View>
 
-      {matchPopup ? (
-        <View className="absolute inset-0 bg-ink-900/70 items-center justify-center px-8">
-          <View className="bg-cream-100 rounded-3xl p-6 w-full max-w-md items-center">
-            <Text className="text-coral-500 text-5xl mb-2">♥</Text>
-            <Text className="text-ink-700 font-serif text-3xl mb-1">{t('discovery.matched')}</Text>
-            <Text className="text-ink-400 mb-5 text-center">
-              {matchPopup.name ? `${matchPopup.name}` : ''}
-            </Text>
-            <Button
-              label={t('discovery.sayHi')}
-              onPress={openChat}
-              fullWidth
-              className="bg-coral-500 active:bg-coral-600"
-            />
-            <View className="h-2" />
-            <Button
-              label={t('discovery.keepSwiping')}
-              variant="ghost"
-              onPress={() => setMatchPopup(null)}
-              fullWidth
-            />
-          </View>
-        </View>
-      ) : null}
+      <MatchModal
+        visible={matchPopup != null}
+        name={matchPopup?.name ?? null}
+        onSayHi={openChat}
+        onClose={() => setMatchPopup(null)}
+      />
     </Screen>
   );
 }

@@ -152,6 +152,7 @@
     "like": "Like",
     "pass": "Pass",
     "matched": "It's a match!",
+    "matchSubtitle": "You and {{name}} liked each other.",
     "sayHi": "Say hi",
     "keepSwiping": "Keep swiping",
     "loading": "Finding compatible people…",
