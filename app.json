@@ -24,6 +24,22 @@
     "android": {
       "package": "es.citasmallorca.app",
       "usesCleartextTraffic": true,
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "data": [
+            {
+              "scheme": "citasmallorca",
+              "host": "email-verified"
+            },
+            {
+              "scheme": "citasmallorca",
+              "host": "verify-email"
+            }
+          ],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
+      ],
       "navigationBar": {
         "backgroundColor": "#FFFFFF",
         "barStyle": "dark-content"

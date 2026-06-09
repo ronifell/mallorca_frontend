@@ -12,6 +12,10 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import './src/styles/global.css';
 import { setOnUnauthorized } from './src/api/client';
 import { initI18n } from './src/i18n';
+import {
+  flushPendingEmailVerification,
+  initEmailVerificationLinking,
+} from './src/services/emailVerificationLinking';
 import { RootNavigator } from './src/navigation/RootNavigator';
 import { SplashScreen } from './src/screens/SplashScreen';
 import { registerForPushNotificationsAsync } from './src/services/notifications';
@@ -41,6 +45,15 @@ export default function App() {
   const logout = useAuthStore((s) => s.logout);
 
   const ready = i18nReady && fontsLoaded && initialized;
+
+  useEffect(() => {
+    initEmailVerificationLinking();
+  }, []);
+
+  useEffect(() => {
+    if (!initialized) return;
+    void flushPendingEmailVerification();
+  }, [initialized]);
 
   useLayoutEffect(() => {
     if (ready) return;

@@ -1,3 +1,4 @@
+import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -6,6 +7,7 @@ import { extractErrorMessage } from '../../api/client';
 import { authApi } from '../../api/endpoints';
 import { LoginBrandHeader } from '../../components/auth/LoginBrandHeader';
 import { Screen } from '../../components/Screen';
+import { flushPendingEmailVerification } from '../../services/emailVerificationLinking';
 import { useAuthStore } from '../../store/auth';
 import { colors } from '../../theme/colors';
 
@@ -34,10 +36,24 @@ export function VerifyEmailScreen() {
     const sub = AppState.addEventListener('change', (state) => {
       if (state === 'active') {
         void checkVerification();
+        void flushPendingEmailVerification();
       }
     });
     return () => sub.remove();
   }, [checkVerification]);
+
+  useFocusEffect(
+    useCallback(() => {
+      void checkVerification();
+      void flushPendingEmailVerification();
+
+      const interval = setInterval(() => {
+        void checkVerification();
+      }, 2500);
+
+      return () => clearInterval(interval);
+    }, [checkVerification]),
+  );
 
   const onResend = async () => {
     if (!email) return;
