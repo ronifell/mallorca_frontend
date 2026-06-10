@@ -303,7 +303,8 @@ export function ConversationScreen({ route, navigation }: Props) {
         ref={listRef}
         data={chatRows}
         keyExtractor={(row) => row.id}
-        className="flex-1 bg-cream-200"
+        className="flex-1"
+        style={{ backgroundColor: 'transparent' }}
         contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 12, paddingBottom: 8 }}
         onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: false })}
         renderItem={({ item }) => {

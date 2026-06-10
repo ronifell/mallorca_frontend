@@ -15,7 +15,7 @@ export function ProfileSetupStack() {
         headerShadowVisible: false,
         headerTintColor: colors.ink[700],
         headerTitleStyle: { fontWeight: '700' },
-        contentStyle: { backgroundColor: colors.cream[200] },
+        contentStyle: { backgroundColor: 'transparent' },
       }}
     >
       <Stack.Screen

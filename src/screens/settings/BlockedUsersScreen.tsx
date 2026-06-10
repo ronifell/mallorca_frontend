@@ -24,6 +24,7 @@ export function BlockedUsersScreen() {
       <FlatList
         data={data ?? []}
         keyExtractor={(b) => b.id}
+        style={{ backgroundColor: 'transparent' }}
         contentContainerStyle={{ padding: 16 }}
         ListEmptyComponent={
           !isLoading ? (

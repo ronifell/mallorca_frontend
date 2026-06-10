@@ -39,8 +39,10 @@ export function Screen({
   const topPadding = useTopScreenPadding();
   const hasBackground = background != null;
   const backgroundSource = background ? tabBackgrounds[background] : null;
-  const surfaceColor = hasBackground ? 'transparent' : colors.cream[200];
-  const containerClass = hasBackground ? `flex-1 ${className}` : `flex-1 bg-cream-200 ${className}`;
+  // Default surface is transparent so the global app background image
+  // (set in RootNavigator for authenticated users) can show through.
+  const surfaceColor = 'transparent';
+  const containerClass = `flex-1 ${className}`;
 
   const inner = (
     <View className={padded ? 'flex-1 px-5' : 'flex-1'} style={{ paddingTop: topPadding }}>

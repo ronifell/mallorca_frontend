@@ -132,7 +132,7 @@ export function MatchProfileScreen({ route, navigation }: Props) {
     return (
       <SafeAreaView
         edges={['bottom']}
-        style={{ flex: 1, backgroundColor: colors.cream[200] }}
+        style={{ flex: 1, backgroundColor: 'transparent' }}
       >
         <View
           style={{ flex: 1, paddingTop: topPadding }}
@@ -148,7 +148,7 @@ export function MatchProfileScreen({ route, navigation }: Props) {
     return (
       <SafeAreaView
         edges={['bottom']}
-        style={{ flex: 1, backgroundColor: colors.cream[200] }}
+        style={{ flex: 1, backgroundColor: 'transparent' }}
       >
         <View style={{ flex: 1, paddingTop: topPadding }}>
           <CandidateProfileHeader />
@@ -165,7 +165,7 @@ export function MatchProfileScreen({ route, navigation }: Props) {
   return (
     <SafeAreaView
       edges={['bottom']}
-      style={{ flex: 1, backgroundColor: colors.cream[200] }}
+      style={{ flex: 1, backgroundColor: 'transparent' }}
     >
       <View style={{ flex: 1, paddingTop: topPadding }}>
         <CandidateProfileHeader />

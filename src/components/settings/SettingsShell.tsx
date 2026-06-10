@@ -4,7 +4,6 @@ import React, { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { AuthBackground, onboardingBackground } from '../auth/AuthBackground';
 import { useTopScreenPadding } from '../../hooks/useTopScreenPadding';
 import { colors } from '../../theme/colors';
 
@@ -18,7 +17,7 @@ export function SettingsShell({ children }: Props) {
   const topPadding = useTopScreenPadding();
 
   return (
-    <AuthBackground source={onboardingBackground}>
+    <View style={{ flex: 1, backgroundColor: 'transparent' }}>
       <SafeAreaView className="flex-1" edges={['bottom']} style={{ flex: 1, backgroundColor: 'transparent' }}>
         <View
           className="flex-row items-center justify-between px-5 pb-1"
@@ -57,6 +56,6 @@ export function SettingsShell({ children }: Props) {
           {children}
         </ScrollView>
       </SafeAreaView>
-    </AuthBackground>
+    </View>
   );
 }

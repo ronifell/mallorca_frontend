@@ -15,7 +15,6 @@ import { CandidatePhotoThumbnails } from '../../components/discovery/CandidatePh
 import { CandidateProfileHeader } from '../../components/discovery/CandidateProfileHeader';
 import { useTopScreenPadding } from '../../hooks/useTopScreenPadding';
 import { RootStackParamList } from '../../navigation/types';
-import { colors } from '../../theme/colors';
 import { resolveMediaUrl } from '../../utils/mediaUrl';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'CandidateProfile'>;
@@ -111,7 +110,7 @@ export function CandidateProfileScreen({ route, navigation }: Props) {
   return (
     <SafeAreaView
       edges={['bottom']}
-      style={{ flex: 1, backgroundColor: colors.cream[200] }}
+      style={{ flex: 1, backgroundColor: 'transparent' }}
     >
       <View style={{ flex: 1, paddingTop: topPadding }}>
         <CandidateProfileHeader />

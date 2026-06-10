@@ -277,6 +277,7 @@ export function LikesView() {
         <FlatList
           data={items}
           keyExtractor={(u) => `${tab}-${u.id}`}
+          style={{ backgroundColor: 'transparent' }}
           contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 24 }}
           refreshControl={
             <RefreshControl

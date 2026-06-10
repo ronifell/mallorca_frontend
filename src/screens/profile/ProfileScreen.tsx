@@ -47,7 +47,7 @@ export function ProfileScreen() {
     return (
       <SafeAreaView
         edges={['bottom']}
-        style={{ flex: 1, backgroundColor: colors.cream[200] }}
+        style={{ flex: 1, backgroundColor: 'transparent' }}
       >
         <View
           style={{ flex: 1, paddingTop: topPadding }}
@@ -81,7 +81,7 @@ export function ProfileScreen() {
   return (
     <SafeAreaView
       edges={['bottom']}
-      style={{ flex: 1, backgroundColor: colors.cream[200] }}
+      style={{ flex: 1, backgroundColor: 'transparent' }}
     >
       <View style={{ flex: 1, paddingTop: topPadding }}>
         <CandidateProfileHeader onBack={goDiscover} />

@@ -8,7 +8,6 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { AuthBackground, onboardingBackground } from '../auth/AuthBackground';
 import { useTopScreenPadding } from '../../hooks/useTopScreenPadding';
 import { colors } from '../../theme/colors';
 import { ProfileStepIndicator } from './ProfileStepIndicator';
@@ -31,7 +30,7 @@ export function ProfileSetupShell({
   const topPadding = useTopScreenPadding();
 
   return (
-    <AuthBackground source={onboardingBackground}>
+    <View style={{ flex: 1, backgroundColor: 'transparent' }}>
       <SafeAreaView className="flex-1" edges={['bottom']} style={{ flex: 1, backgroundColor: 'transparent' }}>
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -73,6 +72,6 @@ export function ProfileSetupShell({
           </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
-    </AuthBackground>
+    </View>
   );
 }
