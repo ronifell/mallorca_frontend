@@ -13,6 +13,9 @@ import { colors } from '../../theme/colors';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Onboarding'>;
 
+/** Italic display font for the onboarding headline. */
+const DISPLAY_FONT = 'PlayfairDisplay_400Regular_Italic';
+
 export function OnboardingScreen({ navigation }: Props) {
   const { t } = useTranslation();
   const topPadding = useTopScreenPadding();
@@ -34,14 +37,14 @@ export function OnboardingScreen({ navigation }: Props) {
             <Logo size={100} />
 
             <Text
-              className="text-ink-700 text-[24px] leading-8 text-center mt-8 px-2"
-              style={{ fontFamily: 'NotoSerif_700Bold' }}
+              className="text-ink-700 text-[28px] leading-9 text-center mt-8 px-2"
+              style={{ fontFamily: DISPLAY_FONT }}
             >
               {t('onboarding.headlineBefore')}{' '}
-              <Text className="text-coral-500" style={{ fontFamily: 'NotoSerif_700Bold' }}>
+              <Text className="text-coral-500" style={{ fontFamily: DISPLAY_FONT }}>
                 {t('onboarding.headlineAccent')}
               </Text>
-              <Text style={{ fontFamily: 'NotoSerif_700Bold' }}>.</Text>
+              <Text style={{ fontFamily: DISPLAY_FONT }}>.</Text>
             </Text>
 
             <View

@@ -19,7 +19,12 @@ export function OnboardingFeature({ icon, title, description }: Props) {
         <Ionicons name={icon} size={22} color={colors.coral[500]} />
       </View>
       <View className="flex-1 pt-0.5">
-        <Text className="text-ink-700 font-semibold text-base mb-1">{title}</Text>
+        <Text
+          className="text-ink-700 text-[18px] mb-1"
+          style={{ fontFamily: 'PlayfairDisplay_700Bold_Italic' }}
+        >
+          {title}
+        </Text>
         <Text className="text-ink-400 text-sm leading-5">{description}</Text>
       </View>
     </View>

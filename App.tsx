@@ -2,6 +2,11 @@ import {
   NotoSerif_400Regular,
   NotoSerif_700Bold,
 } from '@expo-google-fonts/noto-serif';
+import {
+  PlayfairDisplay_400Regular_Italic,
+  PlayfairDisplay_500Medium_Italic,
+  PlayfairDisplay_700Bold_Italic,
+} from '@expo-google-fonts/playfair-display';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useFonts } from 'expo-font';
 import * as ExpoSplash from 'expo-splash-screen';
@@ -39,6 +44,9 @@ export default function App() {
   const [fontsLoaded] = useFonts({
     NotoSerif_400Regular,
     NotoSerif_700Bold,
+    PlayfairDisplay_400Regular_Italic,
+    PlayfairDisplay_500Medium_Italic,
+    PlayfairDisplay_700Bold_Italic,
   });
   const initialized = useAuthStore((s) => s.initialized);
   const bootstrap = useAuthStore((s) => s.bootstrap);
