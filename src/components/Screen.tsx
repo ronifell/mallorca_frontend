@@ -26,6 +26,12 @@ interface Props {
   className?: string;
   padded?: boolean;
   background?: keyof typeof tabBackgrounds;
+  /**
+   * Wrap children in the default `KeyboardAvoidingView`. Set to `false` on
+   * screens (e.g. chat) that need to manage their own keyboard avoidance to
+   * prevent nested `KeyboardAvoidingView`s from double-counting the keyboard.
+   */
+  keyboardAvoiding?: boolean;
 }
 
 export function Screen({
@@ -35,6 +41,7 @@ export function Screen({
   className = '',
   padded = true,
   background,
+  keyboardAvoiding = true,
 }: Props) {
   const topPadding = useTopScreenPadding();
   const hasBackground = background != null;
@@ -50,30 +57,36 @@ export function Screen({
     </View>
   );
 
+  const content = scroll ? (
+    <ScrollView
+      className={padded ? 'flex-1 px-5' : 'flex-1'}
+      keyboardShouldPersistTaps="handled"
+      contentContainerStyle={{ paddingTop: topPadding + 16, paddingBottom: 16, flexGrow: 1 }}
+      style={{ flex: 1, backgroundColor: surfaceColor }}
+    >
+      {children}
+    </ScrollView>
+  ) : (
+    inner
+  );
+
   const body = (
     <SafeAreaView
       edges={edges}
       className={containerClass}
       style={{ flex: 1, backgroundColor: surfaceColor }}
     >
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        className="flex-1"
-        style={{ flex: 1, backgroundColor: surfaceColor }}
-      >
-        {scroll ? (
-          <ScrollView
-            className={padded ? 'flex-1 px-5' : 'flex-1'}
-            keyboardShouldPersistTaps="handled"
-            contentContainerStyle={{ paddingTop: topPadding + 16, paddingBottom: 16, flexGrow: 1 }}
-            style={{ flex: 1, backgroundColor: surfaceColor }}
-          >
-            {children}
-          </ScrollView>
-        ) : (
-          inner
-        )}
-      </KeyboardAvoidingView>
+      {keyboardAvoiding ? (
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          className="flex-1"
+          style={{ flex: 1, backgroundColor: surfaceColor }}
+        >
+          {content}
+        </KeyboardAvoidingView>
+      ) : (
+        content
+      )}
     </SafeAreaView>
   );
 

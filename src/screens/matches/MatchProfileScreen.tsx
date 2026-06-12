@@ -206,6 +206,9 @@ export function MatchProfileScreen({ route, navigation }: Props) {
             interestedIn={profile.interestedIn}
             languages={profile.languages}
             city={profile.city}
+            relationshipGoals={profile.relationshipGoals}
+            minAge={profile.minAge}
+            maxAge={profile.maxAge}
           />
 
           {profile.bio ? (

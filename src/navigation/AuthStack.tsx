@@ -10,7 +10,7 @@ import { AuthStackParamList } from './types';
 const Stack = createNativeStackNavigator<AuthStackParamList>();
 
 /** Set false to skip onboarding on launch; screen remains registered for manual navigation. */
-export const SHOW_ONBOARDING_ON_LAUNCH = false;
+export const SHOW_ONBOARDING_ON_LAUNCH = true;
 
 export function AuthStack() {
   return (

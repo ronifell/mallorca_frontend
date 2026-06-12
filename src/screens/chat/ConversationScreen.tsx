@@ -3,7 +3,15 @@ import { useQuery } from '@tanstack/react-query';
 import * as ImagePicker from 'expo-image-picker';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, FlatList, Pressable, Text, View } from 'react-native';
+import {
+  Alert,
+  FlatList,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  Text,
+  View,
+} from 'react-native';
 import { Socket } from 'socket.io-client';
 import { extractErrorMessage } from '../../api/client';
 import { chatApi, usersApi } from '../../api/endpoints';
@@ -14,8 +22,10 @@ import { ConversationInputBar } from '../../components/chat/ConversationInputBar
 import { MessageBubble } from '../../components/chat/MessageBubble';
 import { PremiumConversationBanner } from '../../components/chat/PremiumConversationBanner';
 import { Screen } from '../../components/Screen';
+import { useTopScreenPadding } from '../../hooks/useTopScreenPadding';
 import { RootStackParamList } from '../../navigation/types';
 import { connectSocket } from '../../services/socket';
+import { RecordingResult } from '../../services/voiceRecorder';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Conversation'>;
 
@@ -212,6 +222,8 @@ export function ConversationScreen({ route, navigation }: Props) {
       type: 'text',
       text: trimmed,
       imageUrl: null,
+      audioUrl: null,
+      audioDuration: null,
       deliveredAt: null,
       readAt: null,
       createdAt: new Date().toISOString(),
@@ -253,6 +265,8 @@ export function ConversationScreen({ route, navigation }: Props) {
       type: 'image',
       text: null,
       imageUrl: localUri,
+      audioUrl: null,
+      audioDuration: null,
       deliveredAt: null,
       readAt: null,
       createdAt: new Date().toISOString(),
@@ -272,6 +286,45 @@ export function ConversationScreen({ route, navigation }: Props) {
     }
   };
 
+  const sendVoice = useCallback(
+    async (recording: RecordingResult) => {
+      if (!myId) return;
+      const tempId = makeTempId();
+      const optimistic: Message = {
+        id: tempId,
+        senderId: myId,
+        type: 'audio',
+        text: null,
+        imageUrl: null,
+        audioUrl: recording.uri,
+        audioDuration: recording.durationSeconds,
+        deliveredAt: null,
+        readAt: null,
+        createdAt: new Date().toISOString(),
+        conversationId,
+      };
+      setMessages((prev) => [...prev, optimistic]);
+
+      try {
+        const fileName = `voice-${Date.now()}.m4a`;
+        const file = { uri: recording.uri, name: fileName, type: recording.mimeType };
+        const { url } = await chatApi.uploadAudio(conversationId, file);
+        const msg = await chatApi.send(conversationId, {
+          type: 'audio',
+          audioUrl: url,
+          audioDuration: recording.durationSeconds,
+        });
+        reconcileOptimistic(tempId, msg);
+      } catch (e) {
+        removeOptimistic(tempId);
+        const errMsg = extractErrorMessage(e);
+        if (errMsg.toLowerCase().includes('premium')) setPremiumBlocked(true);
+        else Alert.alert(t('common.error'), errMsg);
+      }
+    },
+    [conversationId, myId, t],
+  );
+
   const onChangeText = (v: string) => {
     setText(v);
     if (!socketRef.current) return;
@@ -285,78 +338,88 @@ export function ConversationScreen({ route, navigation }: Props) {
   const chatRows = useMemo(() => buildChatRows(messages, t), [messages, t]);
   const inputDisabled = premiumBlocked;
   const isPremium = me?.isPremium ?? false;
+  const topPadding = useTopScreenPadding();
 
   return (
-    <Screen padded={false} edges={['bottom']}>
-      <ConversationHeader
-        otherName={otherName}
-        otherUserAge={otherUserAge}
-        otherUserPhoto={otherUserPhoto}
-        onBack={() => navigation.goBack()}
-      />
+    <Screen padded={false} edges={['bottom']} keyboardAvoiding={false}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? topPadding : 0}
+      >
+        <ConversationHeader
+          otherName={otherName}
+          otherUserAge={otherUserAge}
+          otherUserPhoto={otherUserPhoto}
+          onBack={() => navigation.goBack()}
+        />
 
-      {isPremium && !premiumBlocked ? (
-        <PremiumConversationBanner onPress={() => navigation.navigate('Premium')} />
-      ) : null}
+        {isPremium && !premiumBlocked ? (
+          <PremiumConversationBanner onPress={() => navigation.navigate('Premium')} />
+        ) : null}
 
-      <FlatList
-        ref={listRef}
-        data={chatRows}
-        keyExtractor={(row) => row.id}
-        className="flex-1"
-        style={{ backgroundColor: 'transparent' }}
-        contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 12, paddingBottom: 8 }}
-        onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: false })}
-        renderItem={({ item }) => {
-          if (item.kind === 'date') {
-            return <ChatDateSeparator label={item.label} />;
-          }
+        <FlatList
+          ref={listRef}
+          data={chatRows}
+          keyExtractor={(row) => row.id}
+          className="flex-1"
+          style={{ backgroundColor: 'transparent' }}
+          contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 12, paddingBottom: 8 }}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
+          onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: false })}
+          renderItem={({ item }) => {
+            if (item.kind === 'date') {
+              return <ChatDateSeparator label={item.label} />;
+            }
 
-          const mine = item.message.senderId === myId;
-          return (
-            <MessageBubble
-              message={item.message}
-              mine={mine}
-              showAvatar={!mine && item.showAvatar}
-              otherName={otherName}
-              otherPhoto={otherUserPhoto}
-              showMeta={item.showMeta}
-              timeLabel={item.timeLabel}
-            />
-          );
-        }}
-        ListFooterComponent={
-          otherTyping ? (
-            <View className="flex-row mb-3">
-              <View className="w-8 mr-2" />
-              <View className="bg-white border border-cream-300 px-3 py-2 rounded-2xl rounded-bl-md">
-                <Text className="text-ink-400 italic">{t('chat.typing')}</Text>
+            const mine = item.message.senderId === myId;
+            return (
+              <MessageBubble
+                message={item.message}
+                mine={mine}
+                showAvatar={!mine && item.showAvatar}
+                otherName={otherName}
+                otherPhoto={otherUserPhoto}
+                showMeta={item.showMeta}
+                timeLabel={item.timeLabel}
+              />
+            );
+          }}
+          ListFooterComponent={
+            otherTyping ? (
+              <View className="flex-row mb-3">
+                <View className="w-8 mr-2" />
+                <View className="bg-white border border-cream-300 px-3 py-2 rounded-2xl rounded-bl-md">
+                  <Text className="text-ink-400 italic">{t('chat.typing')}</Text>
+                </View>
               </View>
-            </View>
-          ) : null
-        }
-      />
+            ) : null
+          }
+        />
 
-      {premiumBlocked ? (
-        <View className="bg-coral-50 border-t border-coral-100 px-5 py-4">
-          <Text className="text-coral-600 mb-2 text-center">{t('chat.premiumRequired')}</Text>
-          <Pressable
-            onPress={() => navigation.navigate('Premium')}
-            className="bg-coral-500 py-3 rounded-2xl items-center"
-          >
-            <Text className="text-white font-semibold">{t('chat.upgrade')}</Text>
-          </Pressable>
-        </View>
-      ) : null}
+        {premiumBlocked ? (
+          <View className="bg-coral-50 border-t border-coral-100 px-5 py-4">
+            <Text className="text-coral-600 mb-2 text-center">{t('chat.premiumRequired')}</Text>
+            <Pressable
+              onPress={() => navigation.navigate('Premium')}
+              className="bg-coral-500 py-3 rounded-2xl items-center"
+            >
+              <Text className="text-white font-semibold">{t('chat.upgrade')}</Text>
+            </Pressable>
+          </View>
+        ) : null}
 
-      <ConversationInputBar
-        value={text}
-        onChangeText={onChangeText}
-        onSend={send}
-        onAttach={sendImage}
-        onPickImage={sendImage}
-        disabled={inputDisabled}
-      />
+        <ConversationInputBar
+          value={text}
+          onChangeText={onChangeText}
+          onSend={send}
+          onAttach={sendImage}
+          onPickImage={sendImage}
+          onSendVoice={sendVoice}
+          disabled={inputDisabled}
+        />
+      </KeyboardAvoidingView>
     </Screen>
   );
 }

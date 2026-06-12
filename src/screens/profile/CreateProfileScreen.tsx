@@ -4,7 +4,8 @@ import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import { extractErrorMessage } from '../../api/client';
 import { usersApi } from '../../api/endpoints';
-import { Gender, InterestSelection } from '../../api/types';
+import { Gender, InterestSelection, RelationshipGoal } from '../../api/types';
+import { AgeRangePicker } from '../../components/profile/AgeRangePicker';
 import { BioTextArea } from '../../components/profile/BioTextArea';
 import { GenderToggle } from '../../components/profile/GenderToggle';
 import { InterestPill, InterestPillRow } from '../../components/profile/InterestPill';
@@ -12,6 +13,7 @@ import { LanguageFlagPill } from '../../components/profile/LanguageFlagPill';
 import { ProfileContinueButton } from '../../components/profile/ProfileContinueButton';
 import { ProfileSectionLabel } from '../../components/profile/ProfileSectionLabel';
 import { ProfileSetupShell } from '../../components/profile/ProfileSetupShell';
+import { RelationshipGoalChips } from '../../components/profile/RelationshipGoalChips';
 import { Input } from '../../components/Input';
 import {
   GENDER_LABEL_KEYS,
@@ -38,6 +40,8 @@ export function CreateProfileScreen({ navigation }: Props) {
   const [city, setCity] = useState('');
   const [bio, setBio] = useState('');
   const [languages, setLanguages] = useState<string[]>([]);
+  const [relationshipGoals, setRelationshipGoals] = useState<RelationshipGoal[]>([]);
+  const [ageRange, setAgeRange] = useState<{ min: number; max: number }>({ min: 18, max: 99 });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -72,6 +76,14 @@ export function CreateProfileScreen({ navigation }: Props) {
       setError(t('common.error'));
       return;
     }
+    if (!relationshipGoals.length) {
+      setError(t('profile.relationshipGoalRequired'));
+      return;
+    }
+    if (ageRange.min > ageRange.max) {
+      setError(t('profile.ageRangeInvalid'));
+      return;
+    }
     if (!isValidIsoDate(birthDate)) {
       setError(t('profile.birthDateFormat'));
       return;
@@ -83,6 +95,9 @@ export function CreateProfileScreen({ navigation }: Props) {
         birthDate,
         gender,
         interestSelections: interests,
+        relationshipGoals,
+        minAge: ageRange.min,
+        maxAge: ageRange.max,
         city,
         bio,
         languages,
@@ -144,6 +159,18 @@ export function CreateProfileScreen({ navigation }: Props) {
         ))}
       </InterestPillRow>
       <View className="mb-2" />
+
+      <ProfileSectionLabel label={t('profile.relationshipGoal')} icon="sparkles-outline" />
+      <Text className="text-ink-400 text-xs mb-2">{t('profile.relationshipGoalHelper')}</Text>
+      <RelationshipGoalChips value={relationshipGoals} onChange={setRelationshipGoals} />
+
+      <ProfileSectionLabel label={t('profile.ageRange')} icon="calendar-number-outline" />
+      <Text className="text-ink-400 text-xs mb-2">{t('profile.ageRangeHelper')}</Text>
+      <AgeRangePicker
+        min={ageRange.min}
+        max={ageRange.max}
+        onChange={setAgeRange}
+      />
 
       <ProfileSectionLabel label={t('profile.city')} icon="location-outline" />
       <Input

@@ -2,7 +2,8 @@ import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
-import { InterestedIn } from '../../api/types';
+import { InterestedIn, RelationshipGoal } from '../../api/types';
+import { RELATIONSHIP_GOAL_LABEL_KEYS } from '../../config/profileOptions';
 import { colors } from '../../theme/colors';
 import {
   interestedInIcon,
@@ -15,6 +16,9 @@ interface Props {
   languages: string[];
   city: string | null;
   country?: string;
+  relationshipGoals?: RelationshipGoal[];
+  minAge?: number | null;
+  maxAge?: number | null;
 }
 
 interface RowProps {
@@ -27,7 +31,7 @@ interface RowProps {
 function Row({ icon, label, value, divider = true }: RowProps) {
   return (
     <View
-      className={`flex-row items-center py-3 ${divider ? 'border-b border-cream-200' : ''}`}
+      className={`flex-row items-start py-3 ${divider ? 'border-b border-cream-200' : ''}`}
     >
       <View
         className="w-10 h-10 rounded-full items-center justify-center mr-3"
@@ -37,10 +41,7 @@ function Row({ icon, label, value, divider = true }: RowProps) {
       </View>
       <View className="flex-1">
         <Text className="text-ink-400 text-xs">{label}</Text>
-        <Text
-          className="text-ink-700 font-semibold text-sm mt-0.5"
-          numberOfLines={1}
-        >
+        <Text className="text-ink-700 font-semibold text-sm mt-0.5 leading-5">
           {value}
         </Text>
       </View>
@@ -58,6 +59,9 @@ export function CandidateInfoCard({
   languages,
   city,
   country = 'España',
+  relationshipGoals,
+  minAge,
+  maxAge,
 }: Props) {
   const { t } = useTranslation();
 
@@ -73,6 +77,16 @@ export function CandidateInfoCard({
     return `${middle}, ${country}`;
   })();
 
+  const relationshipGoalValue = (relationshipGoals ?? [])
+    .map((id) => t(RELATIONSHIP_GOAL_LABEL_KEYS[id]))
+    .filter(Boolean)
+    .join(' · ');
+
+  const ageRangeValue =
+    minAge != null && maxAge != null
+      ? t('profile.ageRangeValue', { min: minAge, max: maxAge })
+      : null;
+
   const rows: Array<RowProps & { key: string }> = [];
 
   if (interestedIn) {
@@ -81,6 +95,24 @@ export function CandidateInfoCard({
       icon: interestedInIcon(interestedIn),
       label: t('profile.interestedInLabel'),
       value: interestedInLabel(interestedIn, t),
+    });
+  }
+
+  if (relationshipGoalValue) {
+    rows.push({
+      key: 'relationshipGoal',
+      icon: 'sparkles-outline',
+      label: t('profile.relationshipGoalLabel'),
+      value: relationshipGoalValue,
+    });
+  }
+
+  if (ageRangeValue) {
+    rows.push({
+      key: 'ageRange',
+      icon: 'calendar-number-outline',
+      label: t('profile.ageRangeLabel'),
+      value: ageRangeValue,
     });
   }
 

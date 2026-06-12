@@ -37,22 +37,16 @@ function CircleIconButton({
 }
 
 interface Props {
-  onLeftPress?: () => void;
   onRightPress?: () => void;
   showNotificationDot?: boolean;
 }
 
-export function SocialBrandHeader({ onLeftPress, onRightPress, showNotificationDot }: Props) {
+export function SocialBrandHeader({ onRightPress, showNotificationDot }: Props) {
   const { t } = useTranslation();
 
   return (
     <View className="flex-row items-center justify-between px-5 pt-2 pb-2">
-      <CircleIconButton
-        onPress={onLeftPress}
-        accessibilityLabel={t('matches.openFilters')}
-      >
-        <Ionicons name="filter-outline" size={20} color={colors.ink[700]} />
-      </CircleIconButton>
+      <View style={{ width: 40 }} />
 
       <View className="flex-row items-baseline">
         <Text className="text-ink-700 font-serif text-xl">{t('auth.appNameCitas')} </Text>

@@ -1,18 +1,19 @@
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import * as Haptics from 'expo-haptics';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { extractErrorMessage } from '../../api/client';
-import { discoveryApi } from '../../api/endpoints';
+import { chatApi, discoveryApi, usersApi } from '../../api/endpoints';
 import { CandidateActionBar } from '../../components/discovery/CandidateActionBar';
 import { CandidateIdentityRow } from '../../components/discovery/CandidateIdentityRow';
 import { CandidateInfoCard } from '../../components/discovery/CandidateInfoCard';
 import { CandidatePhotoHero } from '../../components/discovery/CandidatePhotoHero';
 import { CandidatePhotoThumbnails } from '../../components/discovery/CandidatePhotoThumbnails';
 import { CandidateProfileHeader } from '../../components/discovery/CandidateProfileHeader';
+import { MatchModal } from '../../components/discovery/MatchModal';
 import { useTopScreenPadding } from '../../hooks/useTopScreenPadding';
 import { RootStackParamList } from '../../navigation/types';
 import { resolveMediaUrl } from '../../utils/mediaUrl';
@@ -30,6 +31,8 @@ export function CandidateProfileScreen({ route, navigation }: Props) {
 
   const [photoIndex, setPhotoIndex] = useState(0);
   const [busy, setBusy] = useState(false);
+  const [matchPopup, setMatchPopup] = useState<{ matchId: string } | null>(null);
+  const { data: me } = useQuery({ queryKey: ['me'], queryFn: () => usersApi.me() });
 
   const photoUris = useMemo(
     () =>
@@ -57,11 +60,26 @@ export function CandidateProfileScreen({ route, navigation }: Props) {
     qc.invalidateQueries({ queryKey: ['feed'] });
     if (matched && matchId) {
       qc.invalidateQueries({ queryKey: ['matches'] });
-      Alert.alert(t('discovery.matched'), candidate.firstName ?? '', [
-        { text: t('common.ok'), onPress: () => navigation.goBack() },
-      ]);
+      setMatchPopup({ matchId });
     } else {
       navigation.goBack();
+    }
+  };
+
+  const openMatchChat = async () => {
+    if (!matchPopup) return;
+    try {
+      const conv = await chatApi.ensureConversation(matchPopup.matchId);
+      setMatchPopup(null);
+      navigation.replace('Conversation', {
+        conversationId: conv.id,
+        otherName: candidate.firstName,
+        otherUserId: candidate.id,
+        otherUserAge: candidate.age ?? null,
+        otherUserPhoto: candidate.photos[0]?.url ?? null,
+      });
+    } catch (e) {
+      Alert.alert(t('common.error'), extractErrorMessage(e));
     }
   };
 
@@ -94,9 +112,27 @@ export function CandidateProfileScreen({ route, navigation }: Props) {
     }
   };
 
-  const handleSuperLike = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => undefined);
-    Alert.alert(t('discovery.superLike'), t('discovery.superLikeComingSoon'));
+  const handleSuperLike = async () => {
+    if (busy) return;
+    setBusy(true);
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => undefined);
+    try {
+      const res = await discoveryApi.like(candidate.id);
+      if (res.matched && res.matchId) {
+        finishSwipe(true, res.matchId);
+      } else {
+        Alert.alert(
+          t('discovery.superLike'),
+          t('discovery.superLikeSent', { name: candidate.firstName ?? '' }),
+          [{ text: t('common.ok'), onPress: () => navigation.goBack() }],
+        );
+        qc.invalidateQueries({ queryKey: ['feed'] });
+      }
+    } catch {
+      Alert.alert(t('common.error'), t('discovery.superLikeError'));
+    } finally {
+      setBusy(false);
+    }
   };
 
   const handleMenu = () => {
@@ -152,6 +188,9 @@ export function CandidateProfileScreen({ route, navigation }: Props) {
             interestedIn={candidate.interestedIn}
             languages={candidate.languages}
             city={candidate.city}
+            relationshipGoals={candidate.relationshipGoals}
+            minAge={candidate.minAge}
+            maxAge={candidate.maxAge}
           />
 
           {candidate.bio ? (
@@ -188,6 +227,19 @@ export function CandidateProfileScreen({ route, navigation }: Props) {
           onLike={handleLike}
           onSuperLike={handleSuperLike}
           disabled={busy}
+        />
+
+        <MatchModal
+          visible={matchPopup != null}
+          name={candidate.firstName}
+          otherPhoto={candidate.photos[0]?.url ?? null}
+          myPhoto={me?.photos?.[0]?.url ?? null}
+          myName={me?.firstName ?? null}
+          onSendMessage={openMatchChat}
+          onClose={() => {
+            setMatchPopup(null);
+            navigation.goBack();
+          }}
         />
       </View>
     </SafeAreaView>

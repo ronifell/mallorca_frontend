@@ -5,6 +5,7 @@ import { Message } from '../../api/types';
 import { Avatar } from '../Avatar';
 import { colors } from '../../theme/colors';
 import { resolveMediaUrl } from '../../utils/mediaUrl';
+import { VoiceMessagePlayer } from './VoiceMessagePlayer';
 
 interface Props {
   message: Message;
@@ -72,6 +73,12 @@ export function MessageBubble({
               source={{ uri: resolveMediaUrl(message.imageUrl) }}
               className="w-52 h-52 rounded-xl"
               resizeMode="cover"
+            />
+          ) : message.type === 'audio' && message.audioUrl ? (
+            <VoiceMessagePlayer
+              audioUrl={message.audioUrl}
+              durationSeconds={message.audioDuration}
+              mine={mine}
             />
           ) : (
             <Text className="text-ink-700 text-base leading-5">{message.text}</Text>

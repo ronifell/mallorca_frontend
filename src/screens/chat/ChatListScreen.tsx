@@ -4,7 +4,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useQuery } from '@tanstack/react-query';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, FlatList, RefreshControl, Text, View } from 'react-native';
+import { FlatList, RefreshControl, Text, View } from 'react-native';
 import { matchesApi, usersApi } from '../../api/endpoints';
 import { Match } from '../../api/types';
 import { Screen } from '../../components/Screen';
@@ -58,7 +58,6 @@ export function ChatListScreen() {
   return (
     <Screen padded={false}>
       <SocialBrandHeader
-        onLeftPress={() => Alert.alert(t('matches.filters'), t('matches.filterComingSoon'))}
         onRightPress={() => nav.navigate('Matches')}
         showNotificationDot={totalUnread > 0}
       />

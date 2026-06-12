@@ -90,7 +90,9 @@ export function LoginScreen({ navigation }: Props) {
 
             <View style={styles.welcomeBlock}>
               <Text className="text-ink-700 text-[26px] font-bold mb-1">{t('auth.welcomeBack')}</Text>
-              <Text className="text-ink-400 text-base">{t('auth.loginSubtitle')}</Text>
+              <Text className="text-ink-700 text-base font-medium opacity-90 leading-5">
+                {t('auth.loginSubtitle')}
+              </Text>
             </View>
 
             <View style={styles.formCard}>

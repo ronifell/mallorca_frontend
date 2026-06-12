@@ -11,23 +11,24 @@ import { colors } from '../../theme/colors';
  */
 export function PremiumBenefitsCard() {
   const { t } = useTranslation();
+  const desc = t('premium.benefit1Desc');
 
   return (
     <View className="bg-white rounded-2xl px-4 py-3.5 mb-3" style={cardShadow}>
       <Text className="text-ink-700 font-bold text-base mb-1">{t('premium.benefitsTitle')}</Text>
 
-      <View className="flex-row items-start py-2.5">
+      <View className="flex-row items-center py-2.5">
         <View
           className="w-10 h-10 rounded-full items-center justify-center mr-3"
           style={{ backgroundColor: colors.coral[50] }}
         >
           <Ionicons name="chatbubble-ellipses-outline" size={18} color={colors.coral[500]} />
         </View>
-        <View className="flex-1 pt-0.5">
+        <View className="flex-1">
           <Text className="text-ink-700 font-bold text-sm">{t('premium.benefit1Title')}</Text>
-          <Text className="text-ink-400 text-xs mt-0.5 leading-4">
-            {t('premium.benefit1Desc')}
-          </Text>
+          {desc ? (
+            <Text className="text-ink-400 text-xs mt-0.5 leading-4">{desc}</Text>
+          ) : null}
         </View>
       </View>
     </View>

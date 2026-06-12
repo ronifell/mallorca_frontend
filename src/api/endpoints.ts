@@ -11,6 +11,7 @@ import {
   MatchUserProfile,
   Message,
   MyProfile,
+  RelationshipGoal,
   SubscriptionPlan,
 } from './types';
 
@@ -50,6 +51,7 @@ export const usersApi = {
     gender: Gender;
     interestedIn: 'men' | 'women' | 'both';
     interestSelections: InterestSelection[];
+    relationshipGoals: RelationshipGoal[];
     minAge: number;
     maxAge: number;
     city: string;
@@ -116,7 +118,13 @@ export const chatApi = {
   },
   send: (
     conversationId: string,
-    input: { type: 'text' | 'image'; text?: string; imageUrl?: string },
+    input: {
+      type: 'text' | 'image' | 'audio';
+      text?: string;
+      imageUrl?: string;
+      audioUrl?: string;
+      audioDuration?: number;
+    },
   ) =>
     api
       .post<Message>(`/chat/conversations/${conversationId}/messages`, input)
@@ -129,6 +137,15 @@ export const chatApi = {
       file,
     );
   },
+  uploadAudio: async (
+    conversationId: string,
+    file: { uri: string; name: string; type: string },
+  ) =>
+    postMultipartFile<{ url: string }>(
+      `/chat/conversations/${conversationId}/audio`,
+      'audio',
+      file,
+    ),
   markRead: (conversationId: string) =>
     api.post<void>(`/chat/conversations/${conversationId}/read`).then((r) => r.data),
 };

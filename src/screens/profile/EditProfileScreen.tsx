@@ -7,7 +7,8 @@ import { useTranslation } from 'react-i18next';
 import { Alert, Text, View } from 'react-native';
 import { extractErrorMessage } from '../../api/client';
 import { usersApi } from '../../api/endpoints';
-import { Gender, InterestSelection, Photo } from '../../api/types';
+import { Gender, InterestSelection, Photo, RelationshipGoal } from '../../api/types';
+import { AgeRangePicker } from '../../components/profile/AgeRangePicker';
 import { BioTextArea } from '../../components/profile/BioTextArea';
 import { GenderToggle } from '../../components/profile/GenderToggle';
 import { InterestPill, InterestPillRow } from '../../components/profile/InterestPill';
@@ -16,6 +17,7 @@ import { AddPhotoButton, PhotoUploadGrid } from '../../components/profile/PhotoU
 import { ProfileContinueButton } from '../../components/profile/ProfileContinueButton';
 import { ProfileSectionLabel } from '../../components/profile/ProfileSectionLabel';
 import { ProfileSetupShell } from '../../components/profile/ProfileSetupShell';
+import { RelationshipGoalChips } from '../../components/profile/RelationshipGoalChips';
 import { Input } from '../../components/Input';
 import {
   GENDER_LABEL_KEYS,
@@ -42,6 +44,8 @@ export function EditProfileScreen() {
   const [interests, setInterests] = useState<InterestSelection[]>([]);
   const [languages, setLanguages] = useState<string[]>([]);
   const [photos, setPhotos] = useState<Photo[]>([]);
+  const [relationshipGoals, setRelationshipGoals] = useState<RelationshipGoal[]>([]);
+  const [ageRange, setAgeRange] = useState<{ min: number; max: number }>({ min: 18, max: 99 });
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -68,6 +72,8 @@ export function EditProfileScreen() {
     setBio(me.bio ?? '');
     setLanguages(me.languages);
     setPhotos(me.photos);
+    setRelationshipGoals(me.relationshipGoals ?? []);
+    setAgeRange({ min: me.minAge ?? 18, max: me.maxAge ?? 99 });
 
     if (me.interestSelections.length) {
       setInterests(me.interestSelections);
@@ -131,6 +137,14 @@ export function EditProfileScreen() {
       setError(t('common.error'));
       return;
     }
+    if (!relationshipGoals.length) {
+      setError(t('profile.relationshipGoalRequired'));
+      return;
+    }
+    if (ageRange.min > ageRange.max) {
+      setError(t('profile.ageRangeInvalid'));
+      return;
+    }
     if (!isValidIsoDate(birthDate)) {
       setError(t('profile.birthDateFormat'));
       return;
@@ -145,6 +159,9 @@ export function EditProfileScreen() {
         city,
         bio,
         interestSelections: interests,
+        relationshipGoals,
+        minAge: ageRange.min,
+        maxAge: ageRange.max,
         languages,
       });
       await qc.invalidateQueries({ queryKey: ['me'] });
@@ -221,6 +238,14 @@ export function EditProfileScreen() {
           />
         ))}
       </InterestPillRow>
+
+      <ProfileSectionLabel label={t('profile.relationshipGoal')} icon="sparkles-outline" />
+      <Text className="text-ink-400 text-xs mb-2">{t('profile.relationshipGoalHelper')}</Text>
+      <RelationshipGoalChips value={relationshipGoals} onChange={setRelationshipGoals} />
+
+      <ProfileSectionLabel label={t('profile.ageRange')} icon="calendar-number-outline" />
+      <Text className="text-ink-400 text-xs mb-2">{t('profile.ageRangeHelper')}</Text>
+      <AgeRangePicker min={ageRange.min} max={ageRange.max} onChange={setAgeRange} />
 
       <ProfileSectionLabel label={t('profile.city')} icon="location-outline" />
       <Input

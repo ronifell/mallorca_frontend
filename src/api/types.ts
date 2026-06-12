@@ -18,6 +18,23 @@ export const GENDER_VALUES: Gender[] = [
 export type InterestedIn = 'men' | 'women' | 'both';
 export type InterestSelection = 'men' | 'women' | 'everyone';
 
+export type RelationshipGoal =
+  | 'love'
+  | 'friendship'
+  | 'chat'
+  | 'casual'
+  | 'serious'
+  | 'long_term';
+
+export const RELATIONSHIP_GOAL_VALUES: RelationshipGoal[] = [
+  'love',
+  'friendship',
+  'chat',
+  'casual',
+  'serious',
+  'long_term',
+];
+
 export interface Photo {
   id: string;
   url: string;
@@ -39,6 +56,7 @@ export interface MyProfile {
   isPremium: boolean;
   interestedIn: InterestedIn | null;
   interestSelections: InterestSelection[];
+  relationshipGoals: RelationshipGoal[];
   minAge: number;
   maxAge: number;
   appLanguage: string;
@@ -56,6 +74,9 @@ export interface FeedCandidate {
   photos: Photo[];
   languages: string[];
   isPremium: boolean;
+  relationshipGoals: RelationshipGoal[];
+  minAge: number;
+  maxAge: number;
 }
 
 export interface LikedUser extends FeedCandidate {
@@ -78,7 +99,7 @@ export interface Match {
   lastMessage: {
     id: string;
     text: string | null;
-    type: 'text' | 'image';
+    type: MessageType;
     senderId: string;
     createdAt: string;
   } | null;
@@ -99,21 +120,38 @@ export interface MatchUserProfile {
     photos: Photo[];
     interestedIn: InterestedIn | null;
     isPremium: boolean;
+    relationshipGoals: RelationshipGoal[];
+    minAge: number;
+    maxAge: number;
   };
 }
 
 /** Shared shape for profile hero/details components. */
 export type ProfileDisplayData = Pick<
   MyProfile,
-  'firstName' | 'age' | 'city' | 'gender' | 'bio' | 'languages' | 'photos' | 'interestedIn'
+  | 'firstName'
+  | 'age'
+  | 'city'
+  | 'gender'
+  | 'bio'
+  | 'languages'
+  | 'photos'
+  | 'interestedIn'
+  | 'relationshipGoals'
+  | 'minAge'
+  | 'maxAge'
 > & { isPremium?: boolean };
+
+export type MessageType = 'text' | 'image' | 'audio';
 
 export interface Message {
   id: string;
   senderId: string;
-  type: 'text' | 'image';
+  type: MessageType;
   text: string | null;
   imageUrl: string | null;
+  audioUrl: string | null;
+  audioDuration: number | null;
   deliveredAt: string | null;
   readAt: string | null;
   createdAt: string;

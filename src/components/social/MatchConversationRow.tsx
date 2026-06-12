@@ -15,9 +15,12 @@ function formatPreview(match: Match, myUserId: string | undefined, t: (key: stri
   if (!match.lastMessage) {
     return match.hasConversation ? '' : t('matches.newMatch');
   }
+  const prefix = match.lastMessage.senderId === myUserId ? `${t('chat.youPrefix')} ` : '';
   if (match.lastMessage.type === 'image') {
-    const prefix = match.lastMessage.senderId === myUserId ? `${t('chat.youPrefix')} ` : '';
     return `${prefix}🖼 ${t('chat.image')}`;
+  }
+  if (match.lastMessage.type === 'audio') {
+    return `${prefix}🎙 ${t('chat.voice')}`;
   }
   const text = match.lastMessage.text ?? '';
   if (match.lastMessage.senderId === myUserId) {

@@ -9,7 +9,7 @@
     "userInterfaceStyle": "light",
     "splash": {
       "image": "./assets/splash.png",
-      "resizeMode": "cover",
+      "resizeMode": "contain",
       "backgroundColor": "#F2EBE0"
     },
     "assetBundlePatterns": ["**/*"],
@@ -18,12 +18,14 @@
       "bundleIdentifier": "es.citasmallorca.app",
       "infoPlist": {
         "NSPhotoLibraryUsageDescription": "We need access to your photos to upload your profile pictures.",
-        "NSCameraUsageDescription": "We need access to your camera to take profile pictures."
+        "NSCameraUsageDescription": "We need access to your camera to take profile pictures.",
+        "NSMicrophoneUsageDescription": "We need access to your microphone to record voice messages in chats."
       }
     },
     "android": {
       "package": "es.citasmallorca.app",
       "usesCleartextTraffic": true,
+      "softwareKeyboardLayoutMode": "resize",
       "intentFilters": [
         {
           "action": "VIEW",
@@ -49,12 +51,12 @@
         "monochromeImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#B82E2E"
       },
-      "permissions": ["NOTIFICATIONS", "INTERNET"]
+      "permissions": ["NOTIFICATIONS", "INTERNET", "RECORD_AUDIO"]
     },
     "plugins": [
       ["expo-splash-screen", {
         "image": "./assets/splash.png",
-        "resizeMode": "cover",
+        "resizeMode": "contain",
         "backgroundColor": "#F2EBE0",
         "android": {
           "statusBar": {
@@ -66,6 +68,9 @@
       }],
       ["expo-image-picker", {
         "photosPermission": "Allow Citas Mallorca to access your photos to set up your profile."
+      }],
+      ["expo-av", {
+        "microphonePermission": "Allow Citas Mallorca to access your microphone so you can record voice messages."
       }],
       "expo-localization",
       "expo-notifications",

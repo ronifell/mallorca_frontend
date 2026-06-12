@@ -121,6 +121,9 @@ export function ProfileScreen() {
             interestedIn={me.interestedIn}
             languages={me.languages}
             city={me.city}
+            relationshipGoals={me.relationshipGoals}
+            minAge={me.minAge}
+            maxAge={me.maxAge}
           />
 
           {me.bio ? (
