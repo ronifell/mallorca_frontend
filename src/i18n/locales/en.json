@@ -276,7 +276,9 @@
     "restoreComingSoon": "Purchase restore will be available in a future update.",
     "active": "You have Premium",
     "until": "Until",
-    "purchaseError": "We couldn't complete the purchase"
+    "purchaseError": "We couldn't complete the purchase",
+    "acceptTermsIntro": "I have read and accept the ",
+    "acceptPrivacyIntro": "I have read and accept the "
   },
   "settings": {
     "title": "Settings",

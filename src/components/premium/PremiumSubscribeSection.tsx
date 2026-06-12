@@ -1,7 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
-import React from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Alert, Linking, Pressable, Text, View } from 'react-native';
+import { LEGAL_LINKS } from '../../config/legal';
+import { LegalCheckbox } from '../auth/LegalCheckbox';
 import { colors } from '../../theme/colors';
 
 interface Props {
@@ -14,6 +16,11 @@ const GOOGLE_PLAY_SUBS_URL = 'https://play.google.com/store/account/subscription
 
 export function PremiumSubscribeSection({ onSubscribe, loading, disabled }: Props) {
   const { t } = useTranslation();
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [privacyAccepted, setPrivacyAccepted] = useState(false);
+
+  const legalAccepted = termsAccepted && privacyAccepted;
+  const isBlocked = loading || disabled || !legalAccepted;
 
   const onRestore = () => {
     Alert.alert(t('premium.restore'), t('premium.restoreComingSoon'));
@@ -25,12 +32,32 @@ export function PremiumSubscribeSection({ onSubscribe, loading, disabled }: Prop
 
   return (
     <View className="mt-2">
+      {/* Legal consent checkboxes — required by Google Play before purchase */}
+      <View className="mb-4 px-1">
+        <LegalCheckbox
+          checked={termsAccepted}
+          onToggle={() => setTermsAccepted((v) => !v)}
+          intro={t('premium.acceptTermsIntro')}
+          linkLabel={t('auth.termsOfService')}
+          linkUrl={LEGAL_LINKS.terms}
+          testID="premium-terms-checkbox"
+        />
+        <LegalCheckbox
+          checked={privacyAccepted}
+          onToggle={() => setPrivacyAccepted((v) => !v)}
+          intro={t('premium.acceptPrivacyIntro')}
+          linkLabel={t('auth.privacyPolicy')}
+          linkUrl={LEGAL_LINKS.privacy}
+          testID="premium-privacy-checkbox"
+        />
+      </View>
+
       <Pressable
-        onPress={loading || disabled ? undefined : onSubscribe}
+        onPress={isBlocked ? undefined : onSubscribe}
         accessibilityRole="button"
         accessibilityLabel={t('premium.continue')}
         className={`flex-row items-center justify-center bg-coral-500 active:bg-coral-600 rounded-full py-3.5 px-6 w-full ${
-          disabled ? 'opacity-50' : ''
+          disabled ? 'opacity-50' : !legalAccepted ? 'opacity-40' : ''
         } ${loading ? 'opacity-70' : ''}`}
         style={buttonShadow}
       >

@@ -276,7 +276,9 @@
     "restoreComingSoon": "La restauración de compras estará disponible próximamente.",
     "active": "Tienes Premium activo",
     "until": "Hasta",
-    "purchaseError": "No se pudo completar la compra"
+    "purchaseError": "No se pudo completar la compra",
+    "acceptTermsIntro": "He leído y acepto los ",
+    "acceptPrivacyIntro": "He leído y acepto la "
   },
   "settings": {
     "title": "Ajustes",
