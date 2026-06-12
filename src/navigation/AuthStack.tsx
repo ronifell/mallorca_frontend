@@ -9,13 +9,16 @@ import { AuthStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<AuthStackParamList>();
 
-/** Set false to skip onboarding on launch; screen remains registered for manual navigation. */
-export const SHOW_ONBOARDING_ON_LAUNCH = true;
+interface Props {
+  /** When true (default) the stack opens on the Onboarding welcome screen.
+   *  Set to false after a logout so the user lands directly on Login. */
+  showOnboarding?: boolean;
+}
 
-export function AuthStack() {
+export function AuthStack({ showOnboarding = true }: Props) {
   return (
     <Stack.Navigator
-      initialRouteName={SHOW_ONBOARDING_ON_LAUNCH ? 'Onboarding' : 'Login'}
+      initialRouteName={showOnboarding ? 'Onboarding' : 'Login'}
       screenOptions={{
         headerStyle: { backgroundColor: colors.cream[200] },
         headerShadowVisible: false,

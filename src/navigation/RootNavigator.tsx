@@ -1,6 +1,6 @@
 import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import React from 'react';
+import React, { useRef } from 'react';
 import { ImageBackground, StyleSheet, View } from 'react-native';
 import { LanguageSwitcher } from '../components/LanguageSwitcher';
 import { useAuthStore } from '../store/auth';
@@ -43,6 +43,11 @@ export function RootNavigator() {
   const { user } = useAuthStore();
   const isAuthenticated = !!user;
 
+  // Track whether the user has ever been authenticated in this app session.
+  // Once true, any subsequent unauthenticated state is a logout → skip Onboarding.
+  const hasBeenAuthenticated = useRef(false);
+  if (isAuthenticated) hasBeenAuthenticated.current = true;
+
   const contentStyle = isAuthenticated
     ? { backgroundColor: 'transparent' as const }
     : { backgroundColor: colors.cream[200] };
@@ -71,9 +76,10 @@ export function RootNavigator() {
           {!user ? (
             <Stack.Screen
               name="Auth"
-              component={AuthStack}
               options={{ headerShown: false }}
-            />
+            >
+              {() => <AuthStack showOnboarding={!hasBeenAuthenticated.current} />}
+            </Stack.Screen>
           ) : !user.emailVerified ? (
             <Stack.Screen
               name="VerifyEmail"
