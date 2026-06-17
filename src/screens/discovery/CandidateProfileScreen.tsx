@@ -1,21 +1,21 @@
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import * as Haptics from 'expo-haptics';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { extractErrorMessage } from '../../api/client';
-import { chatApi, discoveryApi, usersApi } from '../../api/endpoints';
+import { discoveryApi } from '../../api/endpoints';
 import { CandidateActionBar } from '../../components/discovery/CandidateActionBar';
 import { CandidateIdentityRow } from '../../components/discovery/CandidateIdentityRow';
 import { CandidateInfoCard } from '../../components/discovery/CandidateInfoCard';
 import { CandidatePhotoHero } from '../../components/discovery/CandidatePhotoHero';
 import { CandidatePhotoThumbnails } from '../../components/discovery/CandidatePhotoThumbnails';
 import { CandidateProfileHeader } from '../../components/discovery/CandidateProfileHeader';
-import { MatchModal } from '../../components/discovery/MatchModal';
 import { useTopScreenPadding } from '../../hooks/useTopScreenPadding';
 import { RootStackParamList } from '../../navigation/types';
+import { useMatchPopup } from '../../store/matchPopup';
 import { resolveMediaUrl } from '../../utils/mediaUrl';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'CandidateProfile'>;
@@ -31,8 +31,7 @@ export function CandidateProfileScreen({ route, navigation }: Props) {
 
   const [photoIndex, setPhotoIndex] = useState(0);
   const [busy, setBusy] = useState(false);
-  const [matchPopup, setMatchPopup] = useState<{ matchId: string } | null>(null);
-  const { data: me } = useQuery({ queryKey: ['me'], queryFn: () => usersApi.me() });
+  const showMatchPopup = useMatchPopup((s) => s.show);
 
   const photoUris = useMemo(
     () =>
@@ -60,27 +59,16 @@ export function CandidateProfileScreen({ route, navigation }: Props) {
     qc.invalidateQueries({ queryKey: ['feed'] });
     if (matched && matchId) {
       qc.invalidateQueries({ queryKey: ['matches'] });
-      setMatchPopup({ matchId });
-    } else {
-      navigation.goBack();
-    }
-  };
-
-  const openMatchChat = async () => {
-    if (!matchPopup) return;
-    try {
-      const conv = await chatApi.ensureConversation(matchPopup.matchId);
-      setMatchPopup(null);
-      navigation.replace('Conversation', {
-        conversationId: conv.id,
-        otherName: candidate.firstName,
-        otherUserId: candidate.id,
-        otherUserAge: candidate.age ?? null,
-        otherUserPhoto: candidate.photos[0]?.url ?? null,
+      showMatchPopup({
+        matchId,
+        otherUser: {
+          id: candidate.id,
+          firstName: candidate.firstName,
+          photo: candidate.photos[0]?.url ?? null,
+        },
       });
-    } catch (e) {
-      Alert.alert(t('common.error'), extractErrorMessage(e));
     }
+    navigation.goBack();
   };
 
   const handleLike = async () => {
@@ -227,19 +215,6 @@ export function CandidateProfileScreen({ route, navigation }: Props) {
           onLike={handleLike}
           onSuperLike={handleSuperLike}
           disabled={busy}
-        />
-
-        <MatchModal
-          visible={matchPopup != null}
-          name={candidate.firstName}
-          otherPhoto={candidate.photos[0]?.url ?? null}
-          myPhoto={me?.photos?.[0]?.url ?? null}
-          myName={me?.firstName ?? null}
-          onSendMessage={openMatchChat}
-          onClose={() => {
-            setMatchPopup(null);
-            navigation.goBack();
-          }}
         />
       </View>
     </SafeAreaView>

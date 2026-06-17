@@ -2,6 +2,7 @@ import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React, { useRef } from 'react';
 import { ImageBackground, StyleSheet, View } from 'react-native';
+import { GlobalMatchModal } from '../components/discovery/GlobalMatchModal';
 import { LanguageSwitcher } from '../components/LanguageSwitcher';
 import { useAuthStore } from '../store/auth';
 import { colors } from '../theme/colors';
@@ -42,6 +43,8 @@ const navTheme = {
 export function RootNavigator() {
   const { user } = useAuthStore();
   const isAuthenticated = !!user;
+  const isFullyOnboarded =
+    !!user && user.emailVerified && user.profileComplete;
 
   // Track whether the user has ever been authenticated in this app session.
   // Once true, any subsequent unauthenticated state is a logout → skip Onboarding.
@@ -78,7 +81,11 @@ export function RootNavigator() {
               name="Auth"
               options={{ headerShown: false }}
             >
-              {() => <AuthStack showOnboarding={!hasBeenAuthenticated.current} />}
+              {() => (
+                <AuthStack
+                  initialRoute={hasBeenAuthenticated.current ? 'Login' : 'Register'}
+                />
+              )}
             </Stack.Screen>
           ) : !user.emailVerified ? (
             <Stack.Screen
@@ -142,6 +149,7 @@ export function RootNavigator() {
             </>
           )}
         </Stack.Navigator>
+        {isFullyOnboarded ? <GlobalMatchModal /> : null}
         <LanguageSwitcher />
       </View>
     </NavigationContainer>

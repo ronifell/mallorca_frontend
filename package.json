@@ -12,7 +12,8 @@
     "typecheck": "tsc --noEmit",
     "build:android": "eas build --platform android --profile production",
     "build:android:preview": "eas build --platform android --profile preview",
-    "build:ios": "eas build --platform ios --profile production"
+    "build:ios": "eas build --platform ios --profile production",
+    "build:icons": "node scripts/build-icons.js"
   },
   "dependencies": {
     "@expo-google-fonts/noto-serif": "^0.2.3",
@@ -59,6 +60,7 @@
     "eas-cli": "^20.0.0",
     "eslint": "^8.57.0",
     "lightningcss": "^1.32.0",
+    "sharp": "^0.33.5",
     "typescript": "~5.3.3"
   },
   "private": true,

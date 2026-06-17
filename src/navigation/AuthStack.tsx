@@ -2,7 +2,6 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React from 'react';
 import { ForgotPasswordScreen } from '../screens/auth/ForgotPasswordScreen';
 import { LoginScreen } from '../screens/auth/LoginScreen';
-import { OnboardingScreen } from '../screens/auth/OnboardingScreen';
 import { RegisterScreen } from '../screens/auth/RegisterScreen';
 import { colors } from '../theme/colors';
 import { AuthStackParamList } from './types';
@@ -10,15 +9,16 @@ import { AuthStackParamList } from './types';
 const Stack = createNativeStackNavigator<AuthStackParamList>();
 
 interface Props {
-  /** When true (default) the stack opens on the Onboarding welcome screen.
-   *  Set to false after a logout so the user lands directly on Login. */
-  showOnboarding?: boolean;
+  /** Where the auth flow should land first.
+   *  - 'Register' on a fresh launch (no prior session).
+   *  - 'Login' after a logout so the user can sign back in quickly. */
+  initialRoute?: 'Login' | 'Register';
 }
 
-export function AuthStack({ showOnboarding = true }: Props) {
+export function AuthStack({ initialRoute = 'Register' }: Props) {
   return (
     <Stack.Navigator
-      initialRouteName={showOnboarding ? 'Onboarding' : 'Login'}
+      initialRouteName={initialRoute}
       screenOptions={{
         headerStyle: { backgroundColor: colors.cream[200] },
         headerShadowVisible: false,
@@ -29,11 +29,6 @@ export function AuthStack({ showOnboarding = true }: Props) {
         contentStyle: { backgroundColor: 'transparent' },
       }}
     >
-      <Stack.Screen
-        name="Onboarding"
-        component={OnboardingScreen}
-        options={{ headerShown: false }}
-      />
       <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
       <Stack.Screen name="Register" component={RegisterScreen} options={{ headerShown: false }} />
       <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />

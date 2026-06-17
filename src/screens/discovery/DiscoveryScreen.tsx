@@ -5,7 +5,7 @@ import * as Haptics from 'expo-haptics';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Text, View } from 'react-native';
-import { chatApi, discoveryApi, usersApi } from '../../api/endpoints';
+import { discoveryApi } from '../../api/endpoints';
 import { FeedCandidate } from '../../api/types';
 import { Button } from '../../components/Button';
 import { DiscoveryActionButtons } from '../../components/discovery/DiscoveryActionButtons';
@@ -15,10 +15,10 @@ import {
   DiscoveryModeToggle,
 } from '../../components/discovery/DiscoveryModeToggle';
 import { LikesView } from '../../components/discovery/LikesView';
-import { MatchModal } from '../../components/discovery/MatchModal';
 import { Screen } from '../../components/Screen';
 import { SwipeCard } from '../../components/SwipeCard';
 import { RootStackParamList } from '../../navigation/types';
+import { useMatchPopup } from '../../store/matchPopup';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
@@ -26,21 +26,15 @@ export function DiscoveryScreen() {
   const { t } = useTranslation();
   const nav = useNavigation<Nav>();
   const qc = useQueryClient();
+  const showMatchPopup = useMatchPopup((s) => s.show);
   const [mode, setMode] = useState<DiscoveryMode>('discover');
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['feed'],
     queryFn: () => discoveryApi.feed(20),
   });
-  const { data: me } = useQuery({ queryKey: ['me'], queryFn: () => usersApi.me() });
 
   const [deck, setDeck] = useState<FeedCandidate[]>([]);
   const [isRetrying, setIsRetrying] = useState(false);
-  const [matchPopup, setMatchPopup] = useState<{
-    id: string;
-    name: string | null;
-    matchId: string;
-    photo: string | null;
-  } | null>(null);
 
   useEffect(() => {
     if (data) setDeck(data);
@@ -62,11 +56,13 @@ export function DiscoveryScreen() {
       if (dir === 'right') {
         const res = await discoveryApi.like(candidate.id);
         if (res.matched && res.matchId) {
-          setMatchPopup({
-            id: candidate.id,
-            name: candidate.firstName,
+          showMatchPopup({
             matchId: res.matchId,
-            photo: candidate.photos[0]?.url ?? null,
+            otherUser: {
+              id: candidate.id,
+              firstName: candidate.firstName,
+              photo: candidate.photos[0]?.url ?? null,
+            },
           });
           qc.invalidateQueries({ queryKey: ['matches'] });
         }
@@ -77,20 +73,6 @@ export function DiscoveryScreen() {
       // Networking failures are non-fatal here: the next call will resync.
     }
     if (deck.length <= 3) refetch();
-  };
-
-  const openChat = async () => {
-    if (!matchPopup) return;
-    const conv = await chatApi.ensureConversation(matchPopup.matchId);
-    const photo = matchPopup.photo;
-    setMatchPopup(null);
-    nav.navigate('Conversation', {
-      conversationId: conv.id,
-      otherName: matchPopup.name,
-      otherUserId: matchPopup.id,
-      otherUserAge: null,
-      otherUserPhoto: photo,
-    });
   };
 
   const openCandidateProfile = (candidate: FeedCandidate) => {
@@ -105,11 +87,13 @@ export function DiscoveryScreen() {
     try {
       const res = await discoveryApi.like(candidate.id);
       if (res.matched && res.matchId) {
-        setMatchPopup({
-          id: candidate.id,
-          name: candidate.firstName,
+        showMatchPopup({
           matchId: res.matchId,
-          photo: candidate.photos[0]?.url ?? null,
+          otherUser: {
+            id: candidate.id,
+            firstName: candidate.firstName,
+            photo: candidate.photos[0]?.url ?? null,
+          },
         });
         qc.invalidateQueries({ queryKey: ['matches'] });
       } else {
@@ -192,15 +176,6 @@ export function DiscoveryScreen() {
         </View>
       )}
 
-      <MatchModal
-        visible={matchPopup != null}
-        name={matchPopup?.name ?? null}
-        otherPhoto={matchPopup?.photo ?? null}
-        myPhoto={me?.photos?.[0]?.url ?? null}
-        myName={me?.firstName ?? null}
-        onSendMessage={openChat}
-        onClose={() => setMatchPopup(null)}
-      />
     </Screen>
   );
 }
