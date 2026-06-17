@@ -26,6 +26,7 @@ import { useTopScreenPadding } from '../../hooks/useTopScreenPadding';
 import { RootStackParamList } from '../../navigation/types';
 import { connectSocket } from '../../services/socket';
 import { RecordingResult } from '../../services/voiceRecorder';
+import { useAuthStore } from '../../store/auth';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Conversation'>;
 
@@ -105,6 +106,12 @@ export function ConversationScreen({ route, navigation }: Props) {
 
   const { data: me } = useQuery({ queryKey: ['me'], queryFn: () => usersApi.me() });
   const myId = me?.id;
+  // Read Premium status from the auth store too. The store is updated
+  // synchronously the moment a purchase succeeds (PremiumScreen calls
+  // `patchUser({ isPremium })`), so the banner clears without waiting for
+  // the React Query refetch of /users/me to finish.
+  const authIsPremium = useAuthStore((s) => s.user?.isPremium ?? false);
+  const isPremium = authIsPremium || (me?.isPremium ?? false);
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [text, setText] = useState('');
@@ -113,6 +120,16 @@ export function ConversationScreen({ route, navigation }: Props) {
   const socketRef = useRef<Socket | null>(null);
   const typingTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const listRef = useRef<FlatList<ChatRow>>(null);
+
+  // As soon as the user actually has Premium (e.g. just returned from the
+  // Premium screen after purchasing), drop the gating banner immediately so
+  // they don't have to leave and re-enter the conversation to send their
+  // first message.
+  useEffect(() => {
+    if (isPremium && premiumBlocked) {
+      setPremiumBlocked(false);
+    }
+  }, [isPremium, premiumBlocked]);
 
   const loadInitial = useCallback(async () => {
     try {
@@ -337,7 +354,6 @@ export function ConversationScreen({ route, navigation }: Props) {
 
   const chatRows = useMemo(() => buildChatRows(messages, t), [messages, t]);
   const inputDisabled = premiumBlocked;
-  const isPremium = me?.isPremium ?? false;
   const topPadding = useTopScreenPadding();
 
   return (
