@@ -209,10 +209,7 @@ export function ConversationInputBar({
         <Ionicons name="add" size={24} color={colors.ink[700]} />
       </Pressable>
 
-      <View
-        style={styles.inputWrap}
-        className="flex-1 flex-row items-center bg-white rounded-2xl px-3 border border-cream-300"
-      >
+      <View style={styles.inputWrap}>
         <TextInput
           value={value}
           onChangeText={onChangeText}
@@ -221,9 +218,12 @@ export function ConversationInputBar({
           style={styles.textInput}
           multiline
           editable={!disabled}
-          textAlignVertical="center"
           underlineColorAndroid="transparent"
           selectionColor={colors.coral[500]}
+          cursorColor={colors.coral[500]}
+          autoCorrect
+          textAlignVertical="top"
+          includeFontPadding={false}
         />
         {!hasText ? (
           <Pressable
@@ -287,18 +287,34 @@ const styles = StyleSheet.create({
     paddingBottom: Platform.OS === 'ios' ? 10 : 8,
   },
   inputWrap: {
+    flex: 1,
+    flexDirection: 'row',
+    // Bottom-align so the action icon hugs the last line of typed text;
+    // crucially we do NOT use `items-center` here — combined with a
+    // multiline TextInput on Android that causes the typed text to be
+    // clipped above the visible area when it grows past one line.
+    alignItems: 'flex-end',
+    backgroundColor: colors.white,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.cream[300],
+    paddingHorizontal: 12,
+    paddingVertical: Platform.OS === 'ios' ? 6 : 4,
     minHeight: 48,
     maxHeight: 140,
-    paddingVertical: 4,
   },
   textInput: {
     flex: 1,
     color: colors.ink[700],
     fontSize: 16,
-    lineHeight: 22,
-    paddingVertical: Platform.OS === 'ios' ? 10 : 6,
+    // No explicit lineHeight here — on Android, lineHeight combined with
+    // multiline and `includeFontPadding: false` can cause the cursor and
+    // typed glyphs to render outside the input bounds. Let the platform
+    // pick a sensible default.
+    paddingTop: Platform.OS === 'ios' ? 8 : 6,
+    paddingBottom: Platform.OS === 'ios' ? 8 : 6,
     paddingHorizontal: 4,
-    minHeight: 40,
+    minHeight: 36,
     maxHeight: 120,
   },
 });

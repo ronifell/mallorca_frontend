@@ -5,7 +5,9 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next';
 import {
   Alert,
+  Dimensions,
   FlatList,
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -117,6 +119,14 @@ export function ConversationScreen({ route, navigation }: Props) {
   const [text, setText] = useState('');
   const [otherTyping, setOtherTyping] = useState(false);
   const [premiumBlocked, setPremiumBlocked] = useState(false);
+  // Manual keyboard-height fallback for Android. The Stack.Navigator sets
+  // `statusBarTranslucent: true`, which causes the activity to extend
+  // behind the system bars and makes `windowSoftInputMode=adjustResize`
+  // unreliable in Expo Go — the input bar can be left hidden behind the
+  // keyboard. We listen to Keyboard events ourselves and apply the
+  // measured height as bottom padding only when the system has not
+  // already shrunk the visible window (compared to the screen).
+  const [androidKeyboardOffset, setAndroidKeyboardOffset] = useState(0);
   const socketRef = useRef<Socket | null>(null);
   const typingTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const listRef = useRef<FlatList<ChatRow>>(null);
@@ -212,6 +222,34 @@ export function ConversationScreen({ route, navigation }: Props) {
   useEffect(() => {
     setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 50);
   }, [messages.length]);
+
+  // Track the soft keyboard height on Android as a fallback for unreliable
+  // `adjustResize`. If the OS already shrank the window, we add no extra
+  // offset (avoids double-padding). Also auto-scrolls to the latest message
+  // whenever the keyboard opens so the new typing area is in view.
+  useEffect(() => {
+    if (Platform.OS !== 'android') return;
+
+    const onShow = (e: { endCoordinates: { height: number } }) => {
+      const kb = e.endCoordinates.height ?? 0;
+      const screenH = Dimensions.get('screen').height;
+      const windowH = Dimensions.get('window').height;
+      const systemAdjustedBy = Math.max(0, screenH - windowH);
+      // If the OS already resized the window by ~ the keyboard's height,
+      // adjustResize is working — don't add manual padding on top.
+      const needsManual = systemAdjustedBy < kb * 0.5;
+      setAndroidKeyboardOffset(needsManual ? kb : 0);
+      setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 60);
+    };
+    const onHide = () => setAndroidKeyboardOffset(0);
+
+    const showSub = Keyboard.addListener('keyboardDidShow', onShow);
+    const hideSub = Keyboard.addListener('keyboardDidHide', onHide);
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
 
   const makeTempId = () =>
     `temp-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
@@ -435,6 +473,13 @@ export function ConversationScreen({ route, navigation }: Props) {
           onSendVoice={sendVoice}
           disabled={inputDisabled}
         />
+
+        {/* Fallback spacer on Android when adjustResize does not shrink
+            the window (e.g. translucent status bar). Keeps the input bar
+            visible above the soft keyboard. */}
+        {Platform.OS === 'android' && androidKeyboardOffset > 0 ? (
+          <View style={{ height: androidKeyboardOffset }} />
+        ) : null}
       </KeyboardAvoidingView>
     </Screen>
   );
