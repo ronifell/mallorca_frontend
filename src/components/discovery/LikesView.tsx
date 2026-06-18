@@ -16,7 +16,9 @@ import {
 } from 'react-native';
 import { discoveryApi } from '../../api/endpoints';
 import { LikedUser } from '../../api/types';
+import { isSpecialCityValue, resolveCityLabel } from '../../config/cityOptions';
 import { RootStackParamList } from '../../navigation/types';
+import { useMatchPopup } from '../../store/matchPopup';
 import { colors } from '../../theme/colors';
 import { resolveMediaUrl } from '../../utils/mediaUrl';
 
@@ -34,10 +36,13 @@ interface RowProps {
 function LikeRow({ user, variant, busy, onOpen, onAction }: RowProps) {
   const { t } = useTranslation();
   const cover = resolveMediaUrl(user.photos[0]?.url);
-  const cityLine = user.city
-    ? user.city.toLowerCase().includes('mallorca')
-      ? user.city
-      : `${user.city}, Mallorca`
+  const cityLabel = resolveCityLabel(user.city, t);
+  const cityLine = cityLabel
+    ? isSpecialCityValue(user.city)
+      ? cityLabel
+      : cityLabel.toLowerCase().includes('mallorca')
+        ? cityLabel
+        : `${cityLabel}, Mallorca`
     : null;
 
   const actionAccessibilityLabel =
@@ -177,6 +182,7 @@ export function LikesView() {
   const { t } = useTranslation();
   const nav = useNavigation<Nav>();
   const qc = useQueryClient();
+  const showMatchPopup = useMatchPopup((s) => s.show);
   const [tab, setTab] = useState<Tab>('received');
   const [busyId, setBusyId] = useState<string | null>(null);
 
@@ -209,8 +215,20 @@ export function LikesView() {
     try {
       const res = await discoveryApi.like(user.id);
       invalidateLikes();
-      if (res.matched) {
-        Alert.alert(t('discovery.matched'), user.firstName ?? '');
+      // Surface the match via the global celebration modal instead of a
+      // native Alert. The Alert would overlay the MatchModal (already
+      // triggered from the `match:new` socket event) with a plain white
+      // system dialog. Calling `showMatchPopup` is a no-op when the socket
+      // path already fired thanks to dedup on matchId.
+      if (res.matched && res.matchId) {
+        showMatchPopup({
+          matchId: res.matchId,
+          otherUser: {
+            id: user.id,
+            firstName: user.firstName,
+            photo: user.photos[0]?.url ?? null,
+          },
+        });
       }
     } catch {
       Alert.alert(t('common.error'), t('discovery.retryFailed'));

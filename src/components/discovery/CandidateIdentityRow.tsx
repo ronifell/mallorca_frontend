@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, Text, View } from 'react-native';
+import { isSpecialCityValue, resolveCityLabel } from '../../config/cityOptions';
 import { colors } from '../../theme/colors';
 
 interface Props {
@@ -15,9 +16,17 @@ interface Props {
   onActionPress?: () => void;
 }
 
-function formatCity(city: string | null): string | null {
+function formatCity(
+  city: string | null,
+  t: (key: string) => string,
+): string | null {
   if (!city) return null;
-  return city.toLowerCase().includes('mallorca') ? city : `${city}, Mallorca`;
+  const label = resolveCityLabel(city, t);
+  if (!label) return null;
+  // Translated catch-all tags already describe a location semantically —
+  // don't append ", Mallorca" to "Outside Spain" etc.
+  if (isSpecialCityValue(city)) return label;
+  return label.toLowerCase().includes('mallorca') ? label : `${label}, Mallorca`;
 }
 
 /**
@@ -37,7 +46,7 @@ export function CandidateIdentityRow({
   onActionPress,
 }: Props) {
   const { t } = useTranslation();
-  const cityLine = formatCity(city);
+  const cityLine = formatCity(city, t);
   const hasDistance = typeof distanceKm === 'number' && Number.isFinite(distanceKm);
   const distanceLabel = hasDistance
     ? t('discovery.kmAway', { count: Math.max(1, Math.round(distanceKm as number)) })

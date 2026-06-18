@@ -158,8 +158,11 @@ function FloatingLayer({ active }: { active: boolean }) {
 // Match modal
 // ───────────────────────────────────────────────────────────────────────────────
 
-const AVATAR_SIZE = 148;
-const AVATAR_OVERLAP = 36;
+// Compute the avatar size from the screen width so the two-photo
+// composition never overflows the modal padding on narrower phones.
+// We aim for ~45% of the screen width per avatar, capped at 176.
+const AVATAR_SIZE = Math.min(176, Math.floor(SCREEN_WIDTH * 0.45));
+const AVATAR_OVERLAP = Math.max(18, Math.floor(AVATAR_SIZE * 0.13));
 
 export function MatchModal({
   visible,
@@ -296,7 +299,7 @@ export function MatchModal({
   });
   const leftRotate = leftAvatar.interpolate({
     inputRange: [0, 1],
-    outputRange: ['-14deg', '-6deg'],
+    outputRange: ['-10deg', '-3deg'],
   });
 
   const rightTranslateX = rightAvatar.interpolate({
@@ -309,7 +312,7 @@ export function MatchModal({
   });
   const rightRotate = rightAvatar.interpolate({
     inputRange: [0, 1],
-    outputRange: ['14deg', '6deg'],
+    outputRange: ['10deg', '3deg'],
   });
 
   const heartPulseScale = heartPulse.interpolate({
@@ -364,22 +367,10 @@ export function MatchModal({
 
         {/* Center stack */}
         <View style={styles.centerStack} pointerEvents="box-none">
-          {/* Top pill kicker */}
-          <Animated.View
-            style={[
-              styles.kickerPill,
-              {
-                opacity: titleOpacity,
-                transform: [{ translateY: titleY }],
-              },
-            ]}
-          >
-            <Ionicons name="sparkles" size={12} color={colors.coral[500]} />
-            <Text style={styles.kickerText}>{t('discovery.matchCelebrationCaption')}</Text>
-            <Ionicons name="sparkles" size={12} color={colors.coral[500]} />
-          </Animated.View>
-
-          {/* Title + subtitle */}
+          {/* Title only — the kicker pill ("YOU CONNECTED IN MALLORCA")
+              and the subtitle ("You and X liked each other") were removed
+              per design feedback: the celebration should focus solely on
+              the headline + the two avatars + the CTAs. */}
           <Animated.View
             style={{
               alignItems: 'center',
@@ -388,9 +379,6 @@ export function MatchModal({
             }}
           >
             <Text style={styles.title}>{t('discovery.matchTitle')}</Text>
-            {name ? (
-              <Text style={styles.subtitle}>{t('discovery.matchSubtitle', { name })}</Text>
-            ) : null}
           </Animated.View>
 
           {/* Avatars + heart */}
@@ -514,54 +502,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
 
-  kickerPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    backgroundColor: 'rgba(255,255,255,0.95)',
-    borderRadius: 999,
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    marginBottom: 18,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.18,
-    shadowRadius: 12,
-    elevation: 6,
-  },
-  kickerText: {
-    fontSize: 11,
-    letterSpacing: 1.6,
-    color: colors.coral[600],
-    fontWeight: '800',
-    textTransform: 'uppercase',
-  },
-
   title: {
     fontFamily: 'PlayfairDisplay_700Bold_Italic',
-    fontSize: 52,
-    lineHeight: 60,
+    fontSize: 56,
+    lineHeight: 64,
     color: colors.white,
     textAlign: 'center',
     textShadowColor: 'rgba(0,0,0,0.25)',
     textShadowOffset: { width: 0, height: 4 },
     textShadowRadius: 12,
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 15,
-    lineHeight: 22,
-    color: 'rgba(255,255,255,0.92)',
-    textAlign: 'center',
-    paddingHorizontal: 8,
-    maxWidth: 320,
   },
 
   avatarStage: {
-    height: AVATAR_SIZE + 36,
+    height: AVATAR_SIZE + 40,
     width: AVATAR_SIZE * 2 - AVATAR_OVERLAP,
-    marginTop: 28,
-    marginBottom: 28,
+    marginTop: 36,
+    marginBottom: 36,
     alignItems: 'center',
     justifyContent: 'center',
   },

@@ -7,6 +7,7 @@ import { usersApi } from '../../api/endpoints';
 import { Gender, InterestSelection, RelationshipGoal } from '../../api/types';
 import { AgeRangePicker } from '../../components/profile/AgeRangePicker';
 import { BioTextArea } from '../../components/profile/BioTextArea';
+import { CityPicker } from '../../components/profile/CityPicker';
 import { GenderToggle } from '../../components/profile/GenderToggle';
 import { InterestPill, InterestPillRow } from '../../components/profile/InterestPill';
 import { LanguageFlagPill } from '../../components/profile/LanguageFlagPill';
@@ -173,12 +174,10 @@ export function CreateProfileScreen({ navigation }: Props) {
       />
 
       <ProfileSectionLabel label={t('profile.city')} icon="location-outline" />
-      <Input
-        elevated
+      <CityPicker
         value={city}
-        onChangeText={setCity}
+        onChange={setCity}
         placeholder={t('profile.cityPlaceholder')}
-        rightIcon="chevron-forward"
       />
 
       <ProfileSectionLabel label={t('profile.bio')} icon="chatbubble-outline" />

@@ -35,6 +35,12 @@ export function DiscoveryScreen() {
 
   const [deck, setDeck] = useState<FeedCandidate[]>([]);
   const [isRetrying, setIsRetrying] = useState(false);
+  // True while an in-flight like / super-like / pass call is awaiting the
+  // backend. Used to suppress the "no compatible profiles" empty state
+  // from flashing when the user swipes the very last card and a match is
+  // about to be celebrated (otherwise the empty screen briefly appears
+  // behind the match modal between the swipe and the API response).
+  const [pendingAction, setPendingAction] = useState(false);
 
   useEffect(() => {
     if (data) setDeck(data);
@@ -49,6 +55,7 @@ export function DiscoveryScreen() {
     if (!top) return;
     const candidate = top;
     advance();
+    setPendingAction(true);
     Haptics.impactAsync(
       dir === 'right' ? Haptics.ImpactFeedbackStyle.Medium : Haptics.ImpactFeedbackStyle.Light,
     ).catch(() => undefined);
@@ -71,6 +78,8 @@ export function DiscoveryScreen() {
       }
     } catch {
       // Networking failures are non-fatal here: the next call will resync.
+    } finally {
+      setPendingAction(false);
     }
     if (deck.length <= 3) refetch();
   };
@@ -83,6 +92,7 @@ export function DiscoveryScreen() {
     if (!top) return;
     const candidate = top;
     advance();
+    setPendingAction(true);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => undefined);
     try {
       const res = await discoveryApi.like(candidate.id);
@@ -104,6 +114,8 @@ export function DiscoveryScreen() {
       }
     } catch {
       Alert.alert(t('common.error'), t('discovery.superLikeError'));
+    } finally {
+      setPendingAction(false);
     }
     if (deck.length <= 3) refetch();
   };
@@ -160,6 +172,10 @@ export function DiscoveryScreen() {
                 onLike={() => handleSwipe('right')}
                 onSuperLike={handleSuperLike}
               />
+            </View>
+          ) : pendingAction ? (
+            <View className="flex-1 items-center justify-center">
+              <Text className="text-ink-400">{t('discovery.loading')}</Text>
             </View>
           ) : (
             <View className="flex-1 items-center justify-center">

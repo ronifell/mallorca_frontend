@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Gender, InterestedIn } from '../api/types';
+import { isSpecialCityValue, resolveCityLabel } from '../config/cityOptions';
 import { GENDER_LABEL_KEYS, LANGUAGE_OPTIONS } from '../config/profileOptions';
 
 export interface ProfileDetailItem {
@@ -106,6 +107,13 @@ export function extractInterestsFromBio(
 
 export function formatProfileLocation(city: string | null, t: (key: string) => string): string | null {
   if (!city) return null;
-  const suffix = city.toLowerCase().includes('mallorca') ? city : `${city}, Mallorca`;
+  const label = resolveCityLabel(city, t);
+  if (!label) return null;
+  // Special tags ("Visiting Mallorca", "Outside Spain", ...) already
+  // describe a location semantically — don't append ", Mallorca" to them.
+  if (isSpecialCityValue(city)) {
+    return `${label} · ${t('discovery.nearby')}`;
+  }
+  const suffix = label.toLowerCase().includes('mallorca') ? label : `${label}, Mallorca`;
   return `${suffix} · ${t('discovery.nearby')}`;
 }
