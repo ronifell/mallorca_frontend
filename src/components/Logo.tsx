@@ -1,9 +1,13 @@
 import React from 'react';
 import { Image, View } from 'react-native';
 
-const brandIcon = require('../../assets/icon.png');
+// In-app brand mark uses the original (pre-padding) logo so that the
+// emblem actually fills its display box on every screen. The OS launcher
+// icon keeps using `assets/icon.png` via `app.json` so the home-screen
+// app icon remains untouched.
+const brandIcon = require('../../assets/logo-source.png');
 
-const SIZE_MAP = { sm: 40, md: 64, lg: 96 } as const;
+const SIZE_MAP = { sm: 56, md: 96, lg: 132 } as const;
 
 type SizeProp = keyof typeof SIZE_MAP | number;
 

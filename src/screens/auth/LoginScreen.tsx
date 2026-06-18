@@ -165,11 +165,6 @@ export function LoginScreen({ navigation }: Props) {
                   label={t('auth.continueWithGoogle')}
                   onPress={onSocialPress}
                 />
-                <SocialAuthButton
-                  provider="apple"
-                  label={t('auth.continueWithApple')}
-                  onPress={onSocialPress}
-                />
 
                 <View className="mt-4 flex-row justify-center">
                   <Text className="text-ink-400">{t('auth.noAccount')} </Text>

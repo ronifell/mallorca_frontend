@@ -8,7 +8,7 @@ export function PremiumHero() {
 
   return (
     <View className="mb-3">
-      <Logo size={50} />
+      <Logo size={80} />
       <View className="mt-2">
         <Text className="text-ink-700 font-bold text-lg">
           {t('auth.appNameCitas')} {t('auth.appNameMallorca')}

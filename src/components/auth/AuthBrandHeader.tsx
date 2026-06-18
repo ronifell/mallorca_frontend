@@ -8,7 +8,7 @@ export function AuthBrandHeader() {
 
   return (
     <View className="items-center mb-8">
-      <BrandHeartLogo size={72} />
+      <BrandHeartLogo size={112} />
       <View className="flex-row items-baseline mt-4">
         <Text className="text-ink-700 font-serif text-3xl">{t('auth.appNameCitas')} </Text>
         <Text className="text-coral-500 font-serif text-3xl">{t('auth.appNameMallorca')}</Text>

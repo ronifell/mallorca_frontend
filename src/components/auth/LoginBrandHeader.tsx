@@ -11,7 +11,7 @@ export function LoginBrandHeader() {
 
   return (
     <View className="px-6" style={{ paddingTop: topPadding }}>
-      <Logo size={60} />
+      <Logo size={104} />
       <View className="mt-3">
         <View className="flex-row items-baseline flex-wrap">
           <Text className="text-ink-700 font-bold text-3xl">{t('auth.appNameCitas')} </Text>
