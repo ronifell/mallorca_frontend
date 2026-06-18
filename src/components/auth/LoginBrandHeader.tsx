@@ -17,7 +17,7 @@ export function LoginBrandHeader() {
           <Text className="text-ink-700 font-bold text-3xl">{t('auth.appNameCitas')} </Text>
           <Text className="text-coral-500 font-bold text-3xl">{t('auth.appNameMallorca')}</Text>
         </View>
-        <Text className="text-ink-400 text-sm mt-1.5 leading-5">
+        <Text className="text-ink-700 text-sm font-semibold mt-1.5 leading-5">
           {t('auth.brandTaglineLine1')}
           {'\n'}
           {t('auth.brandTaglineLine2')}
