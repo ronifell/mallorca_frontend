@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -13,6 +13,8 @@ import { CandidateInfoCard } from '../../components/discovery/CandidateInfoCard'
 import { CandidatePhotoHero } from '../../components/discovery/CandidatePhotoHero';
 import { CandidatePhotoThumbnails } from '../../components/discovery/CandidatePhotoThumbnails';
 import { CandidateProfileHeader } from '../../components/discovery/CandidateProfileHeader';
+import { ReportUserSheet } from '../../components/moderation/ReportUserSheet';
+import { ProfileSafetySection } from '../../components/moderation/ProfileSafetySection';
 import { useTopScreenPadding } from '../../hooks/useTopScreenPadding';
 import { RootStackParamList } from '../../navigation/types';
 import { colors } from '../../theme/colors';
@@ -27,6 +29,9 @@ export function MatchProfileScreen({ route, navigation }: Props) {
   const topPadding = useTopScreenPadding();
 
   const [photoIndex, setPhotoIndex] = useState(0);
+  const [reportOpen, setReportOpen] = useState(false);
+  const scrollRef = useRef<ScrollView>(null);
+  const safetyOffsetRef = useRef(0);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['match-profile', matchId],
@@ -106,6 +111,7 @@ export function MatchProfileScreen({ route, navigation }: Props) {
             await moderationApi.block(profile.id);
             await matchesApi.unmatch(matchId);
             await qc.invalidateQueries({ queryKey: ['matches'] });
+            Alert.alert(t('moderation.block'), t('moderation.blocked'));
             navigation.goBack();
           } catch (e) {
             Alert.alert(t('common.error'), extractErrorMessage(e));
@@ -116,16 +122,11 @@ export function MatchProfileScreen({ route, navigation }: Props) {
   };
 
   const handleReport = () => {
-    Alert.alert(t('profile.report'), t('profile.reportComingSoon'));
+    setReportOpen(true);
   };
 
-  const openMenu = () => {
-    Alert.alert(t('profile.openMenu'), undefined, [
-      { text: t('profile.report'), onPress: handleReport },
-      { text: t('profile.block'), style: 'destructive' as const, onPress: handleBlock },
-      { text: t('matches.unmatch'), style: 'destructive' as const, onPress: handleUnmatch },
-      { text: t('common.cancel'), style: 'cancel' as const },
-    ]);
+  const scrollToSafety = () => {
+    scrollRef.current?.scrollTo({ y: safetyOffsetRef.current, animated: true });
   };
 
   if (isLoading) {
@@ -171,6 +172,7 @@ export function MatchProfileScreen({ route, navigation }: Props) {
         <CandidateProfileHeader />
 
         <ScrollView
+          ref={scrollRef}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingBottom: 32 }}
         >
@@ -182,7 +184,7 @@ export function MatchProfileScreen({ route, navigation }: Props) {
             isPremium={profile.isPremium}
             onPrev={photoCount > 1 ? goPrev : undefined}
             onNext={photoCount > 1 ? goNext : undefined}
-            onMenuPress={openMenu}
+            onSafetyPress={scrollToSafety}
           />
 
           {photoCount > 1 ? (
@@ -250,8 +252,28 @@ export function MatchProfileScreen({ route, navigation }: Props) {
               </View>
             ) : null}
           </View>
+
+          <View
+            onLayout={(e) => {
+              safetyOffsetRef.current = e.nativeEvent.layout.y;
+            }}
+          >
+            <ProfileSafetySection
+              onReport={handleReport}
+              onBlock={handleBlock}
+              onUnmatch={handleUnmatch}
+            />
+          </View>
         </ScrollView>
       </View>
+
+      {profile ? (
+        <ReportUserSheet
+          visible={reportOpen}
+          userId={profile.id}
+          onClose={() => setReportOpen(false)}
+        />
+      ) : null}
     </SafeAreaView>
   );
 }

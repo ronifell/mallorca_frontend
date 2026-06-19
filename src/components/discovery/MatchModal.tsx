@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Animated,
+  ActivityIndicator,
   Dimensions,
   Easing,
   Modal,
@@ -25,6 +26,7 @@ interface Props {
   myName?: string | null;
   onSendMessage: () => void;
   onClose: () => void;
+  sending?: boolean;
 }
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -172,11 +174,11 @@ export function MatchModal({
   myName,
   onSendMessage,
   onClose,
+  sending = false,
 }: Props) {
   const { t } = useTranslation();
 
   // Choreographed entrance values.
-  const backdrop = useRef(new Animated.Value(0)).current;
   const titleY = useRef(new Animated.Value(24)).current;
   const titleOpacity = useRef(new Animated.Value(0)).current;
   const leftAvatar = useRef(new Animated.Value(0)).current;
@@ -188,7 +190,6 @@ export function MatchModal({
 
   useEffect(() => {
     if (!visible) {
-      backdrop.setValue(0);
       titleY.setValue(24);
       titleOpacity.setValue(0);
       leftAvatar.setValue(0);
@@ -202,11 +203,6 @@ export function MatchModal({
     }
 
     Animated.sequence([
-      Animated.timing(backdrop, {
-        toValue: 1,
-        duration: 280,
-        useNativeDriver: true,
-      }),
       Animated.parallel([
         Animated.spring(leftAvatar, {
           toValue: 1,
@@ -278,7 +274,6 @@ export function MatchModal({
     ).start();
   }, [
     visible,
-    backdrop,
     titleY,
     titleOpacity,
     leftAvatar,
@@ -338,7 +333,7 @@ export function MatchModal({
     >
       <StatusBar barStyle="light-content" />
 
-      <Animated.View style={[styles.root, { opacity: backdrop }]}>
+      <Animated.View style={styles.root}>
         {/* Romantic warm gradient backdrop */}
         <LinearGradient
           colors={['#FF6B5E', '#E8554E', '#B82E2E']}
@@ -459,17 +454,24 @@ export function MatchModal({
             <TouchableOpacity
               onPress={onSendMessage}
               activeOpacity={0.85}
+              disabled={sending}
               accessibilityRole="button"
               accessibilityLabel={t('discovery.matchSendMessage')}
-              style={styles.primaryButton}
+              style={[styles.primaryButton, sending && styles.primaryButtonDisabled]}
             >
-              <Ionicons
-                name="paper-plane"
-                size={18}
-                color={colors.coral[600]}
-                style={{ marginRight: 10 }}
-              />
-              <Text style={styles.primaryButtonText}>{t('discovery.matchSendMessage')}</Text>
+              {sending ? (
+                <ActivityIndicator color={colors.coral[600]} />
+              ) : (
+                <>
+                  <Ionicons
+                    name="paper-plane"
+                    size={18}
+                    color={colors.coral[600]}
+                    style={{ marginRight: 10 }}
+                  />
+                  <Text style={styles.primaryButtonText}>{t('discovery.matchSendMessage')}</Text>
+                </>
+              )}
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -603,6 +605,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.45,
     shadowRadius: 22,
     elevation: 14,
+  },
+  primaryButtonDisabled: {
+    opacity: 0.75,
   },
   primaryButtonText: {
     color: colors.coral[600],

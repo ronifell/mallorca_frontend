@@ -5,6 +5,7 @@ import {
   Alert,
   Animated,
   Easing,
+  Keyboard,
   Platform,
   Pressable,
   StyleSheet,
@@ -28,6 +29,7 @@ interface Props {
   onAttach: () => void;
   onPickImage: () => void;
   onSendVoice: (result: RecordingResult) => void | Promise<void>;
+  onRecordingChange?: (recording: boolean) => void;
   disabled?: boolean;
 }
 
@@ -45,11 +47,13 @@ export function ConversationInputBar({
   onAttach,
   onPickImage,
   onSendVoice,
+  onRecordingChange,
   disabled,
 }: Props) {
   const { t } = useTranslation();
   const [recording, setRecording] = useState(false);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const inputRef = useRef<TextInput>(null);
   const pulse = useRef(new Animated.Value(0)).current;
   const interval = useRef<ReturnType<typeof setInterval> | null>(null);
   const startTime = useRef<number | null>(null);
@@ -62,12 +66,21 @@ export function ConversationInputBar({
     startTime.current = null;
   };
 
+  const refocusInput = useCallback(() => {
+    const delay = Platform.OS === 'android' ? 120 : 50;
+    setTimeout(() => inputRef.current?.focus(), delay);
+  }, []);
+
   useEffect(() => {
     return () => {
       clearTimers();
       cancelVoiceRecording().catch(() => undefined);
     };
   }, []);
+
+  useEffect(() => {
+    onRecordingChange?.(recording);
+  }, [recording, onRecordingChange]);
 
   useEffect(() => {
     if (!recording) {
@@ -107,6 +120,7 @@ export function ConversationInputBar({
       return;
     }
     try {
+      Keyboard.dismiss();
       await startVoiceRecording();
       setElapsedSeconds(0);
       startTime.current = Date.now();
@@ -123,15 +137,21 @@ export function ConversationInputBar({
   const finishRecording = useCallback(async () => {
     if (!recording) return;
     clearTimers();
-    setRecording(false);
-    const result = await stopVoiceRecording();
-    setElapsedSeconds(0);
-    if (!result || result.durationSeconds < 1) {
-      Alert.alert(t('chat.voice'), t('chat.voiceTooShort'));
-      return;
+    try {
+      const result = await stopVoiceRecording();
+      setElapsedSeconds(0);
+      if (!result || result.durationSeconds < 1) {
+        Alert.alert(t('chat.voice'), t('chat.voiceTooShort'));
+        return;
+      }
+      await onSendVoice(result);
+      refocusInput();
+    } catch (err) {
+      Alert.alert(t('common.error'), (err as Error).message ?? '');
+    } finally {
+      setRecording(false);
     }
-    await onSendVoice(result);
-  }, [recording, onSendVoice, t]);
+  }, [recording, onSendVoice, t, refocusInput]);
 
   const cancelRecording = useCallback(async () => {
     if (!recording) return;
@@ -139,147 +159,172 @@ export function ConversationInputBar({
     setRecording(false);
     setElapsedSeconds(0);
     await cancelVoiceRecording();
-  }, [recording]);
+    refocusInput();
+  }, [recording, refocusInput]);
 
-  const showRecordingBar = recording;
   const hasText = value.trim().length > 0;
   const indicatorOpacity = pulse.interpolate({
     inputRange: [0, 1],
     outputRange: [0.35, 1],
   });
 
-  if (showRecordingBar) {
-    return (
-      <View style={styles.container} className="bg-cream-200 border-t border-cream-300">
-        <Pressable
-          onPress={cancelRecording}
-          className="w-10 h-10 rounded-full bg-white border border-cream-300 items-center justify-center mr-2"
-          accessibilityRole="button"
-          accessibilityLabel={t('chat.voiceCancel')}
-        >
-          <Ionicons name="trash-outline" size={20} color={colors.coral[500]} />
-        </Pressable>
-
-        <View className="flex-1 flex-row items-center bg-white rounded-2xl px-3 py-3 border border-coral-100">
-          <Animated.View
-            style={{
-              width: 10,
-              height: 10,
-              borderRadius: 5,
-              backgroundColor: colors.coral[500],
-              marginRight: 10,
-              opacity: indicatorOpacity,
-            }}
-          />
-          <Text className="text-ink-700 font-semibold text-sm">
-            {t('chat.voiceRecording')}
-          </Text>
-          <Text className="text-ink-400 text-sm ml-2 tabular-nums">
-            {formatRecordingTime(elapsedSeconds)}
-          </Text>
-        </View>
-
-        <Pressable
-          onPress={finishRecording}
-          className="ml-2 w-11 h-11 rounded-full bg-coral-500 items-center justify-center"
-          accessibilityRole="button"
-          accessibilityLabel={t('chat.voiceSend')}
-          style={{
-            shadowColor: colors.coral[600],
-            shadowOffset: { width: 0, height: 3 },
-            shadowOpacity: 0.35,
-            shadowRadius: 6,
-            elevation: 4,
-          }}
-        >
-          <Ionicons name="send" size={18} color={colors.white} />
-        </Pressable>
-      </View>
-    );
-  }
-
   return (
     <View style={styles.container} className="bg-cream-200 border-t border-cream-300">
-      <Pressable
-        onPress={disabled ? undefined : onAttach}
-        className="w-10 h-10 rounded-full bg-white items-center justify-center mr-2 border border-cream-300"
-        accessibilityRole="button"
-        accessibilityLabel={t('chat.attach')}
+      {/* Keep TextInput mounted so keyboard/focus state survives record cycles. */}
+      <View
+        style={[styles.barRow, recording ? styles.hiddenBar : undefined]}
+        pointerEvents={recording ? 'none' : 'auto'}
+        accessibilityElementsHidden={recording}
+        importantForAccessibility={recording ? 'no-hide-descendants' : 'auto'}
       >
-        <Ionicons name="add" size={24} color={colors.ink[700]} />
-      </Pressable>
+        <Pressable
+          onPress={disabled ? undefined : onAttach}
+          className="w-10 h-10 rounded-full bg-white items-center justify-center mr-2 border border-cream-300"
+          accessibilityRole="button"
+          accessibilityLabel={t('chat.attach')}
+        >
+          <Ionicons name="add" size={24} color={colors.ink[700]} />
+        </Pressable>
 
-      <View style={styles.inputWrap}>
-        <TextInput
-          value={value}
-          onChangeText={onChangeText}
-          placeholder={t('chat.writeMessage')}
-          placeholderTextColor={colors.ink[400]}
-          style={styles.textInput}
-          multiline
-          editable={!disabled}
-          underlineColorAndroid="transparent"
-          selectionColor={colors.coral[500]}
-          cursorColor={colors.coral[500]}
-          autoCorrect
-          textAlignVertical="top"
-          includeFontPadding={false}
-        />
-        {!hasText ? (
+        <View style={styles.inputWrap}>
+          <TextInput
+            ref={inputRef}
+            value={value}
+            onChangeText={onChangeText}
+            placeholder={t('chat.writeMessage')}
+            placeholderTextColor={colors.ink[400]}
+            style={styles.textInput}
+            multiline
+            editable={!disabled}
+            underlineColorAndroid="transparent"
+            selectionColor={colors.coral[500]}
+            cursorColor={colors.coral[500]}
+            autoCorrect
+            textAlignVertical="top"
+            includeFontPadding={false}
+          />
+          {!hasText ? (
+            <Pressable
+              onPress={disabled ? undefined : onPickImage}
+              className="w-8 h-8 items-center justify-center ml-1"
+              accessibilityRole="button"
+              accessibilityLabel={t('chat.image')}
+            >
+              <Ionicons name="image-outline" size={22} color={colors.ink[400]} />
+            </Pressable>
+          ) : null}
+        </View>
+
+        {hasText ? (
           <Pressable
-            onPress={disabled ? undefined : onPickImage}
-            className="w-8 h-8 items-center justify-center ml-1"
+            onPress={onSend}
+            className="ml-2 w-11 h-11 rounded-full bg-coral-500 items-center justify-center"
             accessibilityRole="button"
-            accessibilityLabel={t('chat.image')}
+            accessibilityLabel={t('chat.send')}
+            style={{
+              shadowColor: colors.coral[600],
+              shadowOffset: { width: 0, height: 3 },
+              shadowOpacity: 0.35,
+              shadowRadius: 6,
+              elevation: 4,
+            }}
           >
-            <Ionicons name="image-outline" size={22} color={colors.ink[400]} />
+            <Ionicons name="send" size={18} color={colors.white} />
           </Pressable>
-        ) : null}
+        ) : (
+          <Pressable
+            onPress={startRecording}
+            onLongPress={startRecording}
+            delayLongPress={150}
+            disabled={disabled}
+            className="ml-2 w-11 h-11 rounded-full bg-coral-500 items-center justify-center"
+            accessibilityRole="button"
+            accessibilityLabel={t('chat.voice')}
+            style={{
+              shadowColor: colors.coral[600],
+              shadowOffset: { width: 0, height: 3 },
+              shadowOpacity: 0.35,
+              shadowRadius: 6,
+              elevation: 4,
+              opacity: disabled ? 0.5 : 1,
+            }}
+          >
+            <Ionicons name="mic" size={20} color={colors.white} />
+          </Pressable>
+        )}
       </View>
 
-      {hasText ? (
-        <Pressable
-          onPress={onSend}
-          className="ml-2 w-11 h-11 rounded-full bg-coral-500 items-center justify-center"
-          accessibilityRole="button"
-          accessibilityLabel={t('chat.send')}
-          style={{
-            shadowColor: colors.coral[600],
-            shadowOffset: { width: 0, height: 3 },
-            shadowOpacity: 0.35,
-            shadowRadius: 6,
-            elevation: 4,
-          }}
-        >
-          <Ionicons name="send" size={18} color={colors.white} />
-        </Pressable>
-      ) : (
-        <Pressable
-          onPress={startRecording}
-          onLongPress={startRecording}
-          delayLongPress={150}
-          disabled={disabled}
-          className="ml-2 w-11 h-11 rounded-full bg-coral-500 items-center justify-center"
-          accessibilityRole="button"
-          accessibilityLabel={t('chat.voice')}
-          style={{
-            shadowColor: colors.coral[600],
-            shadowOffset: { width: 0, height: 3 },
-            shadowOpacity: 0.35,
-            shadowRadius: 6,
-            elevation: 4,
-            opacity: disabled ? 0.5 : 1,
-          }}
-        >
-          <Ionicons name="mic" size={20} color={colors.white} />
-        </Pressable>
-      )}
+      {recording ? (
+        <View style={styles.recordingBar}>
+          <Pressable
+            onPress={cancelRecording}
+            className="w-10 h-10 rounded-full bg-white border border-cream-300 items-center justify-center mr-2"
+            accessibilityRole="button"
+            accessibilityLabel={t('chat.voiceCancel')}
+          >
+            <Ionicons name="trash-outline" size={20} color={colors.coral[500]} />
+          </Pressable>
+
+          <View className="flex-1 flex-row items-center bg-white rounded-2xl px-3 py-3 border border-coral-100">
+            <Animated.View
+              style={{
+                width: 10,
+                height: 10,
+                borderRadius: 5,
+                backgroundColor: colors.coral[500],
+                marginRight: 10,
+                opacity: indicatorOpacity,
+              }}
+            />
+            <Text className="text-ink-700 font-semibold text-sm">
+              {t('chat.voiceRecording')}
+            </Text>
+            <Text className="text-ink-400 text-sm ml-2 tabular-nums">
+              {formatRecordingTime(elapsedSeconds)}
+            </Text>
+          </View>
+
+          <Pressable
+            onPress={finishRecording}
+            className="ml-2 w-11 h-11 rounded-full bg-coral-500 items-center justify-center"
+            accessibilityRole="button"
+            accessibilityLabel={t('chat.voiceSend')}
+            style={{
+              shadowColor: colors.coral[600],
+              shadowOffset: { width: 0, height: 3 },
+              shadowOpacity: 0.35,
+              shadowRadius: 6,
+              elevation: 4,
+            }}
+          >
+            <Ionicons name="send" size={18} color={colors.white} />
+          </Pressable>
+        </View>
+      ) : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
+    position: 'relative',
+  },
+  barRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    paddingHorizontal: 12,
+    paddingTop: 8,
+    paddingBottom: Platform.OS === 'ios' ? 10 : 8,
+  },
+  hiddenBar: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    opacity: 0,
+    height: 0,
+    overflow: 'hidden',
+  },
+  recordingBar: {
     flexDirection: 'row',
     alignItems: 'flex-end',
     paddingHorizontal: 12,
@@ -289,10 +334,6 @@ const styles = StyleSheet.create({
   inputWrap: {
     flex: 1,
     flexDirection: 'row',
-    // Bottom-align so the action icon hugs the last line of typed text;
-    // crucially we do NOT use `items-center` here — combined with a
-    // multiline TextInput on Android that causes the typed text to be
-    // clipped above the visible area when it grows past one line.
     alignItems: 'flex-end',
     backgroundColor: colors.white,
     borderRadius: 16,
@@ -307,10 +348,6 @@ const styles = StyleSheet.create({
     flex: 1,
     color: colors.ink[700],
     fontSize: 16,
-    // No explicit lineHeight here — on Android, lineHeight combined with
-    // multiline and `includeFontPadding: false` can cause the cursor and
-    // typed glyphs to render outside the input bounds. Let the platform
-    // pick a sensible default.
     paddingTop: Platform.OS === 'ios' ? 8 : 6,
     paddingBottom: Platform.OS === 'ios' ? 8 : 6,
     paddingHorizontal: 4,

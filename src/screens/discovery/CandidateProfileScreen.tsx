@@ -1,18 +1,20 @@
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useQueryClient } from '@tanstack/react-query';
 import * as Haptics from 'expo-haptics';
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { extractErrorMessage } from '../../api/client';
-import { discoveryApi } from '../../api/endpoints';
+import { discoveryApi, moderationApi } from '../../api/endpoints';
 import { CandidateActionBar } from '../../components/discovery/CandidateActionBar';
 import { CandidateIdentityRow } from '../../components/discovery/CandidateIdentityRow';
 import { CandidateInfoCard } from '../../components/discovery/CandidateInfoCard';
 import { CandidatePhotoHero } from '../../components/discovery/CandidatePhotoHero';
 import { CandidatePhotoThumbnails } from '../../components/discovery/CandidatePhotoThumbnails';
 import { CandidateProfileHeader } from '../../components/discovery/CandidateProfileHeader';
+import { ReportUserSheet } from '../../components/moderation/ReportUserSheet';
+import { ProfileSafetySection } from '../../components/moderation/ProfileSafetySection';
 import { useTopScreenPadding } from '../../hooks/useTopScreenPadding';
 import { RootStackParamList } from '../../navigation/types';
 import { useMatchPopup } from '../../store/matchPopup';
@@ -31,7 +33,12 @@ export function CandidateProfileScreen({ route, navigation }: Props) {
 
   const [photoIndex, setPhotoIndex] = useState(0);
   const [busy, setBusy] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
   const showMatchPopup = useMatchPopup((s) => s.show);
+  const matchOpen = useMatchPopup((s) => s.current != null);
+  const hadMatchRef = useRef(false);
+  const scrollRef = useRef<ScrollView>(null);
+  const safetyOffsetRef = useRef(0);
 
   const photoUris = useMemo(
     () =>
@@ -59,6 +66,7 @@ export function CandidateProfileScreen({ route, navigation }: Props) {
     qc.invalidateQueries({ queryKey: ['feed'] });
     if (matched && matchId) {
       qc.invalidateQueries({ queryKey: ['matches'] });
+      hadMatchRef.current = true;
       showMatchPopup({
         matchId,
         otherUser: {
@@ -67,9 +75,17 @@ export function CandidateProfileScreen({ route, navigation }: Props) {
           photo: candidate.photos[0]?.url ?? null,
         },
       });
+      return;
     }
     navigation.goBack();
   };
+
+  useEffect(() => {
+    if (hadMatchRef.current && !matchOpen) {
+      hadMatchRef.current = false;
+      navigation.goBack();
+    }
+  }, [matchOpen, navigation]);
 
   const handleLike = async () => {
     if (busy) return;
@@ -123,11 +139,28 @@ export function CandidateProfileScreen({ route, navigation }: Props) {
     }
   };
 
-  const handleMenu = () => {
-    Alert.alert(t('profile.openMenu'), undefined, [
-      { text: t('profile.report'), onPress: () => Alert.alert(t('profile.reportComingSoon')) },
-      { text: t('profile.block'), style: 'destructive' as const },
-      { text: t('common.cancel'), style: 'cancel' as const },
+  const scrollToSafety = () => {
+    scrollRef.current?.scrollTo({ y: safetyOffsetRef.current, animated: true });
+  };
+
+  const handleBlock = () => {
+    Alert.alert(t('profile.block'), t('profile.blockConfirm'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      {
+        text: t('profile.block'),
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await moderationApi.block(candidate.id);
+            await qc.invalidateQueries({ queryKey: ['feed'] });
+            await qc.invalidateQueries({ queryKey: ['likes'] });
+            Alert.alert(t('moderation.block'), t('moderation.blocked'));
+            navigation.goBack();
+          } catch (e) {
+            Alert.alert(t('common.error'), extractErrorMessage(e));
+          }
+        },
+      },
     ]);
   };
 
@@ -140,6 +173,7 @@ export function CandidateProfileScreen({ route, navigation }: Props) {
         <CandidateProfileHeader />
 
         <ScrollView
+          ref={scrollRef}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingBottom: ACTION_BAR_HEIGHT + 24 }}
         >
@@ -151,7 +185,7 @@ export function CandidateProfileScreen({ route, navigation }: Props) {
             isPremium={candidate.isPremium}
             onPrev={photoCount > 1 ? goPrev : undefined}
             onNext={photoCount > 1 ? goNext : undefined}
-            onMenuPress={handleMenu}
+            onSafetyPress={scrollToSafety}
           />
 
           {photoCount > 1 ? (
@@ -208,6 +242,17 @@ export function CandidateProfileScreen({ route, navigation }: Props) {
               </Text>
             </View>
           ) : null}
+
+          <View
+            onLayout={(e) => {
+              safetyOffsetRef.current = e.nativeEvent.layout.y;
+            }}
+          >
+            <ProfileSafetySection
+              onReport={() => setReportOpen(true)}
+              onBlock={handleBlock}
+            />
+          </View>
         </ScrollView>
 
         <CandidateActionBar
@@ -217,6 +262,16 @@ export function CandidateProfileScreen({ route, navigation }: Props) {
           disabled={busy}
         />
       </View>
+
+      <ReportUserSheet
+        visible={reportOpen}
+        userId={candidate.id}
+        onClose={() => setReportOpen(false)}
+        onReported={() => {
+          qc.invalidateQueries({ queryKey: ['feed'] });
+          navigation.goBack();
+        }}
+      />
     </SafeAreaView>
   );
 }

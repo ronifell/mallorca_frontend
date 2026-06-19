@@ -27,6 +27,7 @@ export function DiscoveryScreen() {
   const nav = useNavigation<Nav>();
   const qc = useQueryClient();
   const showMatchPopup = useMatchPopup((s) => s.show);
+  const matchOpen = useMatchPopup((s) => s.current != null);
   const [mode, setMode] = useState<DiscoveryMode>('discover');
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['feed'],
@@ -173,7 +174,7 @@ export function DiscoveryScreen() {
                 onSuperLike={handleSuperLike}
               />
             </View>
-          ) : pendingAction ? (
+          ) : pendingAction || matchOpen ? (
             <View className="flex-1 items-center justify-center">
               <Text className="text-ink-400">{t('discovery.loading')}</Text>
             </View>

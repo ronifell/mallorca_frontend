@@ -1,4 +1,5 @@
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useFocusEffect } from '@react-navigation/native';
 import { useQuery } from '@tanstack/react-query';
 import * as ImagePicker from 'expo-image-picker';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -29,6 +30,7 @@ import { RootStackParamList } from '../../navigation/types';
 import { connectSocket } from '../../services/socket';
 import { RecordingResult } from '../../services/voiceRecorder';
 import { useAuthStore } from '../../store/auth';
+import { useMatchPopup } from '../../store/matchPopup';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Conversation'>;
 
@@ -140,6 +142,12 @@ export function ConversationScreen({ route, navigation }: Props) {
       setPremiumBlocked(false);
     }
   }, [isPremium, premiumBlocked]);
+
+  useFocusEffect(
+    useCallback(() => {
+      useMatchPopup.getState().hide();
+    }, []),
+  );
 
   const loadInitial = useCallback(async () => {
     try {
@@ -471,6 +479,12 @@ export function ConversationScreen({ route, navigation }: Props) {
           onAttach={sendImage}
           onPickImage={sendImage}
           onSendVoice={sendVoice}
+          onRecordingChange={(isRecording) => {
+            if (isRecording) {
+              Keyboard.dismiss();
+              setAndroidKeyboardOffset(0);
+            }
+          }}
           disabled={inputDisabled}
         />
 

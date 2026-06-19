@@ -1,7 +1,7 @@
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useQuery } from '@tanstack/react-query';
-import React from 'react';
+import React, { useState } from 'react';
 import { Alert } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { chatApi, usersApi } from '../../api/endpoints';
@@ -25,13 +25,14 @@ export function GlobalMatchModal() {
   const current = useMatchPopup((s) => s.current);
   const hide = useMatchPopup((s) => s.hide);
   const { data: me } = useQuery({ queryKey: ['me'], queryFn: () => usersApi.me() });
+  const [sending, setSending] = useState(false);
 
   const onSendMessage = async () => {
-    if (!current) return;
+    if (!current || sending) return;
     const popup = current;
+    setSending(true);
     try {
       const conv = await chatApi.ensureConversation(popup.matchId);
-      hide();
       nav.navigate('Conversation', {
         conversationId: conv.id,
         otherName: popup.otherUser.firstName,
@@ -41,6 +42,8 @@ export function GlobalMatchModal() {
       });
     } catch (e) {
       Alert.alert(t('common.error'), extractErrorMessage(e));
+    } finally {
+      setSending(false);
     }
   };
 
@@ -53,6 +56,7 @@ export function GlobalMatchModal() {
       myName={me?.firstName ?? null}
       onSendMessage={onSendMessage}
       onClose={hide}
+      sending={sending}
     />
   );
 }

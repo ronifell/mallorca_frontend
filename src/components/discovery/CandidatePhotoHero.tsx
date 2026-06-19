@@ -13,6 +13,7 @@ interface Props {
   onPrev?: () => void;
   onNext?: () => void;
   onMenuPress?: () => void;
+  onSafetyPress?: () => void;
 }
 
 /**
@@ -33,8 +34,10 @@ export function CandidatePhotoHero({
   onPrev,
   onNext,
   onMenuPress,
+  onSafetyPress,
 }: Props) {
   const { t } = useTranslation();
+  const safetyHandler = onSafetyPress ?? onMenuPress;
 
   return (
     <View
@@ -85,15 +88,19 @@ export function CandidatePhotoHero({
         </View>
       ) : null}
 
-      {onMenuPress ? (
+      {safetyHandler ? (
         <Pressable
-          onPress={onMenuPress}
+          onPress={safetyHandler}
           accessibilityRole="button"
-          accessibilityLabel={t('profile.openMenu')}
-          className="absolute top-3 right-3 w-8 h-8 items-center justify-center"
-          hitSlop={8}
+          accessibilityLabel={t('profile.safetyTitle')}
+          className="absolute top-3 right-3 flex-row items-center rounded-full px-3 py-1.5"
+          style={{ backgroundColor: 'rgba(0,0,0,0.62)' }}
+          hitSlop={4}
         >
-          <Ionicons name="ellipsis-vertical" size={20} color="#FFFFFF" />
+          <Ionicons name="shield-checkmark" size={15} color="#FFFFFF" />
+          <Text className="text-white text-xs font-bold ml-1.5">
+            {t('profile.safetyTitle')}
+          </Text>
         </Pressable>
       ) : null}
 
