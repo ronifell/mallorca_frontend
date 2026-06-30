@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "921193281866",
+    "project_id": "citas-mallorca-69a3a",
+    "storage_bucket": "citas-mallorca-69a3a.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:921193281866:android:adeba9c5d2fa2a4e9be9b3",
+        "android_client_info": {
+          "package_name": "es.citasmallorca.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA73cYwrMQ1yAJZD0r1bEmErIkzjOsJXJQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

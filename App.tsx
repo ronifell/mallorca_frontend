@@ -49,6 +49,7 @@ export default function App() {
     PlayfairDisplay_700Bold_Italic,
   });
   const initialized = useAuthStore((s) => s.initialized);
+  const user = useAuthStore((s) => s.user);
   const bootstrap = useAuthStore((s) => s.bootstrap);
   const logout = useAuthStore((s) => s.logout);
 
@@ -79,8 +80,13 @@ export default function App() {
   useEffect(() => {
     if (!ready) return;
     ExpoSplash.hideAsync().catch(() => undefined);
-    registerForPushNotificationsAsync().catch(() => undefined);
   }, [ready]);
+
+  // Register FCM token only after the user is authenticated so PUT /users/me/fcm-token succeeds.
+  useEffect(() => {
+    if (!ready || !user) return;
+    registerForPushNotificationsAsync().catch(() => undefined);
+  }, [ready, user]);
 
   if (!ready) {
     return <SplashScreen />;

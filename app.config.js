@@ -32,6 +32,12 @@ module.exports = {
       visible: 'sticky-immersive',
       backgroundColor: '#00000000',
     },
+    android: {
+      ...appJson.expo.android,
+      // EAS injects GOOGLE_SERVICES_JSON as a file path on cloud builds; local builds use ./google-services.json.
+      googleServicesFile:
+        process.env.GOOGLE_SERVICES_JSON ?? './google-services.json',
+    },
     ios: {
       ...appJson.expo.ios,
       infoPlist: {
