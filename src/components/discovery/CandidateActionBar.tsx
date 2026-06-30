@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '../../theme/colors';
 
@@ -10,6 +10,8 @@ interface Props {
   onLike: () => void;
   onSuperLike: () => void;
   disabled?: boolean;
+  superLikeRemaining?: number | null;
+  superLikeEnabled?: boolean;
 }
 
 /**
@@ -24,6 +26,8 @@ export function CandidateActionBar({
   onLike,
   onSuperLike,
   disabled = false,
+  superLikeRemaining,
+  superLikeEnabled = true,
 }: Props) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
@@ -97,7 +101,16 @@ export function CandidateActionBar({
             elevation: 3,
           }}
         >
-          <Ionicons name="star-outline" size={24} color={colors.ink[700]} />
+          <Ionicons name="star-outline" size={24} color="#F5B301" />
+          {!superLikeEnabled ? (
+            <View className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-coral-500 items-center justify-center">
+              <Ionicons name="lock-closed" size={11} color="#FFFFFF" />
+            </View>
+          ) : superLikeRemaining != null ? (
+            <View className="absolute -top-1 -right-1 min-w-[20px] h-5 px-1 rounded-full bg-coral-500 items-center justify-center">
+              <Text className="text-white text-[10px] font-bold">{superLikeRemaining}</Text>
+            </View>
+          ) : null}
         </Pressable>
       </View>
     </View>

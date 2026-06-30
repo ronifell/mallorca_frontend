@@ -29,6 +29,8 @@ import { useTopScreenPadding } from '../../hooks/useTopScreenPadding';
 import { RootStackParamList } from '../../navigation/types';
 import { connectSocket } from '../../services/socket';
 import { RecordingResult } from '../../services/voiceRecorder';
+import { useContentFilter } from '../../hooks/useContentFilter';
+import { createFilteredChangeHandler, extractContentBlockedMessage } from '../../utils/contentFilterHelpers';
 import { useAuthStore } from '../../store/auth';
 import { useMatchPopup } from '../../store/matchPopup';
 
@@ -106,6 +108,7 @@ function buildChatRows(messages: Message[], t: (key: string) => string): ChatRow
 
 export function ConversationScreen({ route, navigation }: Props) {
   const { t } = useTranslation();
+  const { check: checkContent } = useContentFilter();
   const { conversationId, otherName, otherUserAge, otherUserPhoto } = route.params;
 
   const { data: me } = useQuery({ queryKey: ['me'], queryFn: () => usersApi.me() });
@@ -278,6 +281,12 @@ export function ConversationScreen({ route, navigation }: Props) {
     const trimmed = text.trim();
     if (!trimmed || !myId) return;
 
+    const blockedMessage = checkContent(trimmed, 'chat');
+    if (blockedMessage) {
+      Alert.alert(t('contentFilter.blockedTitle'), blockedMessage);
+      return;
+    }
+
     const tempId = makeTempId();
     const optimistic: Message = {
       id: tempId,
@@ -301,6 +310,11 @@ export function ConversationScreen({ route, navigation }: Props) {
     } catch (e) {
       removeOptimistic(tempId);
       setText(trimmed);
+      const blockedMessage = extractContentBlockedMessage(e, t);
+      if (blockedMessage) {
+        Alert.alert(t('contentFilter.blockedTitle'), blockedMessage);
+        return;
+      }
       const errMsg = extractErrorMessage(e);
       if (errMsg.toLowerCase().includes('premium')) {
         setPremiumBlocked(true);
@@ -388,15 +402,26 @@ export function ConversationScreen({ route, navigation }: Props) {
     [conversationId, myId, t],
   );
 
-  const onChangeText = (v: string) => {
-    setText(v);
-    if (!socketRef.current) return;
-    socketRef.current.emit('typing', { conversationId, typing: true });
-    if (typingTimeout.current) clearTimeout(typingTimeout.current);
-    typingTimeout.current = setTimeout(() => {
-      socketRef.current?.emit('typing', { conversationId, typing: false });
-    }, 1500);
-  };
+  const onChangeText = useCallback(
+    (v: string) => {
+      createFilteredChangeHandler(
+        text,
+        (next) => {
+          setText(next);
+          if (!socketRef.current) return;
+          socketRef.current.emit('typing', { conversationId, typing: true });
+          if (typingTimeout.current) clearTimeout(typingTimeout.current);
+          typingTimeout.current = setTimeout(() => {
+            socketRef.current?.emit('typing', { conversationId, typing: false });
+          }, 1500);
+        },
+        'chat',
+        t,
+        (message) => Alert.alert(t('contentFilter.blockedTitle'), message),
+      )(v);
+    },
+    [conversationId, t, text],
+  );
 
   const chatRows = useMemo(() => buildChatRows(messages, t), [messages, t]);
   const inputDisabled = premiumBlocked;

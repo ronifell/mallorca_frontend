@@ -4,7 +4,6 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,
-  Alert,
   ImageBackground,
   KeyboardAvoidingView,
   Platform,
@@ -21,6 +20,7 @@ import { LoginBrandHeader } from '../../components/auth/LoginBrandHeader';
 import { OrDivider } from '../../components/auth/OrDivider';
 import { SocialAuthButton } from '../../components/auth/SocialAuthButton';
 import { Input } from '../../components/Input';
+import { useGoogleSignIn } from '../../hooks/useGoogleSignIn';
 import { AuthStackParamList } from '../../navigation/types';
 import { useAuthStore } from '../../store/auth';
 import { colors } from '../../theme/colors';
@@ -36,6 +36,7 @@ export function LoginScreen({ navigation }: Props) {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { onGooglePress, googleLoading, showGoogleButton } = useGoogleSignIn({ onError: setError });
 
   const onSubmit = async () => {
     setLoading(true);
@@ -52,10 +53,6 @@ export function LoginScreen({ navigation }: Props) {
     } finally {
       setLoading(false);
     }
-  };
-
-  const onSocialPress = () => {
-    Alert.alert(t('auth.login'), t('auth.socialComingSoon'));
   };
 
   return (
@@ -158,13 +155,20 @@ export function LoginScreen({ navigation }: Props) {
                   )}
                 </Pressable>
 
-                <OrDivider />
-
-                <SocialAuthButton
-                  provider="google"
-                  label={t('auth.continueWithGoogle')}
-                  onPress={onSocialPress}
-                />
+                {showGoogleButton ? (
+                  <>
+                    <OrDivider />
+                    <SocialAuthButton
+                      provider="google"
+                      label={t('auth.continueWithGoogle')}
+                      onPress={() => {
+                        setError(null);
+                        onGooglePress();
+                      }}
+                      loading={googleLoading}
+                    />
+                  </>
+                ) : null}
 
                 <View className="mt-4 flex-row justify-center">
                   <Text className="text-ink-400">{t('auth.noAccount')} </Text>

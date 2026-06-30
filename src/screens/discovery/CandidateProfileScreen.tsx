@@ -1,5 +1,6 @@
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useQueryClient } from '@tanstack/react-query';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp, NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import * as Haptics from 'expo-haptics';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -18,6 +19,10 @@ import { ProfileSafetySection } from '../../components/moderation/ProfileSafetyS
 import { useTopScreenPadding } from '../../hooks/useTopScreenPadding';
 import { RootStackParamList } from '../../navigation/types';
 import { useMatchPopup } from '../../store/matchPopup';
+import {
+  ensureSuperLikeAllowed,
+  handleSuperLikeApiError,
+} from '../../utils/superLikeActions';
 import { resolveMediaUrl } from '../../utils/mediaUrl';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'CandidateProfile'>;
@@ -26,10 +31,16 @@ const ACTION_BAR_HEIGHT = 96;
 
 export function CandidateProfileScreen({ route, navigation }: Props) {
   const { t } = useTranslation();
+  const nav = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const qc = useQueryClient();
   const candidate = route.params.candidate;
   const distanceKm = route.params.distanceKm;
   const topPadding = useTopScreenPadding();
+
+  const { data: superLikeQuota, refetch: refetchQuota } = useQuery({
+    queryKey: ['superLikeQuota'],
+    queryFn: () => discoveryApi.superLikeQuota(),
+  });
 
   const [photoIndex, setPhotoIndex] = useState(0);
   const [busy, setBusy] = useState(false);
@@ -118,10 +129,13 @@ export function CandidateProfileScreen({ route, navigation }: Props) {
 
   const handleSuperLike = async () => {
     if (busy) return;
+    if (!ensureSuperLikeAllowed(superLikeQuota, nav, t)) return;
+
     setBusy(true);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => undefined);
     try {
-      const res = await discoveryApi.like(candidate.id);
+      const res = await discoveryApi.superLike(candidate.id);
+      refetchQuota();
       if (res.matched && res.matchId) {
         finishSwipe(true, res.matchId);
       } else {
@@ -131,9 +145,10 @@ export function CandidateProfileScreen({ route, navigation }: Props) {
           [{ text: t('common.ok'), onPress: () => navigation.goBack() }],
         );
         qc.invalidateQueries({ queryKey: ['feed'] });
+        qc.invalidateQueries({ queryKey: ['likes'] });
       }
-    } catch {
-      Alert.alert(t('common.error'), t('discovery.superLikeError'));
+    } catch (e) {
+      handleSuperLikeApiError(e, nav, t, superLikeQuota?.limit ?? 5);
     } finally {
       setBusy(false);
     }
@@ -260,6 +275,10 @@ export function CandidateProfileScreen({ route, navigation }: Props) {
           onLike={handleLike}
           onSuperLike={handleSuperLike}
           disabled={busy}
+          superLikeEnabled={superLikeQuota?.isPremium === true}
+          superLikeRemaining={
+            superLikeQuota?.isPremium ? superLikeQuota.remaining : null
+          }
         />
       </View>
 

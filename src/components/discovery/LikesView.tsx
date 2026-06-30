@@ -95,6 +95,14 @@ function LikeRow({ user, variant, busy, onOpen, onAction }: RowProps) {
               <Ionicons name="ribbon" size={10} color="#FFFFFF" />
             </View>
           ) : null}
+          {variant === 'received' && user.isSuperLike ? (
+            <View
+              className="ml-2 flex-row items-center rounded-full px-1.5 py-0.5"
+              style={{ backgroundColor: '#F5B301' }}
+            >
+              <Ionicons name="star" size={10} color="#FFFFFF" />
+            </View>
+          ) : null}
         </View>
         {cityLine ? (
           <View className="flex-row items-center mt-1">

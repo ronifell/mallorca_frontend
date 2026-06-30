@@ -20,6 +20,7 @@ module.exports = {
           },
         },
       ],
+      '@react-native-google-signin/google-signin',
       ...(appJson.expo.plugins ?? []),
     ],
     androidStatusBar: {

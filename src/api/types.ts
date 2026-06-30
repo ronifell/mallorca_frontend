@@ -81,6 +81,22 @@ export interface FeedCandidate {
 
 export interface LikedUser extends FeedCandidate {
   likedAt: string;
+  isSuperLike?: boolean;
+}
+
+export interface SuperLikeQuota {
+  isPremium: boolean;
+  limit: number;
+  used: number;
+  remaining: number;
+  resetsAt: string | null;
+}
+
+export interface SuperLikeResult {
+  matched: boolean;
+  matchId?: string;
+  superLikesRemaining: number;
+  isNewSuperLike: boolean;
 }
 
 export interface Match {

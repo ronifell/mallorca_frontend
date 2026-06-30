@@ -22,6 +22,8 @@ import {
   LANGUAGE_OPTIONS,
 } from '../../config/profileOptions';
 import { ProfileSetupStackParamList } from '../../navigation/types';
+import { useContentFilter } from '../../hooks/useContentFilter';
+import { validateProfileFields, extractContentBlockedMessage } from '../../utils/contentFilterHelpers';
 import { useAuthStore } from '../../store/auth';
 
 type Props = NativeStackScreenProps<ProfileSetupStackParamList, 'CreateProfile'>;
@@ -32,6 +34,7 @@ function isValidIsoDate(s: string): boolean {
 
 export function CreateProfileScreen({ navigation }: Props) {
   const { t } = useTranslation();
+  const { check: checkContent } = useContentFilter();
   const logout = useAuthStore((s) => s.logout);
 
   const [firstName, setFirstName] = useState('');
@@ -89,6 +92,14 @@ export function CreateProfileScreen({ navigation }: Props) {
       setError(t('profile.birthDateFormat'));
       return;
     }
+    const blockedField = validateProfileFields(
+      [{ value: firstName }, { value: city }, { value: bio }],
+      checkContent,
+    );
+    if (blockedField) {
+      setError(blockedField);
+      return;
+    }
     setLoading(true);
     try {
       await usersApi.update({
@@ -105,7 +116,7 @@ export function CreateProfileScreen({ navigation }: Props) {
       });
       navigation.navigate('UploadPhotos');
     } catch (e) {
-      setError(extractErrorMessage(e));
+      setError(extractContentBlockedMessage(e, t) ?? extractErrorMessage(e));
     } finally {
       setLoading(false);
     }
@@ -131,6 +142,7 @@ export function CreateProfileScreen({ navigation }: Props) {
         placeholder={t('profile.firstNamePlaceholder')}
         leftIcon="person-outline"
         autoCapitalize="words"
+        filterContext="profile"
       />
 
       <ProfileSectionLabel label={t('profile.birthDate')} icon="calendar-outline" />

@@ -19,6 +19,10 @@ import { Screen } from '../../components/Screen';
 import { SwipeCard } from '../../components/SwipeCard';
 import { RootStackParamList } from '../../navigation/types';
 import { useMatchPopup } from '../../store/matchPopup';
+import {
+  ensureSuperLikeAllowed,
+  handleSuperLikeApiError,
+} from '../../utils/superLikeActions';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
@@ -32,6 +36,10 @@ export function DiscoveryScreen() {
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['feed'],
     queryFn: () => discoveryApi.feed(20),
+  });
+  const { data: superLikeQuota, refetch: refetchQuota } = useQuery({
+    queryKey: ['superLikeQuota'],
+    queryFn: () => discoveryApi.superLikeQuota(),
   });
 
   const [deck, setDeck] = useState<FeedCandidate[]>([]);
@@ -91,12 +99,14 @@ export function DiscoveryScreen() {
 
   const handleSuperLike = async () => {
     if (!top) return;
+    if (!ensureSuperLikeAllowed(superLikeQuota, nav, t)) return;
+
     const candidate = top;
     advance();
     setPendingAction(true);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => undefined);
     try {
-      const res = await discoveryApi.like(candidate.id);
+      const res = await discoveryApi.superLike(candidate.id);
       if (res.matched && res.matchId) {
         showMatchPopup({
           matchId: res.matchId,
@@ -113,10 +123,11 @@ export function DiscoveryScreen() {
           t('discovery.superLikeSent', { name: candidate.firstName ?? '' }),
         );
       }
-    } catch {
-      Alert.alert(t('common.error'), t('discovery.superLikeError'));
+    } catch (e) {
+      handleSuperLikeApiError(e, nav, t, superLikeQuota?.limit ?? 5);
     } finally {
       setPendingAction(false);
+      refetchQuota();
     }
     if (deck.length <= 3) refetch();
   };
@@ -172,6 +183,10 @@ export function DiscoveryScreen() {
                 onPass={() => handleSwipe('left')}
                 onLike={() => handleSwipe('right')}
                 onSuperLike={handleSuperLike}
+                superLikeEnabled={superLikeQuota?.isPremium === true}
+                superLikeRemaining={
+                  superLikeQuota?.isPremium ? superLikeQuota.remaining : null
+                }
               />
             </View>
           ) : pendingAction || matchOpen ? (

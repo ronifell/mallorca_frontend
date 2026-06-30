@@ -18,7 +18,10 @@ import { extractErrorMessage } from '../../api/client';
 import { authApi } from '../../api/endpoints';
 import { LegalCheckbox } from '../../components/auth/LegalCheckbox';
 import { LoginBrandHeader } from '../../components/auth/LoginBrandHeader';
+import { OrDivider } from '../../components/auth/OrDivider';
+import { SocialAuthButton } from '../../components/auth/SocialAuthButton';
 import { Input } from '../../components/Input';
+import { useGoogleSignIn } from '../../hooks/useGoogleSignIn';
 import { AuthStackParamList } from '../../navigation/types';
 import { useAuthStore } from '../../store/auth';
 import { colors } from '../../theme/colors';
@@ -37,6 +40,12 @@ export function RegisterScreen({ navigation }: Props) {
   const [acceptedPrivacy, setAcceptedPrivacy] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { onGooglePress, googleLoading, showGoogleButton } = useGoogleSignIn({
+    requireConsent: true,
+    acceptedTerms,
+    acceptedPrivacy,
+    onError: setError,
+  });
 
   const onSubmit = async () => {
     if (!acceptedTerms) {
@@ -181,6 +190,21 @@ export function RegisterScreen({ navigation }: Props) {
                     </>
                   )}
                 </Pressable>
+
+                {showGoogleButton ? (
+                  <>
+                    <OrDivider />
+                    <SocialAuthButton
+                      provider="google"
+                      label={t('auth.continueWithGoogle')}
+                      onPress={() => {
+                        setError(null);
+                        onGooglePress();
+                      }}
+                      loading={googleLoading}
+                    />
+                  </>
+                ) : null}
 
                 <View className="mt-6 flex-row justify-center">
                   <Text className="text-ink-400">{t('auth.haveAccount')} </Text>

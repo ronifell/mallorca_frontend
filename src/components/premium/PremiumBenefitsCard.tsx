@@ -36,6 +36,18 @@ export function PremiumBenefitsCard() {
         badgeBg={colors.coral[500]}
         title={t('premium.benefitPremiumTitle')}
       />
+
+      <View className="h-px bg-cream-200 my-2" />
+
+      <BenefitRow
+        icon="star"
+        iconColor="#F5B301"
+        iconBg="#FFF8E1"
+        badge={t('premium.benefitPremiumBadge')}
+        badgeColor={colors.white}
+        badgeBg={colors.coral[500]}
+        title={t('premium.benefitSuperLikeTitle')}
+      />
     </View>
   );
 }

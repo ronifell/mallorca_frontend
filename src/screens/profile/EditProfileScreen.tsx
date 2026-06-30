@@ -8,6 +8,8 @@ import { Alert, Text, View } from 'react-native';
 import { extractErrorMessage } from '../../api/client';
 import { usersApi } from '../../api/endpoints';
 import { Gender, InterestSelection, Photo, RelationshipGoal } from '../../api/types';
+import { useContentFilter } from '../../hooks/useContentFilter';
+import { extractContentBlockedMessage, validateProfileFields } from '../../utils/contentFilterHelpers';
 import { AgeRangePicker } from '../../components/profile/AgeRangePicker';
 import { BioTextArea } from '../../components/profile/BioTextArea';
 import { CityPicker } from '../../components/profile/CityPicker';
@@ -33,6 +35,7 @@ function isValidIsoDate(s: string): boolean {
 
 export function EditProfileScreen() {
   const { t } = useTranslation();
+  const { check: checkContent } = useContentFilter();
   const qc = useQueryClient();
   const nav = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { data: me } = useQuery({ queryKey: ['me'], queryFn: () => usersApi.me() });
@@ -150,6 +153,14 @@ export function EditProfileScreen() {
       setError(t('profile.birthDateFormat'));
       return;
     }
+    const blockedField = validateProfileFields(
+      [{ value: firstName }, { value: city }, { value: bio }],
+      checkContent,
+    );
+    if (blockedField) {
+      setError(blockedField);
+      return;
+    }
 
     setSaving(true);
     try {
@@ -168,7 +179,7 @@ export function EditProfileScreen() {
       await qc.invalidateQueries({ queryKey: ['me'] });
       nav.goBack();
     } catch (e) {
-      setError(extractErrorMessage(e));
+      setError(extractContentBlockedMessage(e, t) ?? extractErrorMessage(e));
     } finally {
       setSaving(false);
     }
@@ -211,6 +222,7 @@ export function EditProfileScreen() {
         placeholder={t('profile.firstNamePlaceholder')}
         leftIcon="person-outline"
         autoCapitalize="words"
+        filterContext="profile"
       />
 
       <ProfileSectionLabel label={t('profile.birthDate')} icon="calendar-outline" />

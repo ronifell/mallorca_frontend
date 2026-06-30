@@ -15,6 +15,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { extractErrorMessage } from '../../api/client';
 import { moderationApi } from '../../api/endpoints';
+import { useContentFilter } from '../../hooks/useContentFilter';
+import { useFilteredText } from '../../hooks/useFilteredText';
 import { colors } from '../../theme/colors';
 
 const REASONS = [
@@ -36,13 +38,15 @@ interface Props {
 
 export function ReportUserSheet({ visible, userId, onClose, onReported }: Props) {
   const { t } = useTranslation();
+  const { check: checkContent } = useContentFilter();
+  const { value: details, onChangeText: setDetails, setValue: resetDetails, filterError } =
+    useFilteredText('', 'chat');
   const [reason, setReason] = useState<Reason | null>(null);
-  const [details, setDetails] = useState('');
   const [busy, setBusy] = useState(false);
 
   const reset = () => {
     setReason(null);
-    setDetails('');
+    resetDetails('');
     setBusy(false);
   };
 
@@ -54,6 +58,12 @@ export function ReportUserSheet({ visible, userId, onClose, onReported }: Props)
 
   const handleSubmit = async () => {
     if (!reason || busy) return;
+    const trimmed = details.trim();
+    const blocked = trimmed ? checkContent(trimmed, 'chat') : null;
+    if (blocked) {
+      Alert.alert(t('contentFilter.blockedTitle'), blocked);
+      return;
+    }
     setBusy(true);
     try {
       await moderationApi.report(userId, reason, details.trim() || undefined);
@@ -145,11 +155,12 @@ export function ReportUserSheet({ visible, userId, onClose, onReported }: Props)
             onChangeText={setDetails}
             placeholder={t('moderation.detailsPlaceholder')}
             placeholderTextColor={colors.ink[400]}
-            style={styles.detailsInput}
+            style={[styles.detailsInput, filterError ? styles.detailsInputBlocked : null]}
             multiline
             maxLength={1000}
             editable={!busy}
           />
+          {filterError ? <Text style={styles.filterError}>{filterError}</Text> : null}
         </ScrollView>
 
         <View style={styles.footer}>
@@ -292,6 +303,15 @@ const styles = StyleSheet.create({
     color: colors.ink[700],
     minHeight: 100,
     textAlignVertical: 'top',
+  },
+  detailsInputBlocked: {
+    borderColor: colors.coral[500],
+  },
+  filterError: {
+    color: colors.coral[600],
+    fontSize: 12,
+    marginTop: 6,
+    marginLeft: 4,
   },
   footer: {
     paddingHorizontal: 20,

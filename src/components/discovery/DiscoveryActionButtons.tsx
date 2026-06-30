@@ -7,9 +7,19 @@ interface Props {
   onPass: () => void;
   onLike: () => void;
   onSuperLike: () => void;
+  /** Remaining weekly Super Likes for Premium users; null/undefined hides the badge. */
+  superLikeRemaining?: number | null;
+  /** When false, the Super Like star is shown locked (non-Premium users). */
+  superLikeEnabled?: boolean;
 }
 
-export function DiscoveryActionButtons({ onPass, onLike, onSuperLike }: Props) {
+export function DiscoveryActionButtons({
+  onPass,
+  onLike,
+  onSuperLike,
+  superLikeRemaining,
+  superLikeEnabled = true,
+}: Props) {
   return (
     <View className="flex-row items-center justify-center mt-5 mb-2">
       <Pressable
@@ -43,6 +53,7 @@ export function DiscoveryActionButtons({ onPass, onLike, onSuperLike }: Props) {
       <Pressable
         onPress={onSuperLike}
         className="w-14 h-14 rounded-full bg-white border border-cream-300 items-center justify-center"
+        accessibilityRole="button"
         style={{
           shadowColor: '#3D2618',
           shadowOffset: { width: 0, height: 2 },
@@ -52,6 +63,15 @@ export function DiscoveryActionButtons({ onPass, onLike, onSuperLike }: Props) {
         }}
       >
         <Ionicons name="star" size={26} color="#F5B301" />
+        {!superLikeEnabled ? (
+          <View className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-coral-500 items-center justify-center">
+            <Ionicons name="lock-closed" size={11} color="#FFFFFF" />
+          </View>
+        ) : superLikeRemaining != null ? (
+          <View className="absolute -top-1 -right-1 min-w-[20px] h-5 px-1 rounded-full bg-coral-500 items-center justify-center">
+            <Text className="text-white text-[11px] font-bold">{superLikeRemaining}</Text>
+          </View>
+        ) : null}
       </Pressable>
     </View>
   );

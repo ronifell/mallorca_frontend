@@ -13,6 +13,8 @@ import {
   MyProfile,
   RelationshipGoal,
   SubscriptionPlan,
+  SuperLikeQuota,
+  SuperLikeResult,
 } from './types';
 
 export const authApi = {
@@ -25,6 +27,12 @@ export const authApi = {
   }) => api.post<AuthResult>('/auth/register', input).then((r) => r.data),
   login: (input: { email: string; password: string }) =>
     api.post<AuthResult>('/auth/login', input).then((r) => r.data),
+  loginWithGoogle: (input: {
+    idToken: string;
+    acceptedTerms?: true;
+    acceptedPrivacy?: true;
+    language?: 'en' | 'es';
+  }) => api.post<AuthResult>('/auth/google', input).then((r) => r.data),
   logout: (refreshToken: string) =>
     api.post<void>('/auth/logout', { refreshToken }).then((r) => r.data),
   forgotPassword: (email: string) =>
@@ -87,6 +95,10 @@ export const discoveryApi = {
   resetFeed: () => api.post<void>('/discovery/reset').then((r) => r.data),
   like: (id: string) =>
     api.post<{ matched: boolean; matchId?: string }>(`/discovery/like/${id}`).then((r) => r.data),
+  superLike: (id: string) =>
+    api.post<SuperLikeResult>(`/discovery/super-like/${id}`).then((r) => r.data),
+  superLikeQuota: () =>
+    api.get<SuperLikeQuota>('/discovery/super-like/quota').then((r) => r.data),
   pass: (id: string) => api.post<void>(`/discovery/pass/${id}`).then((r) => r.data),
   sentLikes: () =>
     api.get<{ users: LikedUser[] }>('/discovery/likes/sent').then((r) => r.data.users),
