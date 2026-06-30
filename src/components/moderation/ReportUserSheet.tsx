@@ -17,6 +17,7 @@ import { extractErrorMessage } from '../../api/client';
 import { moderationApi } from '../../api/endpoints';
 import { useContentFilter } from '../../hooks/useContentFilter';
 import { useFilteredText } from '../../hooks/useFilteredText';
+import { extractContentBlockedMessage } from '../../utils/contentFilterHelpers';
 import { colors } from '../../theme/colors';
 
 const REASONS = [
@@ -72,7 +73,11 @@ export function ReportUserSheet({ visible, userId, onClose, onReported }: Props)
       Alert.alert(t('moderation.report'), t('moderation.reported'));
       onReported?.();
     } catch (e) {
-      Alert.alert(t('common.error'), extractErrorMessage(e));
+      const blocked = extractContentBlockedMessage(e, t);
+      Alert.alert(
+        blocked ? t('contentFilter.blockedTitle') : t('common.error'),
+        blocked ?? extractErrorMessage(e),
+      );
     } finally {
       setBusy(false);
     }
