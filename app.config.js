@@ -51,7 +51,7 @@ module.exports = {
       apiBaseUrl,
       socketUrl,
       eas: {
-        projectId: '0540ab6e-9566-4a00-bf9a-b36c3f56c68a',
+        projectId: '2a257000-2886-4f51-a75a-c6694a8c4ee6',
       },
     },
   },
