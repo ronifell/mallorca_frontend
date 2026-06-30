@@ -9,7 +9,9 @@
       "distribution": "internal",
       "env": {
         "EXPO_PUBLIC_API_BASE_URL": "http://54.94.85.115:4000",
-        "EXPO_PUBLIC_SOCKET_URL": "http://54.94.85.115:4000"
+        "EXPO_PUBLIC_SOCKET_URL": "http://54.94.85.115:4000",
+        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "348711983822-7tp79tt59u3vrsusl2iave6o0taqpaiv.apps.googleusercontent.com",
+        "EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID": "348711983822-t881asjhgq217qmiv1dle7gm00plvd0g.apps.googleusercontent.com"
       }
     },
     "preview": {
@@ -17,7 +19,9 @@
       "android": { "buildType": "apk" },
       "env": {
         "EXPO_PUBLIC_API_BASE_URL": "http://54.94.85.115:4000",
-        "EXPO_PUBLIC_SOCKET_URL": "http://54.94.85.115:4000"
+        "EXPO_PUBLIC_SOCKET_URL": "http://54.94.85.115:4000",
+        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "348711983822-7tp79tt59u3vrsusl2iave6o0taqpaiv.apps.googleusercontent.com",
+        "EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID": "348711983822-t881asjhgq217qmiv1dle7gm00plvd0g.apps.googleusercontent.com"
       }
     },
     "production": {
@@ -29,7 +33,9 @@
       },
       "env": {
         "EXPO_PUBLIC_API_BASE_URL": "http://54.94.85.115:4000",
-        "EXPO_PUBLIC_SOCKET_URL": "http://54.94.85.115:4000"
+        "EXPO_PUBLIC_SOCKET_URL": "http://54.94.85.115:4000",
+        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "348711983822-7tp79tt59u3vrsusl2iave6o0taqpaiv.apps.googleusercontent.com",
+        "EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID": "348711983822-t881asjhgq217qmiv1dle7gm00plvd0g.apps.googleusercontent.com"
       }
     }
   },

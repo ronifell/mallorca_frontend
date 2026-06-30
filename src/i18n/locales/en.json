@@ -65,7 +65,7 @@
     "verifyEmailResent": "If the address is registered, we've sent the link again.",
     "verifyEmailContinue": "I've already confirmed",
     "verifyEmailNotYet": "Your email is not confirmed yet. Open the link we sent you, then tap this button again.",
-    "verifyEmailFooter": "Don't see the email? Check your spam folder, or contact soporte@citasmallorca.es."
+    "verifyEmailFooter": "Don't see the email? Check your spam folder, or contact info@citasmallorca.es."
   },
   "onboarding": {
     "title": "Welcome to Citas Mallorca",
@@ -361,7 +361,9 @@
     "contactGeneral": "General information",
     "contactGeneralDesc": "Questions about the project, partnerships, press.",
     "contactSupport": "Technical support and issues",
-    "contactSupportDesc": "App problems, payments, account help."
+    "contactSupportDesc": "App problems, payments, account help.",
+    "contactOfficial": "Email Citas Mallorca",
+    "contactOfficialDesc": "General enquiries, account help, technical support, and feedback."
   },
   "moderation": {
     "block": "Block",
