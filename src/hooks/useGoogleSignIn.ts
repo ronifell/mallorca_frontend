@@ -19,6 +19,7 @@ const ERROR_KEYS = {
   no_token: 'auth.googleError',
   not_configured: 'auth.googleNotConfigured',
   requires_dev_build: 'auth.googleRequiresDevBuild',
+  developer_error: 'auth.googleDeveloperError',
   unknown: 'auth.googleError',
 } as const;
 

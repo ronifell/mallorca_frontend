@@ -33,6 +33,7 @@
     "googleError": "We couldn't sign you in with Google. Please try again.",
     "googleInProgress": "Sign-in is already in progress.",
     "googlePlayServices": "Google Play services are not available or out of date.",
+    "googleDeveloperError": "Google sign-in is not configured for this app build. Add the EAS APK signing SHA-1 fingerprint in Firebase Console, then rebuild.",
     "legalPrefix": "By continuing, you agree to our ",
     "legalJoiner": " and ",
     "legalSuffix": ".",

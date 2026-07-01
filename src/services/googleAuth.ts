@@ -7,6 +7,10 @@ import { NativeModules, Platform } from 'react-native';
  * must match the server's `GOOGLE_CLIENT_ID`. Android additionally requires the
  * app's SHA-1 fingerprint to be registered on the Android OAuth client.
  *
+ * EAS/APK builds use a different signing certificate than `expo run:android`
+ * (debug). Register the EAS keystore SHA-1 in Firebase Console → Project
+ * settings → Android app, then re-download google-services.json.
+ *
  * Requires a development/production build — **not Expo Go** (no RNGoogleSignin native module).
  */
 
@@ -63,17 +67,13 @@ export type GoogleSignInOutcome =
         | 'no_token'
         | 'not_configured'
         | 'requires_dev_build'
+        | 'developer_error'
         | 'unknown';
       message?: string;
     };
 
-function extractIdToken(response: unknown): string | null {
-  const r = response as { idToken?: string; data?: { idToken?: string } } | null;
-  return r?.data?.idToken ?? r?.idToken ?? null;
-}
-
-function isCancelled(response: unknown): boolean {
-  return (response as { type?: string } | null)?.type === 'cancelled';
+function isDeveloperError(code: string | number | undefined): boolean {
+  return code === 10 || code === '10' || code === 'DEVELOPER_ERROR';
 }
 
 export async function signInWithGoogle(): Promise<GoogleSignInOutcome> {
@@ -85,27 +85,45 @@ export async function signInWithGoogle(): Promise<GoogleSignInOutcome> {
   const mod = await ensureConfigured();
   if (!mod) return { type: 'error', code: 'requires_dev_build' };
 
-  const { GoogleSignin, isErrorWithCode, statusCodes } = mod;
+  const { GoogleSignin, isErrorWithCode, isCancelledResponse, isSuccessResponse, statusCodes } =
+    mod;
 
   try {
     await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
     const response = await GoogleSignin.signIn();
 
-    if (isCancelled(response)) return { type: 'cancelled' };
+    if (isCancelledResponse(response)) return { type: 'cancelled' };
 
-    let idToken = extractIdToken(response);
-    if (!idToken) {
-      try {
-        const tokens = await GoogleSignin.getTokens();
-        idToken = tokens.idToken ?? null;
-      } catch {
-        // ignore; handled below
+    if (isSuccessResponse(response)) {
+      let idToken = response.data.idToken;
+      if (!idToken) {
+        try {
+          const tokens = await GoogleSignin.getTokens();
+          idToken = tokens.idToken ?? null;
+        } catch {
+          // handled below
+        }
       }
+      if (!idToken) {
+        return {
+          type: 'error',
+          code: Platform.OS === 'android' ? 'developer_error' : 'no_token',
+          message: 'Google returned no ID token. Check webClientId and Android SHA-1 in Firebase.',
+        };
+      }
+      return { type: 'success', idToken };
     }
-    if (!idToken) return { type: 'error', code: 'no_token' };
-    return { type: 'success', idToken };
+
+    return { type: 'error', code: 'unknown', message: 'Unexpected Google sign-in response' };
   } catch (e) {
     if (isErrorWithCode(e)) {
+      if (isDeveloperError(e.code)) {
+        return {
+          type: 'error',
+          code: 'developer_error',
+          message: e.message,
+        };
+      }
       switch (e.code) {
         case statusCodes.SIGN_IN_CANCELLED:
           return { type: 'cancelled' };

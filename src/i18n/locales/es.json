@@ -33,6 +33,7 @@
     "googleError": "No pudimos iniciar sesión con Google. Inténtalo de nuevo.",
     "googleInProgress": "El inicio de sesión ya está en curso.",
     "googlePlayServices": "Los servicios de Google Play no están disponibles o están desactualizados.",
+    "googleDeveloperError": "El inicio de sesión con Google no está configurado para esta compilación. Añade la huella SHA-1 del APK de EAS en Firebase Console y vuelve a compilar.",
     "legalPrefix": "Al continuar, aceptas nuestros ",
     "legalJoiner": " y la ",
     "legalSuffix": ".",
