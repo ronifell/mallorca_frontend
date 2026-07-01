@@ -1,5 +1,26 @@
 /** @type {import('expo/config').ExpoConfig} */
+const fs = require('fs');
+const path = require('path');
 const appJson = require('./app.json');
+
+const localGoogleServicesPath = path.join(__dirname, 'google-services.json');
+
+function resolveGoogleServicesFile() {
+  if (process.env.GOOGLE_SERVICES_JSON) {
+    return process.env.GOOGLE_SERVICES_JSON;
+  }
+  if (fs.existsSync(localGoogleServicesPath)) {
+    return './google-services.json';
+  }
+  const hint =
+    'FCM will not work on Android. Add Frontend/google-services.json or run: ' +
+    'eas env:create preview --name GOOGLE_SERVICES_JSON --type file --value ./google-services.json';
+  if (process.env.EAS_BUILD === 'true') {
+    throw new Error(`google-services.json missing for EAS Android build. ${hint}`);
+  }
+  console.warn(`[app.config] ${hint}`);
+  return './google-services.json';
+}
 
 const apiBaseUrl =
   process.env.EXPO_PUBLIC_API_BASE_URL ?? appJson.expo.extra?.apiBaseUrl;
@@ -17,6 +38,7 @@ module.exports = {
         {
           android: {
             usesCleartextTraffic: true,
+            extraMavenRepos: ['https://www.jitpack.io'],
           },
         },
       ],
@@ -35,8 +57,7 @@ module.exports = {
     android: {
       ...appJson.expo.android,
       // EAS injects GOOGLE_SERVICES_JSON as a file path on cloud builds; local builds use ./google-services.json.
-      googleServicesFile:
-        process.env.GOOGLE_SERVICES_JSON ?? './google-services.json',
+      googleServicesFile: resolveGoogleServicesFile(),
     },
     ios: {
       ...appJson.expo.ios,

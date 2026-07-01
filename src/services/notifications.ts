@@ -1,6 +1,7 @@
 import * as Notifications from 'expo-notifications';
-import { Platform } from 'react-native';
+import { AppState, Platform } from 'react-native';
 import { usersApi } from '../api/endpoints';
+import { tokenStorage } from './storage';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -9,6 +10,27 @@ Notifications.setNotificationHandler({
     shouldSetBadge: false,
   }),
 });
+
+function logPushWarning(message: string, err?: unknown) {
+  if (__DEV__) {
+    console.warn(`[push] ${message}`, err ?? '');
+  }
+}
+
+async function persistFcmToken(token: string): Promise<boolean> {
+  const access = await tokenStorage.getAccess();
+  if (!access) {
+    logPushWarning('Skipping FCM upload — user not authenticated yet');
+    return false;
+  }
+  try {
+    await usersApi.updateFcmToken(token);
+    return true;
+  } catch (err) {
+    logPushWarning('Failed to save FCM token to server', err);
+    return false;
+  }
+}
 
 export async function registerForPushNotificationsAsync(): Promise<string | null> {
   if (Platform.OS === 'android') {
@@ -26,17 +48,54 @@ export async function registerForPushNotificationsAsync(): Promise<string | null
     const { status } = await Notifications.requestPermissionsAsync();
     finalStatus = status;
   }
-  if (finalStatus !== 'granted') return null;
+  if (finalStatus !== 'granted') {
+    logPushWarning(`Notification permission not granted (${finalStatus})`);
+    return null;
+  }
 
   try {
     const tokenData = await Notifications.getDevicePushTokenAsync();
     const token = tokenData.data;
     if (token) {
-      // Best-effort: ignore failures (e.g. user is offline).
-      usersApi.updateFcmToken(token).catch(() => undefined);
+      await persistFcmToken(token);
     }
     return token;
-  } catch {
+  } catch (err) {
+    logPushWarning(
+      'getDevicePushTokenAsync failed — rebuild with google-services.json bundled (EAS secret GOOGLE_SERVICES_JSON)',
+      err,
+    );
     return null;
   }
+}
+
+let pushRegistrationStarted = false;
+
+/** Register for FCM and keep the backend token in sync (login, cold start, token refresh). */
+export function initPushNotifications(userAuthenticated: boolean) {
+  if (!userAuthenticated) return;
+
+  const register = () => {
+    registerForPushNotificationsAsync().catch((err) => {
+      logPushWarning('registerForPushNotificationsAsync failed', err);
+    });
+  };
+
+  if (!pushRegistrationStarted) {
+    pushRegistrationStarted = true;
+
+    Notifications.addPushTokenListener(({ data }) => {
+      if (data) {
+        persistFcmToken(data).catch((err) => {
+          logPushWarning('Failed to persist refreshed FCM token', err);
+        });
+      }
+    });
+
+    AppState.addEventListener('change', (state) => {
+      if (state === 'active') register();
+    });
+  }
+
+  register();
 }

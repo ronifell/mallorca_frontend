@@ -23,7 +23,7 @@ import {
 } from './src/services/emailVerificationLinking';
 import { RootNavigator } from './src/navigation/RootNavigator';
 import { SplashScreen } from './src/screens/SplashScreen';
-import { registerForPushNotificationsAsync } from './src/services/notifications';
+import { initPushNotifications } from './src/services/notifications';
 import { enableFullscreenUi } from './src/services/systemUi';
 import { useAuthStore } from './src/store/auth';
 import { colors } from './src/theme/colors';
@@ -84,8 +84,8 @@ export default function App() {
 
   // Register FCM token only after the user is authenticated so PUT /users/me/fcm-token succeeds.
   useEffect(() => {
-    if (!ready || !user) return;
-    registerForPushNotificationsAsync().catch(() => undefined);
+    if (!ready) return;
+    initPushNotifications(!!user);
   }, [ready, user]);
 
   if (!ready) {
