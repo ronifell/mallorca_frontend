@@ -5,17 +5,24 @@ import { NativeModules, Platform } from 'react-native';
  * Native Google Sign-In wrapper. The backend (`POST /auth/google`) verifies the
  * Google **ID token**, so we configure `webClientId` as the token audience — it
  * must match the server's `GOOGLE_CLIENT_ID`. Android additionally requires the
- * app's SHA-1 fingerprint to be registered on the Android OAuth client.
+ * app's SHA-1 fingerprint on the Android OAuth client in Google Cloud / Firebase.
  *
- * EAS/APK builds use a different signing certificate than `expo run:android`
- * (debug). Register the EAS keystore SHA-1 in Firebase Console → Project
- * settings → Android app, then re-download google-services.json.
- *
- * Requires a development/production build — **not Expo Go** (no RNGoogleSignin native module).
+ * Standalone APK builds read client IDs from expo.extra (app.config.js) because
+ * that is more reliable than process.env alone in release builds.
  */
 
-const webClientId = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ?? '';
-const iosClientId = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID ?? '';
+interface GoogleExtra {
+  googleWebClientId?: string;
+  googleAndroidClientId?: string;
+}
+
+const extra = (Constants.expoConfig?.extra ?? {}) as GoogleExtra;
+
+const webClientId =
+  extra.googleWebClientId?.trim() ||
+  process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID?.trim() ||
+  '';
+const iosClientId = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID?.trim() || '';
 
 type GoogleSignInModule = typeof import('@react-native-google-signin/google-signin');
 
@@ -107,8 +114,10 @@ export async function signInWithGoogle(): Promise<GoogleSignInOutcome> {
       if (!idToken) {
         return {
           type: 'error',
-          code: Platform.OS === 'android' ? 'developer_error' : 'no_token',
-          message: 'Google returned no ID token. Check webClientId and Android SHA-1 in Firebase.',
+          code: 'developer_error',
+          message:
+            'Google returned no ID token. Verify the EAS APK SHA-1 is on the Android OAuth client ' +
+            'and google-services.json includes oauth_client entries, then rebuild the APK.',
         };
       }
       return { type: 'success', idToken };

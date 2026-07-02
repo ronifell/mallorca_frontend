@@ -12,14 +12,20 @@ Notifications.setNotificationHandler({
 });
 
 function logPushWarning(message: string, err?: unknown) {
-  if (__DEV__) {
-    console.warn(`[push] ${message}`, err ?? '');
-  }
+  console.warn(`[push] ${message}`, err ?? '');
 }
 
-async function persistFcmToken(token: string): Promise<boolean> {
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function persistFcmToken(token: string, attempt = 1): Promise<boolean> {
   const access = await tokenStorage.getAccess();
   if (!access) {
+    if (attempt < 5) {
+      await sleep(400 * attempt);
+      return persistFcmToken(token, attempt + 1);
+    }
     logPushWarning('Skipping FCM upload — user not authenticated yet');
     return false;
   }
@@ -27,6 +33,10 @@ async function persistFcmToken(token: string): Promise<boolean> {
     await usersApi.updateFcmToken(token);
     return true;
   } catch (err) {
+    if (attempt < 3) {
+      await sleep(500 * attempt);
+      return persistFcmToken(token, attempt + 1);
+    }
     logPushWarning('Failed to save FCM token to server', err);
     return false;
   }
@@ -62,7 +72,7 @@ export async function registerForPushNotificationsAsync(): Promise<string | null
     return token;
   } catch (err) {
     logPushWarning(
-      'getDevicePushTokenAsync failed — rebuild with google-services.json bundled (EAS secret GOOGLE_SERVICES_JSON)',
+      'getDevicePushTokenAsync failed — APK must include google-services.json (Firebase not initialized)',
       err,
     );
     return null;
