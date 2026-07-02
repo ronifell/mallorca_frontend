@@ -164,6 +164,44 @@ function withNotificationLargeIcon(config) {
   });
 }
 
+/** Overwrite Expo's notification_icon drawables with our silhouette (fit, not cover). */
+function withNotificationSmallIconAssets(config) {
+  return withDangerousMod(config, [
+    'android',
+    async (config) => {
+      const source = path.join(config.modRequest.projectRoot, 'assets', 'notification-icon.png');
+      if (!fs.existsSync(source)) {
+        throw new Error(
+          '[withNotificationSmallIconAssets] assets/notification-icon.png missing. Run: npm run build:icons',
+        );
+      }
+
+      const resRoot = path.join(config.modRequest.platformProjectRoot, 'app', 'src', 'main', 'res');
+      const dpi = [
+        ['drawable-mdpi', 24],
+        ['drawable-hdpi', 36],
+        ['drawable-xhdpi', 48],
+        ['drawable-xxhdpi', 72],
+        ['drawable-xxxhdpi', 96],
+      ];
+      const sharp = require('sharp');
+
+      await Promise.all(
+        dpi.map(async ([folder, size]) => {
+          const dir = path.join(resRoot, folder);
+          fs.mkdirSync(dir, { recursive: true });
+          await sharp(source)
+            .resize(size, size, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
+            .png()
+            .toFile(path.join(dir, 'notification_icon.png'));
+        }),
+      );
+
+      return config;
+    },
+  ]);
+}
+
 /** Copy full-color logo into Android drawables for notification large icon. */
 function withNotificationLargeIconAssets(config) {
   return withDangerousMod(config, [
@@ -249,6 +287,7 @@ module.exports = {
           defaultChannel: 'default',
         },
       ],
+      withNotificationSmallIconAssets,
       ...(appJson.expo.plugins ?? []).filter(
         (plugin) =>
           plugin !== 'expo-notifications' &&

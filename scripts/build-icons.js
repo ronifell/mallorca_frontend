@@ -78,33 +78,61 @@ async function composeIcon(scale, background) {
  * The OS uses only the alpha channel and tints the icon — full-color PNGs
  * appear as a hollow circle in the notification shade.
  *
- * The Citas Mallorca coin logo is a filled circle, so alpha-only conversion
- * produces a featureless white disc. We keep interior cream transparent and
- * preserve the gold ring, heart, and lettering via luminance/chroma rules.
+ * Do NOT include the coin's outer gold ring: it becomes a white ring with a
+ * transparent hole, which reads as an empty circle in the status bar / banner.
+ * We keep the heart plus interior lettering only.
  */
-function isSilhouettePixel(r, g, b) {
+function isHeartPixel(r, g, b) {
   const lum = 0.299 * r + 0.587 * g + 0.114 * b;
-  const isDark = lum < 132;
-  const isRedHeart = r > 95 && r > g * 1.3 && r > b * 1.3 && lum < 205;
+  return r > 95 && r > g * 1.3 && r > b * 1.3 && lum < 205;
+}
+
+function isInteriorDetailPixel(r, g, b) {
+  const lum = 0.299 * r + 0.587 * g + 0.114 * b;
+  const isDarkInk = lum < 118;
+  const isCreamFill = lum > 168 && r > 175 && g > 155 && b > 120;
   const isGoldRing = lum >= 132 && lum <= 218 && r >= 145 && g >= 95 && b <= 130;
-  return isDark || isRedHeart || isGoldRing;
+  return isDarkInk && !isCreamFill && !isGoldRing;
+}
+
+function dilateSilhouette(pixels, width, height, radius = 1) {
+  const out = Buffer.from(pixels);
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const i = (y * width + x) * 4;
+      if (pixels[i + 3] === 0) continue;
+      for (let dy = -radius; dy <= radius; dy++) {
+        for (let dx = -radius; dx <= radius; dx++) {
+          const nx = x + dx;
+          const ny = y + dy;
+          if (nx < 0 || ny < 0 || nx >= width || ny >= height) continue;
+          const j = (ny * width + nx) * 4;
+          out[j] = 255;
+          out[j + 1] = 255;
+          out[j + 2] = 255;
+          out[j + 3] = 255;
+        }
+      }
+    }
+  }
+  return out;
 }
 
 async function composeNotificationIcon() {
-  const logoSize = Math.round(CANVAS_SIZE * 0.62);
+  const logoSize = Math.round(CANVAS_SIZE * 0.72);
   const { data, info } = await sharp(SOURCE)
     .resize(logoSize, logoSize, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
     .ensureAlpha()
     .raw()
     .toBuffer({ resolveWithObject: true });
 
-  const pixels = Buffer.alloc(data.length);
+  let pixels = Buffer.alloc(data.length);
   for (let i = 0; i < data.length; i += 4) {
     const r = data[i];
     const g = data[i + 1];
     const b = data[i + 2];
     const alpha = data[i + 3];
-    if (alpha > 16 && isSilhouettePixel(r, g, b)) {
+    if (alpha > 16 && (isHeartPixel(r, g, b) || isInteriorDetailPixel(r, g, b))) {
       pixels[i] = 255;
       pixels[i + 1] = 255;
       pixels[i + 2] = 255;
@@ -112,13 +140,37 @@ async function composeNotificationIcon() {
     }
   }
 
-  const iconSize = 96;
-  const innerSize = Math.round(iconSize * 0.72);
-  const pad = Math.round((iconSize - innerSize) / 2);
+  pixels = dilateSilhouette(pixels, info.width, info.height, 1);
 
-  return sharp(pixels, {
+  let minX = info.width;
+  let minY = info.height;
+  let maxX = 0;
+  let maxY = 0;
+  for (let y = 0; y < info.height; y++) {
+    for (let x = 0; x < info.width; x++) {
+      if (pixels[(y * info.width + x) * 4 + 3] > 0) {
+        minX = Math.min(minX, x);
+        minY = Math.min(minY, y);
+        maxX = Math.max(maxX, x);
+        maxY = Math.max(maxY, y);
+      }
+    }
+  }
+
+  const cropWidth = Math.max(1, maxX - minX + 1);
+  const cropHeight = Math.max(1, maxY - minY + 1);
+  const cropped = await sharp(pixels, {
     raw: { width: info.width, height: info.height, channels: 4 },
   })
+    .extract({ left: minX, top: minY, width: cropWidth, height: cropHeight })
+    .png()
+    .toBuffer();
+
+  const iconSize = 96;
+  const innerSize = Math.round(iconSize * 0.78);
+  const pad = Math.round((iconSize - innerSize) / 2);
+
+  return sharp(cropped)
     .resize(innerSize, innerSize, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
     .extend({
       top: pad,
