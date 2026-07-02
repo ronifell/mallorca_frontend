@@ -19,6 +19,7 @@ import { Screen } from '../../components/Screen';
 import { SwipeCard } from '../../components/SwipeCard';
 import { RootStackParamList } from '../../navigation/types';
 import { useMatchPopup } from '../../store/matchPopup';
+import { useSuperLikeAccess } from '../../hooks/useSuperLikeAccess';
 import {
   ensureSuperLikeAllowed,
   handleSuperLikeApiError,
@@ -37,10 +38,8 @@ export function DiscoveryScreen() {
     queryKey: ['feed'],
     queryFn: () => discoveryApi.feed(20),
   });
-  const { data: superLikeQuota, refetch: refetchQuota } = useQuery({
-    queryKey: ['superLikeQuota'],
-    queryFn: () => discoveryApi.superLikeQuota(),
-  });
+  const { quota: superLikeQuota, unlocked: superLikeUnlocked, remaining: superLikeRemaining, refetch: refetchQuota, authIsPremium } =
+    useSuperLikeAccess();
 
   const [deck, setDeck] = useState<FeedCandidate[]>([]);
   const [isRetrying, setIsRetrying] = useState(false);
@@ -99,7 +98,7 @@ export function DiscoveryScreen() {
 
   const handleSuperLike = async () => {
     if (!top) return;
-    if (!ensureSuperLikeAllowed(superLikeQuota, nav, t)) return;
+    if (!ensureSuperLikeAllowed(superLikeQuota, nav, t, authIsPremium)) return;
 
     const candidate = top;
     advance();
@@ -183,10 +182,8 @@ export function DiscoveryScreen() {
                 onPass={() => handleSwipe('left')}
                 onLike={() => handleSwipe('right')}
                 onSuperLike={handleSuperLike}
-                superLikeEnabled={superLikeQuota?.isPremium === true}
-                superLikeRemaining={
-                  superLikeQuota?.isPremium ? superLikeQuota.remaining : null
-                }
+                superLikeEnabled={superLikeUnlocked}
+                superLikeRemaining={superLikeRemaining}
               />
             </View>
           ) : pendingAction || matchOpen ? (

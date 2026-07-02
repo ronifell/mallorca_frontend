@@ -1,6 +1,6 @@
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp, NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import * as Haptics from 'expo-haptics';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -17,6 +17,7 @@ import { CandidateProfileHeader } from '../../components/discovery/CandidateProf
 import { ReportUserSheet } from '../../components/moderation/ReportUserSheet';
 import { ProfileSafetySection } from '../../components/moderation/ProfileSafetySection';
 import { useTopScreenPadding } from '../../hooks/useTopScreenPadding';
+import { useSuperLikeAccess } from '../../hooks/useSuperLikeAccess';
 import { RootStackParamList } from '../../navigation/types';
 import { useMatchPopup } from '../../store/matchPopup';
 import {
@@ -37,10 +38,8 @@ export function CandidateProfileScreen({ route, navigation }: Props) {
   const distanceKm = route.params.distanceKm;
   const topPadding = useTopScreenPadding();
 
-  const { data: superLikeQuota, refetch: refetchQuota } = useQuery({
-    queryKey: ['superLikeQuota'],
-    queryFn: () => discoveryApi.superLikeQuota(),
-  });
+  const { quota: superLikeQuota, unlocked: superLikeUnlocked, remaining: superLikeRemaining, refetch: refetchQuota, authIsPremium } =
+    useSuperLikeAccess();
 
   const [photoIndex, setPhotoIndex] = useState(0);
   const [busy, setBusy] = useState(false);
@@ -129,7 +128,7 @@ export function CandidateProfileScreen({ route, navigation }: Props) {
 
   const handleSuperLike = async () => {
     if (busy) return;
-    if (!ensureSuperLikeAllowed(superLikeQuota, nav, t)) return;
+    if (!ensureSuperLikeAllowed(superLikeQuota, nav, t, authIsPremium)) return;
 
     setBusy(true);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => undefined);
@@ -275,10 +274,8 @@ export function CandidateProfileScreen({ route, navigation }: Props) {
           onLike={handleLike}
           onSuperLike={handleSuperLike}
           disabled={busy}
-          superLikeEnabled={superLikeQuota?.isPremium === true}
-          superLikeRemaining={
-            superLikeQuota?.isPremium ? superLikeQuota.remaining : null
-          }
+          superLikeEnabled={superLikeUnlocked}
+          superLikeRemaining={superLikeRemaining}
         />
       </View>
 

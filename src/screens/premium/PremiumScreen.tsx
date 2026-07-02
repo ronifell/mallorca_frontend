@@ -39,6 +39,7 @@ export function PremiumScreen() {
       patchUser({ isPremium: result.isPremium });
       await qc.invalidateQueries({ queryKey: ['me'] });
       await qc.invalidateQueries({ queryKey: ['subscription-status'] });
+      await qc.invalidateQueries({ queryKey: ['superLikeQuota'] });
       Alert.alert(t('premium.active'), `${t('premium.until')}: ${new Date(result.expiryDate).toLocaleDateString()}`);
       nav.goBack();
     } catch (e) {

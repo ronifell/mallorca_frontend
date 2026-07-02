@@ -34,12 +34,15 @@ export function ensureSuperLikeAllowed(
   quota: SuperLikeQuota | undefined,
   nav: Nav,
   t: Translate,
+  viewerIsPremium = false,
 ): boolean {
-  if (quota && !quota.isPremium) {
-    promptSuperLikePremiumUpsell(nav, t, quota.limit);
+  const premium = viewerIsPremium || quota?.isPremium === true;
+  if (!premium) {
+    promptSuperLikePremiumUpsell(nav, t, quota?.limit ?? 5);
     return false;
   }
-  if (quota && quota.remaining <= 0) {
+  // Only enforce weekly quota once the API confirms Premium (avoids stale cache after upgrade).
+  if (quota?.isPremium === true && quota.remaining <= 0) {
     promptSuperLikeQuotaExhausted(t, quota.limit);
     return false;
   }
