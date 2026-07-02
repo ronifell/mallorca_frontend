@@ -13,6 +13,45 @@ const googleAndroidClientId =
   process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID ??
   '348711983822-t881asjhgq217qmiv1dle7gm00plvd0g.apps.googleusercontent.com';
 
+/** EAS preview/production APK signing cert (from `eas credentials` / keytool on the APK). */
+const EAS_ANDROID_SHA1 = 'ad617be1fe9b49aed1d13379f80a924e7117836e';
+
+function assertGoogleServicesOAuth(sourcePath) {
+  const raw = fs.readFileSync(sourcePath, 'utf8');
+  const json = JSON.parse(raw);
+  const oauthClients = json?.client?.[0]?.oauth_client ?? [];
+  const androidOAuth = oauthClients.find(
+    (c) =>
+      c.client_type === 1 &&
+      c.android_info?.package_name === 'es.citasmallorca.app' &&
+      c.android_info?.certificate_hash,
+  );
+  const webOAuth = oauthClients.find((c) => c.client_type === 3);
+
+  if (!androidOAuth || !webOAuth) {
+    throw new Error(
+      `[google-services.json] Missing Android/Web oauth_client entries for Google Sign-In. ` +
+        'In Firebase Console → Project settings → Your Android app, add the EAS APK SHA-1 fingerprint, ' +
+        'then download a fresh google-services.json (do not hand-edit oauth_client).',
+    );
+  }
+
+  const hash = String(androidOAuth.android_info.certificate_hash).toLowerCase();
+  if (hash !== EAS_ANDROID_SHA1) {
+    console.warn(
+      `[app.config] google-services.json Android SHA-1 is ${hash}; expected EAS SHA-1 ${EAS_ANDROID_SHA1}. ` +
+        'Google Sign-In will fail in preview APK builds until Firebase has the EAS fingerprint.',
+    );
+  }
+
+  if (webOAuth.client_id !== googleWebClientId) {
+    console.warn(
+      `[app.config] google-services.json Web client (${webOAuth.client_id}) ` +
+        `does not match EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID (${googleWebClientId}).`,
+    );
+  }
+}
+
 function resolveGoogleServicesAbsolutePath(projectRoot = __dirname) {
   const easPath = process.env.GOOGLE_SERVICES_JSON;
   if (easPath && fs.existsSync(easPath)) {
@@ -67,6 +106,8 @@ function withEnsureGoogleServices(config) {
         );
       }
 
+      assertGoogleServicesOAuth(source);
+
       const destination = path.join(
         config.modRequest.platformProjectRoot,
         'app',
@@ -101,7 +142,13 @@ module.exports = {
           },
         },
       ],
-      '@react-native-google-signin/google-signin',
+      [
+        '@react-native-google-signin/google-signin',
+        {
+          iosUrlScheme:
+            'com.googleusercontent.apps.348711983822-7tp79tt59u3vrsusl2iave6o0taqpaiv',
+        },
+      ],
       ...(appJson.expo.plugins ?? []),
     ],
     androidStatusBar: {

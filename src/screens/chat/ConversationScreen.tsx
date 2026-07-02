@@ -28,6 +28,7 @@ import { Screen } from '../../components/Screen';
 import { useTopScreenPadding } from '../../hooks/useTopScreenPadding';
 import { RootStackParamList } from '../../navigation/types';
 import { connectSocket } from '../../services/socket';
+import { setActiveConversationId } from '../../services/activeConversation';
 import { RecordingResult } from '../../services/voiceRecorder';
 import { useContentFilter } from '../../hooks/useContentFilter';
 import { createFilteredChangeHandler, extractContentBlockedMessage } from '../../utils/contentFilterHelpers';
@@ -150,6 +151,13 @@ export function ConversationScreen({ route, navigation }: Props) {
     useCallback(() => {
       useMatchPopup.getState().hide();
     }, []),
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      setActiveConversationId(conversationId);
+      return () => setActiveConversationId(null);
+    }, [conversationId]),
   );
 
   const loadInitial = useCallback(async () => {

@@ -8,7 +8,11 @@ Notifications.setNotificationHandler({
     shouldShowAlert: true,
     shouldPlaySound: true,
     shouldSetBadge: false,
+    priority: Notifications.AndroidNotificationPriority.MAX,
   }),
+  handleError(id, error) {
+    console.warn('[push] foreground handler error', id, error);
+  },
 });
 
 function logPushWarning(message: string, err?: unknown) {
@@ -46,7 +50,7 @@ export async function registerForPushNotificationsAsync(): Promise<string | null
   if (Platform.OS === 'android') {
     await Notifications.setNotificationChannelAsync('default', {
       name: 'default',
-      importance: Notifications.AndroidImportance.HIGH,
+      importance: Notifications.AndroidImportance.MAX,
       vibrationPattern: [0, 250, 250, 250],
       lightColor: '#B82E2E',
     });
@@ -76,6 +80,31 @@ export async function registerForPushNotificationsAsync(): Promise<string | null
       err,
     );
     return null;
+  }
+}
+
+/** Show a heads-up notification while the app is open (e.g. new chat message via socket). */
+export async function showMessageNotification(
+  title: string,
+  body: string,
+  data?: Record<string, string>,
+): Promise<void> {
+  const { status } = await Notifications.getPermissionsAsync();
+  if (status !== 'granted') return;
+
+  try {
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title,
+        body,
+        data,
+        sound: true,
+        ...(Platform.OS === 'android' ? { channelId: 'default' } : {}),
+      },
+      trigger: null,
+    });
+  } catch (err) {
+    logPushWarning('showMessageNotification failed', err);
   }
 }
 

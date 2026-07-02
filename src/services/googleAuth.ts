@@ -58,6 +58,7 @@ async function ensureConfigured(): Promise<GoogleSignInModule | null> {
     webClientId,
     iosClientId: iosClientId || undefined,
     offlineAccess: false,
+    scopes: ['profile', 'email'],
   });
   configured = true;
   return mod;
