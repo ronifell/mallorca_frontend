@@ -1,7 +1,7 @@
 /** @type {import('expo/config').ExpoConfig} */
 const fs = require('fs');
 const path = require('path');
-const { withDangerousMod } = require('@expo/config-plugins');
+const { withDangerousMod, withAndroidManifest, AndroidConfig } = require('@expo/config-plugins');
 const appJson = require('./app.json');
 
 const localGoogleServicesPath = path.join(__dirname, 'google-services.json');
@@ -121,6 +121,59 @@ function withEnsureGoogleServices(config) {
   ]);
 }
 
+/** Full-color logo in the notification shade (large icon). */
+function withNotificationLargeIcon(config) {
+  return withAndroidManifest(config, (config) => {
+    const mainApplication = AndroidConfig.Manifest.getMainApplicationOrThrow(config.modResults);
+    AndroidConfig.Manifest.addMetaDataItemToMainApplication(
+      mainApplication,
+      'expo.modules.notifications.large_notification_icon',
+      '@drawable/notification_large_icon',
+      'resource',
+    );
+    return config;
+  });
+}
+
+/** Copy full-color logo into Android drawables for notification large icon. */
+function withNotificationLargeIconAssets(config) {
+  return withDangerousMod(config, [
+    'android',
+    async (config) => {
+      const source = path.join(config.modRequest.projectRoot, 'assets', 'notification-large-icon.png');
+      if (!fs.existsSync(source)) {
+        throw new Error(
+          '[withNotificationLargeIconAssets] assets/notification-large-icon.png missing. Run: npm run build:icons',
+        );
+      }
+
+      const resRoot = path.join(config.modRequest.platformProjectRoot, 'app', 'src', 'main', 'res');
+      const folders = [
+        'drawable-mdpi',
+        'drawable-hdpi',
+        'drawable-xhdpi',
+        'drawable-xxhdpi',
+        'drawable-xxxhdpi',
+      ];
+      const sizes = [64, 96, 128, 192, 256];
+
+      await Promise.all(
+        folders.map(async (folder, index) => {
+          const dir = path.join(resRoot, folder);
+          fs.mkdirSync(dir, { recursive: true });
+          const sharp = require('sharp');
+          await sharp(source)
+            .resize(sizes[index], sizes[index], { fit: 'contain', background: { r: 242, g: 235, b: 224, alpha: 1 } })
+            .png()
+            .toFile(path.join(dir, 'notification_large_icon.png'));
+        }),
+      );
+
+      return config;
+    },
+  ]);
+}
+
 const apiBaseUrl =
   process.env.EXPO_PUBLIC_API_BASE_URL ?? appJson.expo.extra?.apiBaseUrl;
 const socketUrl =
@@ -133,6 +186,8 @@ module.exports = {
     ...appJson.expo,
     plugins: [
       withEnsureGoogleServices,
+      withNotificationLargeIconAssets,
+      withNotificationLargeIcon,
       [
         'expo-build-properties',
         {
@@ -152,7 +207,7 @@ module.exports = {
       [
         'expo-notifications',
         {
-          icon: './assets/adaptive-icon.png',
+          icon: './assets/notification-icon.png',
           color: '#B82E2E',
           defaultChannel: 'default',
         },
