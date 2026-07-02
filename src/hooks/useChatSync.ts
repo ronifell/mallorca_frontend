@@ -66,6 +66,8 @@ export function useChatSync() {
         const conversationId = m.conversationId;
         if (!myId || !conversationId || m.senderId === myId) return;
         if (conversationId === getActiveConversationId()) return;
+        // Background delivery is handled by FCM; socket only drives foreground banners.
+        if (AppState.currentState !== 'active') return;
 
         const matches = qc.getQueryData<Match[]>(['matches']);
         const title = senderNameForConversation(matches, conversationId);
