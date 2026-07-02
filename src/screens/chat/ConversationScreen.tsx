@@ -137,7 +137,24 @@ export function ConversationScreen({ route, navigation }: Props) {
   const [androidKeyboardOffset, setAndroidKeyboardOffset] = useState(0);
   const socketRef = useRef<Socket | null>(null);
   const typingTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const otherTypingTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const listRef = useRef<FlatList<ChatRow>>(null);
+
+  const stopTyping = useCallback(() => {
+    if (typingTimeout.current) {
+      clearTimeout(typingTimeout.current);
+      typingTimeout.current = null;
+    }
+    socketRef.current?.emit('typing', { conversationId, typing: false });
+  }, [conversationId]);
+
+  const clearOtherTyping = useCallback(() => {
+    if (otherTypingTimeout.current) {
+      clearTimeout(otherTypingTimeout.current);
+      otherTypingTimeout.current = null;
+    }
+    setOtherTyping(false);
+  }, []);
 
   // As soon as the user actually has Premium (e.g. just returned from the
   // Premium screen after purchasing), drop the gating banner immediately so
@@ -192,6 +209,9 @@ export function ConversationScreen({ route, navigation }: Props) {
 
       const onMessage = (m: Message & { conversationId?: string }) => {
         if (m.conversationId && m.conversationId !== conversationId) return;
+        if (m.senderId !== myId) {
+          clearOtherTyping();
+        }
         setMessages((prev) => {
           if (prev.some((x) => x.id === m.id)) return prev;
           if (m.senderId === myId) {
@@ -217,7 +237,18 @@ export function ConversationScreen({ route, navigation }: Props) {
       const onTyping = (p: { conversationId: string; userId: string; typing: boolean }) => {
         if (p.conversationId !== conversationId) return;
         if (p.userId === myId) return;
+        if (otherTypingTimeout.current) {
+          clearTimeout(otherTypingTimeout.current);
+          otherTypingTimeout.current = null;
+        }
         setOtherTyping(p.typing);
+        // Auto-clear if typing:false is missed (e.g. peer backgrounded mid-typing).
+        if (p.typing) {
+          otherTypingTimeout.current = setTimeout(() => {
+            setOtherTyping(false);
+            otherTypingTimeout.current = null;
+          }, 4000);
+        }
       };
       const onRead = (p: { conversationId: string; readerId: string }) => {
         if (p.conversationId !== conversationId) return;
@@ -229,6 +260,7 @@ export function ConversationScreen({ route, navigation }: Props) {
         );
       };
       const onConnect = () => {
+        clearOtherTyping();
         s.emit('conversation:join', conversationId);
       };
 
@@ -250,6 +282,7 @@ export function ConversationScreen({ route, navigation }: Props) {
 
     const appStateSub = AppState.addEventListener('change', (state) => {
       if (state === 'active') {
+        clearOtherTyping();
         setActiveConversationId(conversationId);
         void loadInitial();
         socketRef.current?.emit('conversation:join', conversationId);
@@ -262,9 +295,13 @@ export function ConversationScreen({ route, navigation }: Props) {
     return () => {
       active = false;
       appStateSub.remove();
+      if (otherTypingTimeout.current) {
+        clearTimeout(otherTypingTimeout.current);
+        otherTypingTimeout.current = null;
+      }
       cleanup?.();
     };
-  }, [conversationId, loadInitial, myId, qc]);
+  }, [clearOtherTyping, conversationId, loadInitial, myId, qc]);
 
   useEffect(() => {
     setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 50);
@@ -339,6 +376,7 @@ export function ConversationScreen({ route, navigation }: Props) {
     };
     setMessages((prev) => [...prev, optimistic]);
     setText('');
+    stopTyping();
 
     try {
       const msg = await chatApi.send(conversationId, { type: 'text', text: trimmed });
@@ -386,6 +424,7 @@ export function ConversationScreen({ route, navigation }: Props) {
       conversationId,
     };
     setMessages((prev) => [...prev, optimistic]);
+    stopTyping();
 
     try {
       const { url } = await chatApi.uploadImage(conversationId, res.assets[0]);
@@ -417,6 +456,7 @@ export function ConversationScreen({ route, navigation }: Props) {
         conversationId,
       };
       setMessages((prev) => [...prev, optimistic]);
+      stopTyping();
 
       try {
         const fileName = `voice-${Date.now()}.m4a`;
@@ -435,7 +475,7 @@ export function ConversationScreen({ route, navigation }: Props) {
         else Alert.alert(t('common.error'), errMsg);
       }
     },
-    [conversationId, myId, t],
+    [conversationId, myId, stopTyping, t],
   );
 
   const onChangeText = useCallback(
