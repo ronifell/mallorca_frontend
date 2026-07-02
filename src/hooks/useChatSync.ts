@@ -3,6 +3,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import { Match, Message } from '../api/types';
 import { getActiveConversationId } from '../services/activeConversation';
+import { syncRecentMatchPopups } from '../services/matchSync';
 import { showMessageNotification } from '../services/notifications';
 import { connectSocket } from '../services/socket';
 import { useAuthStore } from '../store/auth';
@@ -110,12 +111,16 @@ export function useChatSync() {
         qc.invalidateQueries({ queryKey: ['feed'] });
         showMatchPopup(payload);
       };
+      const onConnect = () => {
+        void syncRecentMatchPopups();
+      };
 
       s.on('message:new', onMessage);
       s.on('message:read', onRead);
       s.on('like:new', onNewLike);
       s.on('super_like:new', onSuperLike);
       s.on('match:new', onMatch);
+      s.on('connect', onConnect);
 
       cleanup = () => {
         s.off('message:new', onMessage);
@@ -123,7 +128,12 @@ export function useChatSync() {
         s.off('like:new', onNewLike);
         s.off('super_like:new', onSuperLike);
         s.off('match:new', onMatch);
+        s.off('connect', onConnect);
       };
+
+      if (s.connected) {
+        void syncRecentMatchPopups();
+      }
     };
 
     void attachListeners();
