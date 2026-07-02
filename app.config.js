@@ -1,7 +1,8 @@
 /** @type {import('expo/config').ExpoConfig} */
 const fs = require('fs');
 const path = require('path');
-const { withDangerousMod, withAndroidManifest, AndroidConfig } = require('@expo/config-plugins');
+const { withDangerousMod, withAndroidManifest, withMainApplication, AndroidConfig } = require('@expo/config-plugins');
+const { mergeContents } = require('@expo/config-plugins/build/utils/generateCode');
 const appJson = require('./app.json');
 
 const localGoogleServicesPath = path.join(__dirname, 'google-services.json');
@@ -121,6 +122,34 @@ function withEnsureGoogleServices(config) {
   ]);
 }
 
+/** Create the FCM notification channel before any push can arrive (Android 8+). */
+function withDefaultNotificationChannelAtBoot(config) {
+  return withMainApplication(config, (config) => {
+    config.modResults.contents = mergeContents({
+      tag: 'citasmallorca-default-notification-channel',
+      src: config.modResults.contents,
+      newSrc: `
+    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+      val channel = android.app.NotificationChannel(
+        "default",
+        "General",
+        android.app.NotificationManager.IMPORTANCE_HIGH
+      )
+      channel.enableVibration(true)
+      channel.setShowBadge(true)
+      channel.lockscreenVisibility = android.app.Notification.VISIBILITY_PUBLIC
+      val notificationManager = getSystemService(android.app.NotificationManager::class.java)
+      notificationManager?.createNotificationChannel(channel)
+    }
+      `.trim(),
+      anchor: /ApplicationLifecycleDispatcher\.onApplicationCreate\(this\)/,
+      offset: 1,
+      comment: '//',
+    }).contents;
+    return config;
+  });
+}
+
 /** Full-color logo in the notification shade (large icon). */
 function withNotificationLargeIcon(config) {
   return withAndroidManifest(config, (config) => {
@@ -144,6 +173,13 @@ function withNotificationLargeIconAssets(config) {
       if (!fs.existsSync(source)) {
         throw new Error(
           '[withNotificationLargeIconAssets] assets/notification-large-icon.png missing. Run: npm run build:icons',
+        );
+      }
+
+      const smallIcon = path.join(config.modRequest.projectRoot, 'assets', 'notification-icon.png');
+      if (!fs.existsSync(smallIcon)) {
+        throw new Error(
+          '[withNotificationLargeIconAssets] assets/notification-icon.png missing. Run: npm run build:icons',
         );
       }
 
@@ -188,6 +224,7 @@ module.exports = {
       withEnsureGoogleServices,
       withNotificationLargeIconAssets,
       withNotificationLargeIcon,
+      withDefaultNotificationChannelAtBoot,
       [
         'expo-build-properties',
         {
