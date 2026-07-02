@@ -56,7 +56,7 @@ export function useChatSync() {
 
     const attachListeners = async () => {
       const s = await connectSocket();
-      if (!active || !s) return null;
+      if (!active || !s) return;
 
       const onMessage = (m: Message & { conversationId?: string }) => {
         qc.invalidateQueries({ queryKey: ['matches'] });
@@ -124,8 +124,6 @@ export function useChatSync() {
         s.off('super_like:new', onSuperLike);
         s.off('match:new', onMatch);
       };
-
-      return cleanup;
     };
 
     void attachListeners();
@@ -133,7 +131,6 @@ export function useChatSync() {
     const appStateSub = AppState.addEventListener('change', (state) => {
       if (state !== 'active') return;
       cleanup?.();
-      cleanup = null;
       void attachListeners();
     });
 

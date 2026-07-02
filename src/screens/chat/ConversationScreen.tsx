@@ -1,11 +1,12 @@
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useFocusEffect } from '@react-navigation/native';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import * as ImagePicker from 'expo-image-picker';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Alert,
+  AppState,
   Dimensions,
   FlatList,
   Keyboard,
@@ -110,6 +111,7 @@ function buildChatRows(messages: Message[], t: (key: string) => string): ChatRow
 export function ConversationScreen({ route, navigation }: Props) {
   const { t } = useTranslation();
   const { check: checkContent } = useContentFilter();
+  const qc = useQueryClient();
   const { conversationId, otherName, otherUserAge, otherUserPhoto } = route.params;
 
   const { data: me } = useQuery({ queryKey: ['me'], queryFn: () => usersApi.me() });
@@ -165,20 +167,26 @@ export function ConversationScreen({ route, navigation }: Props) {
       const msgs = await chatApi.list(conversationId);
       setMessages(msgs);
       chatApi.markRead(conversationId).catch(() => undefined);
+      qc.invalidateQueries({ queryKey: ['matches'] });
     } catch (e) {
       Alert.alert(t('common.error'), extractErrorMessage(e));
     }
-  }, [conversationId, t]);
+  }, [conversationId, qc, t]);
 
-  useEffect(() => {
-    loadInitial();
-  }, [loadInitial]);
+  useFocusEffect(
+    useCallback(() => {
+      void loadInitial();
+    }, [loadInitial]),
+  );
 
   useEffect(() => {
     let active = true;
-    (async () => {
+    let cleanup: (() => void) | null = null;
+
+    const setupSocket = async () => {
       const s = await connectSocket();
       if (!active || !s) return;
+
       socketRef.current = s;
       s.emit('conversation:join', conversationId);
 
@@ -186,8 +194,6 @@ export function ConversationScreen({ route, navigation }: Props) {
         if (m.conversationId && m.conversationId !== conversationId) return;
         setMessages((prev) => {
           if (prev.some((x) => x.id === m.id)) return prev;
-          // If this is the echo of a message we just sent, replace the
-          // matching optimistic placeholder so we don't render duplicates.
           if (m.senderId === myId) {
             const idx = prev.findIndex(
               (x) =>
@@ -206,6 +212,7 @@ export function ConversationScreen({ route, navigation }: Props) {
           return [...prev, m];
         });
         chatApi.markRead(conversationId).catch(() => undefined);
+        qc.invalidateQueries({ queryKey: ['matches'] });
       };
       const onTyping = (p: { conversationId: string; userId: string; typing: boolean }) => {
         if (p.conversationId !== conversationId) return;
@@ -221,22 +228,43 @@ export function ConversationScreen({ route, navigation }: Props) {
           ),
         );
       };
+      const onConnect = () => {
+        s.emit('conversation:join', conversationId);
+      };
 
+      s.on('connect', onConnect);
       s.on('message:new', onMessage);
       s.on('typing', onTyping);
       s.on('message:read', onRead);
 
-      return () => {
+      cleanup = () => {
+        s.off('connect', onConnect);
         s.off('message:new', onMessage);
         s.off('typing', onTyping);
         s.off('message:read', onRead);
         s.emit('conversation:leave', conversationId);
       };
-    })();
+    };
+
+    void setupSocket();
+
+    const appStateSub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') {
+        setActiveConversationId(conversationId);
+        void loadInitial();
+        socketRef.current?.emit('conversation:join', conversationId);
+      } else {
+        // While backgrounded, do not suppress push/local notifications for this chat.
+        setActiveConversationId(null);
+      }
+    });
+
     return () => {
       active = false;
+      appStateSub.remove();
+      cleanup?.();
     };
-  }, [conversationId, myId]);
+  }, [conversationId, loadInitial, myId, qc]);
 
   useEffect(() => {
     setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 50);
