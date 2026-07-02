@@ -23,6 +23,29 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+function stringifyData(data?: Record<string, string>): Record<string, string> | undefined {
+  if (!data) return undefined;
+  const out: Record<string, string> = {};
+  for (const [key, value] of Object.entries(data)) {
+    if (value != null) out[key] = String(value);
+  }
+  return Object.keys(out).length ? out : undefined;
+}
+
+/** Must exist before any FCM/local notification is shown (Android 8+). */
+export async function ensureDefaultNotificationChannel(): Promise<void> {
+  if (Platform.OS !== 'android') return;
+  await Notifications.setNotificationChannelAsync('default', {
+    name: 'default',
+    importance: Notifications.AndroidImportance.MAX,
+    vibrationPattern: [0, 250, 250, 250],
+    lightColor: '#B82E2E',
+    sound: 'default',
+    enableVibrate: true,
+    showBadge: true,
+  });
+}
+
 async function persistFcmToken(token: string, attempt = 1): Promise<boolean> {
   const access = await tokenStorage.getAccess();
   if (!access) {
@@ -35,6 +58,7 @@ async function persistFcmToken(token: string, attempt = 1): Promise<boolean> {
   }
   try {
     await usersApi.updateFcmToken(token);
+    console.log('[push] FCM token saved to server');
     return true;
   } catch (err) {
     if (attempt < 3) {
@@ -47,14 +71,7 @@ async function persistFcmToken(token: string, attempt = 1): Promise<boolean> {
 }
 
 export async function registerForPushNotificationsAsync(): Promise<string | null> {
-  if (Platform.OS === 'android') {
-    await Notifications.setNotificationChannelAsync('default', {
-      name: 'default',
-      importance: Notifications.AndroidImportance.MAX,
-      vibrationPattern: [0, 250, 250, 250],
-      lightColor: '#B82E2E',
-    });
-  }
+  await ensureDefaultNotificationChannel();
 
   const { status: existing } = await Notifications.getPermissionsAsync();
   let finalStatus = existing;
@@ -71,6 +88,7 @@ export async function registerForPushNotificationsAsync(): Promise<string | null
     const tokenData = await Notifications.getDevicePushTokenAsync();
     const token = tokenData.data;
     if (token) {
+      console.log('[push] FCM device token obtained');
       await persistFcmToken(token);
     }
     return token;
@@ -92,12 +110,14 @@ export async function showMessageNotification(
   const { status } = await Notifications.getPermissionsAsync();
   if (status !== 'granted') return;
 
+  await ensureDefaultNotificationChannel();
+
   try {
     await Notifications.scheduleNotificationAsync({
       content: {
         title,
         body,
-        data,
+        data: stringifyData(data),
         sound: true,
         ...(Platform.OS === 'android' ? { channelId: 'default' } : {}),
       },
@@ -122,6 +142,8 @@ export function initPushNotifications(userAuthenticated: boolean) {
 
   if (!pushRegistrationStarted) {
     pushRegistrationStarted = true;
+
+    void ensureDefaultNotificationChannel();
 
     Notifications.addPushTokenListener(({ data }) => {
       if (data) {

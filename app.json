@@ -73,7 +73,14 @@
         "microphonePermission": "Allow Citas Mallorca to access your microphone so you can record voice messages."
       }],
       "expo-localization",
-      "expo-notifications",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/adaptive-icon.png",
+          "color": "#B82E2E",
+          "defaultChannel": "default"
+        }
+      ],
       "expo-secure-store"
     ],
     "extra": {

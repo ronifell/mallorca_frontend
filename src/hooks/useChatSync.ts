@@ -1,3 +1,4 @@
+import { AppState } from 'react-native';
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import { Match, Message } from '../api/types';
@@ -53,9 +54,9 @@ export function useChatSync() {
     let active = true;
     let cleanup: (() => void) | null = null;
 
-    (async () => {
+    const attachListeners = async () => {
       const s = await connectSocket();
-      if (!active || !s) return;
+      if (!active || !s) return null;
 
       const onMessage = (m: Message & { conversationId?: string }) => {
         qc.invalidateQueries({ queryKey: ['matches'] });
@@ -123,10 +124,22 @@ export function useChatSync() {
         s.off('super_like:new', onSuperLike);
         s.off('match:new', onMatch);
       };
-    })();
+
+      return cleanup;
+    };
+
+    void attachListeners();
+
+    const appStateSub = AppState.addEventListener('change', (state) => {
+      if (state !== 'active') return;
+      cleanup?.();
+      cleanup = null;
+      void attachListeners();
+    });
 
     return () => {
       active = false;
+      appStateSub.remove();
       cleanup?.();
     };
   }, [qc, showMatchPopup]);

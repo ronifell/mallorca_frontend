@@ -149,7 +149,19 @@ module.exports = {
             'com.googleusercontent.apps.348711983822-7tp79tt59u3vrsusl2iave6o0taqpaiv',
         },
       ],
-      ...(appJson.expo.plugins ?? []),
+      [
+        'expo-notifications',
+        {
+          icon: './assets/adaptive-icon.png',
+          color: '#B82E2E',
+          defaultChannel: 'default',
+        },
+      ],
+      ...(appJson.expo.plugins ?? []).filter(
+        (plugin) =>
+          plugin !== 'expo-notifications' &&
+          !(Array.isArray(plugin) && plugin[0] === 'expo-notifications'),
+      ),
     ],
     androidStatusBar: {
       hidden: true,
