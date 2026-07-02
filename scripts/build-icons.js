@@ -77,7 +77,19 @@ async function composeIcon(scale, background) {
  * Android notification small icons must be a white silhouette on transparency.
  * The OS uses only the alpha channel and tints the icon — full-color PNGs
  * appear as a hollow circle in the notification shade.
+ *
+ * The Citas Mallorca coin logo is a filled circle, so alpha-only conversion
+ * produces a featureless white disc. We keep interior cream transparent and
+ * preserve the gold ring, heart, and lettering via luminance/chroma rules.
  */
+function isSilhouettePixel(r, g, b) {
+  const lum = 0.299 * r + 0.587 * g + 0.114 * b;
+  const isDark = lum < 132;
+  const isRedHeart = r > 95 && r > g * 1.3 && r > b * 1.3 && lum < 205;
+  const isGoldRing = lum >= 132 && lum <= 218 && r >= 145 && g >= 95 && b <= 130;
+  return isDark || isRedHeart || isGoldRing;
+}
+
 async function composeNotificationIcon() {
   const logoSize = Math.round(CANVAS_SIZE * 0.62);
   const { data, info } = await sharp(SOURCE)
@@ -88,19 +100,33 @@ async function composeNotificationIcon() {
 
   const pixels = Buffer.alloc(data.length);
   for (let i = 0; i < data.length; i += 4) {
+    const r = data[i];
+    const g = data[i + 1];
+    const b = data[i + 2];
     const alpha = data[i + 3];
-    if (alpha > 16) {
+    if (alpha > 16 && isSilhouettePixel(r, g, b)) {
       pixels[i] = 255;
       pixels[i + 1] = 255;
       pixels[i + 2] = 255;
-      pixels[i + 3] = alpha;
+      pixels[i + 3] = 255;
     }
   }
+
+  const iconSize = 96;
+  const innerSize = Math.round(iconSize * 0.72);
+  const pad = Math.round((iconSize - innerSize) / 2);
 
   return sharp(pixels, {
     raw: { width: info.width, height: info.height, channels: 4 },
   })
-    .resize(96, 96, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
+    .resize(innerSize, innerSize, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
+    .extend({
+      top: pad,
+      bottom: pad,
+      left: pad,
+      right: pad,
+      background: { r: 0, g: 0, b: 0, alpha: 0 },
+    })
     .png()
     .toBuffer();
 }
