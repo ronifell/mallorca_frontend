@@ -1,7 +1,7 @@
 /** @type {import('expo/config').ExpoConfig} */
 const fs = require('fs');
 const path = require('path');
-const { withDangerousMod, withAndroidManifest, withMainApplication, AndroidConfig } = require('@expo/config-plugins');
+const { withDangerousMod, withAndroidManifest, withMainApplication, withAppBuildGradle, AndroidConfig } = require('@expo/config-plugins');
 const { mergeContents } = require('@expo/config-plugins/build/utils/generateCode');
 const appJson = require('./app.json');
 
@@ -16,6 +16,30 @@ const googleAndroidClientId =
 
 /** EAS preview/production APK signing cert (from `eas credentials` / keytool on the APK). */
 const EAS_ANDROID_SHA1 = 'ad617be1fe9b49aed1d13379f80a924e7117836e';
+
+/**
+ * react-native-iap publishes amazon + play product flavors. The app module must
+ * pick one via missingDimensionStrategy or Gradle fails with variant ambiguity.
+ * The stock react-native-iap config plugin sometimes misses on EAS prebuild;
+ * this ensures Play Store is always selected for Google Play builds.
+ */
+function withIapPlayStoreFlavor(config) {
+  return withAppBuildGradle(config, (config) => {
+    const marker = 'missingDimensionStrategy "store", "play"';
+    if (config.modResults.contents.includes(marker)) {
+      return config;
+    }
+    config.modResults.contents = mergeContents({
+      tag: 'citasmallorca-iap-play-store',
+      src: config.modResults.contents,
+      newSrc: `        ${marker}`,
+      anchor: /defaultConfig\s*\{/,
+      offset: 1,
+      comment: '//',
+    }).contents;
+    return config;
+  });
+}
 
 function assertGoogleServicesOAuth(sourcePath) {
   const raw = fs.readFileSync(sourcePath, 'utf8');
@@ -285,6 +309,7 @@ module.exports = {
           paymentProvider: 'Play Store',
         },
       ],
+      withIapPlayStoreFlavor,
       [
         'expo-notifications',
         {
