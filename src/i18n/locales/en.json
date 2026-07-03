@@ -317,6 +317,8 @@
     "managedByGooglePlay": "Subscriptions and cancellations are managed via Google Play.",
     "restore": "Restore purchases",
     "restoreComingSoon": "Purchase restore will be available in a future update.",
+    "restoreNone": "No previous purchases were found on your Google Play account.",
+    "restoreSuccess": "Purchases restored",
     "active": "You have Premium",
     "until": "Until",
     "purchaseError": "We couldn't complete the purchase",

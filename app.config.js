@@ -280,6 +280,12 @@ module.exports = {
         },
       ],
       [
+        'react-native-iap',
+        {
+          paymentProvider: 'Play Store',
+        },
+      ],
+      [
         'expo-notifications',
         {
           icon: './assets/notification-icon.png',

@@ -1,20 +1,29 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Alert, Linking, Pressable, Text, View } from 'react-native';
+import { ActivityIndicator, Linking, Pressable, Text, View } from 'react-native';
 import { LEGAL_LINKS } from '../../config/legal';
+import { openManageSubscriptions } from '../../services/billing';
 import { LegalCheckbox } from '../auth/LegalCheckbox';
 import { colors } from '../../theme/colors';
 
 interface Props {
   onSubscribe: () => void;
+  onRestore?: () => void;
   loading?: boolean;
+  restoring?: boolean;
   disabled?: boolean;
 }
 
 const GOOGLE_PLAY_SUBS_URL = 'https://play.google.com/store/account/subscriptions';
 
-export function PremiumSubscribeSection({ onSubscribe, loading, disabled }: Props) {
+export function PremiumSubscribeSection({
+  onSubscribe,
+  onRestore,
+  loading,
+  restoring,
+  disabled,
+}: Props) {
   const { t } = useTranslation();
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [privacyAccepted, setPrivacyAccepted] = useState(false);
@@ -22,12 +31,12 @@ export function PremiumSubscribeSection({ onSubscribe, loading, disabled }: Prop
   const legalAccepted = termsAccepted && privacyAccepted;
   const isBlocked = loading || disabled || !legalAccepted;
 
-  const onRestore = () => {
-    Alert.alert(t('premium.restore'), t('premium.restoreComingSoon'));
-  };
-
   const onManage = () => {
-    Linking.openURL(GOOGLE_PLAY_SUBS_URL).catch(() => undefined);
+    // Deep link into the native subscription-management screen when possible;
+    // fall back to the web URL if the native module isn't linked (Expo Go).
+    openManageSubscriptions().catch(() => {
+      Linking.openURL(GOOGLE_PLAY_SUBS_URL).catch(() => undefined);
+    });
   };
 
   return (
@@ -108,8 +117,16 @@ export function PremiumSubscribeSection({ onSubscribe, loading, disabled }: Prop
       </View>
 
       <View className="flex-row items-center justify-center mt-2 gap-4">
-        <Pressable onPress={onRestore} className="flex-row items-center py-1">
-          <Text className="text-coral-500 font-semibold text-sm">{t('premium.restore')}</Text>
+        <Pressable
+          onPress={restoring ? undefined : onRestore}
+          className="flex-row items-center py-1"
+          accessibilityRole="button"
+        >
+          {restoring ? (
+            <ActivityIndicator color={colors.coral[500]} size="small" />
+          ) : (
+            <Text className="text-coral-500 font-semibold text-sm">{t('premium.restore')}</Text>
+          )}
         </Pressable>
         <Pressable onPress={onManage} className="flex-row items-center py-1">
           <Text className="text-coral-500 font-semibold text-sm">Google Play</Text>

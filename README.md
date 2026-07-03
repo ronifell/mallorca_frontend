@@ -109,19 +109,17 @@ npm run build:ios              # → IPA via Expo's m-medium worker
 ## Production checklist
 
 1. Set `expo.extra.apiBaseUrl` and `socketUrl` to your production HTTPS URLs.
-2. Replace `src/services/billing.ts → mockPurchase` with a real
-   `react-native-iap` flow:
-   ```ts
-   const purchase = await RNIap.requestSubscription({ sku: productId });
-   return {
-     platform: Platform.OS === 'ios' ? 'app_store' : 'google_play',
-     productId,
-     purchaseToken: purchase.purchaseToken,
-   };
-   ```
+2. Google Play billing (`src/services/billing.ts`) is wired to `react-native-iap`
+   and picks the base plan offerToken automatically. The library is a native
+   module — it does **not** work in Expo Go, so use a dev-client build or
+   preview/production EAS builds when testing purchases.
+   - Create products `monthly_premium` and `annual_premium` in Play Console.
+   - Upload an AAB to Internal testing.
+   - Add license testers so purchases are free.
+   - Set the backend's `GOOGLE_SERVICE_ACCOUNT_JSON` and
+     `GOOGLE_PLAY_RTDN_TOKEN` (see `Backend/README.md`).
 3. Configure FCM in Firebase Console; download `google-services.json` and add
-   it via EAS (`eas credentials`). Set `GOOGLE_SERVICE_ACCOUNT_JSON` on the
-   backend for server-side purchase validation.
+   it via EAS (`eas credentials`).
 4. Add your real icon/splash assets at `assets/icon.png`, `assets/splash.png`,
    `assets/adaptive-icon.png`.
 5. Build → upload to Play Console → submit for review.
