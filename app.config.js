@@ -78,22 +78,36 @@ function assertGoogleServicesOAuth(sourcePath) {
 }
 
 function resolveGoogleServicesAbsolutePath(projectRoot = __dirname) {
+  const candidates = [];
+
   const easPath = process.env.GOOGLE_SERVICES_JSON;
-  if (easPath && fs.existsSync(easPath)) {
-    return easPath;
+  if (easPath) {
+    candidates.push(easPath);
   }
 
   const localPath = path.join(projectRoot, 'google-services.json');
   if (fs.existsSync(localPath)) {
-    return localPath;
+    candidates.push(localPath);
+  }
+
+  for (const candidate of candidates) {
+    if (!fs.existsSync(candidate)) {
+      continue;
+    }
+    try {
+      assertGoogleServicesOAuth(candidate);
+      return candidate;
+    } catch (err) {
+      console.warn(`[app.config] Skipping google-services.json at ${candidate}: ${err.message}`);
+    }
   }
 
   const hint =
-    'FCM requires google-services.json. Commit Frontend/google-services.json or run: ' +
-    'eas env:create preview --name GOOGLE_SERVICES_JSON --type file --value ./google-services.json';
+    'FCM requires google-services.json with Android + Web oauth_client entries. Commit Frontend/google-services.json ' +
+    'or run: eas env:update --variable-name GOOGLE_SERVICES_JSON --value ./google-services.json --type file --environment production';
 
   if (process.env.EAS_BUILD === 'true') {
-    throw new Error(`google-services.json missing for EAS Android build. ${hint}`);
+    throw new Error(`No valid google-services.json found for EAS Android build. ${hint}`);
   }
 
   console.warn(`[app.config] ${hint}`);
