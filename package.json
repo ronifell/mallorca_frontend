@@ -14,7 +14,8 @@
     "build:android:preview": "eas build --platform android --profile preview",
     "build:ios": "eas build --platform ios --profile production",
     "build:icons": "node scripts/build-icons.js",
-    "build:feature-graphic": "node scripts/build-feature-graphic.js"
+    "build:feature-graphic": "node scripts/build-feature-graphic.js",
+    "postinstall": "patch-package"
   },
   "dependencies": {
     "@expo-google-fonts/noto-serif": "^0.2.3",
@@ -64,6 +65,7 @@
     "eas-cli": "^20.0.0",
     "eslint": "^8.57.0",
     "lightningcss": "^1.32.0",
+    "patch-package": "^8.0.1",
     "sharp": "^0.33.5",
     "typescript": "^5.3.3"
   },
