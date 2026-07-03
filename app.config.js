@@ -291,6 +291,8 @@ module.exports = {
         'expo-build-properties',
         {
           android: {
+            compileSdkVersion: 35,
+            targetSdkVersion: 35,
             usesCleartextTraffic: true,
             extraMavenRepos: ['https://www.jitpack.io'],
           },

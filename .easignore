@@ -3,6 +3,10 @@ node_modules/
 .expo/
 .expo-shared/
 
+# Generated native projects — must NOT be uploaded; EAS prebuilds from app.config.js
+android/
+ios/
+
 # Local secrets and logs
 .env
 .env.*
