@@ -15,6 +15,7 @@ import {
   acknowledgePurchase,
   initBillingConnection,
   restorePurchases,
+  setBillingMockMode,
   startPurchase,
   toApiPayload,
 } from '../../services/billing';
@@ -37,11 +38,27 @@ export function PremiumScreen() {
     queryKey: ['subscription-status'],
     queryFn: () => subscriptionsApi.status(),
   });
+  const { data: billingConfig } = useQuery({
+    queryKey: ['subscription-config'],
+    queryFn: () => subscriptionsApi.config(),
+    staleTime: 60_000,
+  });
+
+  useEffect(() => {
+    // Push the server-side mock flag into the billing module BEFORE any
+    // purchase can start. This lets ops flip real ↔ mock billing by setting
+    // BILLING_ALLOW_MOCK in the backend .env — no app rebuild required.
+    if (typeof billingConfig?.mockEnabled === 'boolean') {
+      setBillingMockMode(billingConfig.mockEnabled);
+    }
+  }, [billingConfig?.mockEnabled]);
 
   useEffect(() => {
     // Warm the billing connection up-front so the "Subscribe" tap is snappy.
+    // Skipped automatically when the backend has enabled mock mode.
+    if (billingConfig?.mockEnabled) return;
     initBillingConnection().catch(() => undefined);
-  }, []);
+  }, [billingConfig?.mockEnabled]);
 
   const invalidatePremiumQueries = async () => {
     await qc.invalidateQueries({ queryKey: ['me'] });

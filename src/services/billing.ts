@@ -54,6 +54,27 @@ export const IAP_NATIVE_AVAILABLE: boolean =
       ? !!NativeModules?.RNIapIos || !!NativeModules?.RNIapIosSk2
       : false;
 
+/**
+ * Server-controlled kill switch for the whole native billing flow. When the
+ * backend reports `mockEnabled: true` (i.e. `BILLING_ALLOW_MOCK=true` in the
+ * backend `.env`), the app skips Google Play and completes the purchase with
+ * a mock token — the backend validator will accept it and grant Premium for
+ * the product's normal duration. This lets QA / demos exercise the whole
+ * Premium gating end-to-end without a real Google Play charge, and lets ops
+ * toggle real vs mock billing without shipping a new app build.
+ */
+let mockModeFromServer = false;
+
+/** Called by `PremiumScreen` after fetching `/subscriptions/config`. */
+export function setBillingMockMode(enabled: boolean): void {
+  mockModeFromServer = enabled;
+}
+
+/** Effective flag: use mock either because native IAP is missing or the server said so. */
+function shouldUseMock(): boolean {
+  return mockModeFromServer || !IAP_NATIVE_AVAILABLE;
+}
+
 let connectionReady = false;
 let connectPromise: Promise<boolean> | null = null;
 
@@ -63,7 +84,7 @@ let connectPromise: Promise<boolean> | null = null;
  */
 export async function initBillingConnection(): Promise<boolean> {
   if (connectionReady) return true;
-  if (!IAP_NATIVE_AVAILABLE) return false;
+  if (shouldUseMock()) return false;
   if (connectPromise) return connectPromise;
 
   const RNIap = await import('react-native-iap');
@@ -127,7 +148,7 @@ function extractPurchaseToken(purchase: Purchase | SubscriptionPurchase): string
  * prices instead of the hardcoded ones served by `/subscriptions/plans`.
  */
 export async function fetchSubscriptions(): Promise<Subscription[]> {
-  if (!IAP_NATIVE_AVAILABLE) return [];
+  if (shouldUseMock()) return [];
   await initBillingConnection();
   const RNIap = await import('react-native-iap');
   return RNIap.getSubscriptions({ skus: SUBSCRIPTION_SKUS });
@@ -187,10 +208,10 @@ function waitForPurchase(sku: string, timeoutMs = 90_000): Promise<Purchase> {
  * within 3 days.
  */
 export async function startPurchase(productId: ProductId): Promise<PurchaseResult> {
-  if (!IAP_NATIVE_AVAILABLE) {
-    // Expo Go / non-native runtime — fall back to a mock token so the whole
-    // premium flow can still be exercised. The backend must have
-    // BILLING_ALLOW_MOCK=true for the token to be accepted.
+  if (shouldUseMock()) {
+    // Either Expo Go (no native module) or the backend reported
+    // BILLING_ALLOW_MOCK=true — skip Google Play and finish the purchase with
+    // a mock token that the backend validator will accept.
     return mockPurchase(productId);
   }
 
@@ -241,7 +262,7 @@ export async function startPurchase(productId: ProductId): Promise<PurchaseResul
  * On iOS this marks the StoreKit transaction as finished.
  */
 export async function acknowledgePurchase(result: PurchaseResult): Promise<void> {
-  if (!IAP_NATIVE_AVAILABLE || !result.raw) return;
+  if (shouldUseMock() || !result.raw) return;
   const RNIap = await import('react-native-iap');
   try {
     await RNIap.finishTransaction({ purchase: result.raw, isConsumable: false });
@@ -257,7 +278,7 @@ export async function acknowledgePurchase(result: PurchaseResult): Promise<void>
  * `acknowledgePurchase({...})` for the ones the backend accepts.
  */
 export async function restorePurchases(): Promise<PurchaseResult[]> {
-  if (!IAP_NATIVE_AVAILABLE) return [];
+  if (shouldUseMock()) return [];
   await initBillingConnection();
   const RNIap = await import('react-native-iap');
   const purchases = await RNIap.getAvailablePurchases();
@@ -282,7 +303,7 @@ export async function restorePurchases(): Promise<PurchaseResult[]> {
  * subscriptions.
  */
 export async function openManageSubscriptions(sku?: ProductId): Promise<void> {
-  if (!IAP_NATIVE_AVAILABLE) return;
+  if (shouldUseMock()) return;
   const RNIap = await import('react-native-iap');
   await RNIap.deepLinkToSubscriptions({ sku });
 }

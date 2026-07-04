@@ -163,6 +163,13 @@ export const chatApi = {
 };
 
 export const subscriptionsApi = {
+  /**
+   * Public billing config. `mockEnabled: true` means the backend has
+   * `BILLING_ALLOW_MOCK=true` and the app should skip Google Play and use
+   * a mock purchase token — useful for staging / QA.
+   */
+  config: () =>
+    api.get<{ mockEnabled: boolean }>('/subscriptions/config').then((r) => r.data),
   plans: () =>
     api.get<{ plans: SubscriptionPlan[] }>('/subscriptions/plans').then((r) => r.data.plans),
   status: () =>
