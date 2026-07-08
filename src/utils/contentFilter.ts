@@ -93,7 +93,8 @@ const SOCIAL_PLATFORM_RE = wordList([
 ]);
 
 // --- Phone numbers ----------------------------------------------------------
-const PHONE_CANDIDATE_RE = /\+?\d(?:[\d\s().-]{5,}\d)/g;
+// Wide separator class to catch symbol-obfuscated numbers ("6*6*6_7-7-7").
+const PHONE_CANDIDATE_RE = /\+?\d(?:[\d\s().\-*_+·•/\\|#,]{5,}\d)/g;
 
 // --- Spam -------------------------------------------------------------------
 const REPEATED_CHAR_RE = /(.)\1{7,}/;
@@ -216,24 +217,104 @@ const ILLEGAL_RE = wordList([
   'lolita',
 ]);
 
-function hasLink(folded: string, raw: string): boolean {
-  return URL_RE.test(raw) || DOMAIN_RE.test(folded) || OBFUSCATED_DOMAIN_RE.test(folded);
+// --- De-obfuscation ---------------------------------------------------------
+// Mirror of the backend logic: normalise the text into several variants so
+// spaced-out ("i n s t a"), leetspeak ("wh4ts4pp") and "at/dot" email tricks
+// are caught. Keep in sync with Backend/src/utils/contentFilter.ts.
+
+const SEPARATOR_CHARS = "\\s._\\-*·•|/\\\\~^=+#,:;'\"()\\[\\]{}";
+const SEPARATOR_RUN_RE = new RegExp(`[${SEPARATOR_CHARS}]+`, 'g');
+const SPACED_CHARS_RE = new RegExp(
+  `\\b(?:[a-z0-9](?:[${SEPARATOR_CHARS}]+)){2,}[a-z0-9]\\b`,
+  'gi',
+);
+
+const LEET_MAP: Record<string, string> = {
+  '0': 'o',
+  '1': 'i',
+  '3': 'e',
+  '4': 'a',
+  '5': 's',
+  '7': 't',
+  '8': 'b',
+  '9': 'g',
+  '@': 'a',
+  $: 's',
+  '€': 'e',
+  '!': 'i',
+};
+
+function deLeet(text: string): string {
+  return text.replace(/[013457890@$€!]/g, (c) => LEET_MAP[c] ?? c);
 }
 
-function hasPhone(raw: string): boolean {
+function collapseSpacedChars(text: string): string {
+  return text.replace(SPACED_CHARS_RE, (m) => m.replace(SEPARATOR_RUN_RE, ''));
+}
+
+const EMAIL_RE =
+  /[a-z0-9._%+-]+\s*(?:@|\(\s*at\s*\)|\[\s*at\s*\]|\s+at\s+|\s+arroba\s+)\s*[a-z0-9.-]+\s*(?:\.|\(\s*dot\s*\)|\[\s*dot\s*\]|\s+dot\s+|\s+punto\s+)\s*[a-z]{2,}/i;
+
+const NUMBER_WORDS_RE =
+  /\b(zero|one|two|three|four|five|six|seven|eight|nine|oh|cero|uno|dos|tres|cuatro|cinco|seis|siete|ocho|nueve)\b/gi;
+
+function buildVariants(raw: string): string[] {
+  const folded = fold(raw);
+  const variants = new Set<string>([
+    folded,
+    deLeet(folded),
+    collapseSpacedChars(folded),
+    collapseSpacedChars(deLeet(folded)),
+  ]);
+  return [...variants];
+}
+
+function matchAny(variants: string[], re: RegExp): RegExpMatchArray | null {
+  for (const v of variants) {
+    const m = v.match(re);
+    if (m) return m;
+  }
+  return null;
+}
+
+function testAny(variants: string[], re: RegExp): boolean {
+  return variants.some((v) => re.test(v));
+}
+
+function hasLink(variants: string[], raw: string): boolean {
+  return (
+    URL_RE.test(raw) ||
+    testAny(variants, DOMAIN_RE) ||
+    testAny(variants, OBFUSCATED_DOMAIN_RE)
+  );
+}
+
+function countDigitRun(text: string): boolean {
   PHONE_CANDIDATE_RE.lastIndex = 0;
   let m: RegExpExecArray | null;
-  while ((m = PHONE_CANDIDATE_RE.exec(raw)) !== null) {
+  while ((m = PHONE_CANDIDATE_RE.exec(text)) !== null) {
     const digits = m[0].replace(/\D/g, '');
     if (digits.length >= 7 && digits.length <= 15) return true;
   }
   return false;
 }
 
-function hasSocial(folded: string, raw: string): boolean {
-  if (HANDLE_RE.test(raw)) return true;
-  if (SOCIAL_PLATFORM_RE.test(folded)) return true;
+function hasPhone(variants: string[], raw: string): boolean {
+  if (countDigitRun(raw)) return true;
+  if (variants.some((v) => countDigitRun(v))) return true;
+  const words = raw.match(NUMBER_WORDS_RE);
+  if (words && words.length >= 7) return true;
   return false;
+}
+
+function hasEmail(variants: string[]): boolean {
+  return testAny(variants, EMAIL_RE);
+}
+
+function hasSocial(variants: string[], raw: string): boolean {
+  if (HANDLE_RE.test(raw)) return true;
+  if (testAny(variants, HANDLE_RE)) return true;
+  return testAny(variants, SOCIAL_PLATFORM_RE);
 }
 
 function isCapsFlood(raw: string): boolean {
@@ -243,11 +324,11 @@ function isCapsFlood(raw: string): boolean {
   return upper / letters.length >= 0.8;
 }
 
-function hasSpam(folded: string, raw: string): boolean {
+function hasSpam(variants: string[], raw: string): boolean {
   return (
     REPEATED_CHAR_RE.test(raw) ||
-    REPEATED_WORD_RE.test(folded) ||
-    SPAM_PHRASE_RE.test(folded) ||
+    testAny(variants, REPEATED_WORD_RE) ||
+    testAny(variants, SPAM_PHRASE_RE) ||
     isCapsFlood(raw)
   );
 }
@@ -259,21 +340,23 @@ function hasSpam(folded: string, raw: string): boolean {
 export function inspectContent(raw: string, context: FilterContext = 'chat'): FilterResult {
   void context;
   if (!raw || !raw.trim()) return { blocked: false };
-  const folded = fold(raw);
 
-  const illegal = folded.match(ILLEGAL_RE);
+  const variants = buildVariants(raw);
+
+  const illegal = matchAny(variants, ILLEGAL_RE);
   if (illegal) return { blocked: true, category: 'illegal', match: illegal[1] };
 
-  const sexual = folded.match(SEXUAL_RE);
+  const sexual = matchAny(variants, SEXUAL_RE);
   if (sexual) return { blocked: true, category: 'sexual', match: sexual[1] };
 
-  const aggressive = folded.match(AGGRESSIVE_RE);
+  const aggressive = matchAny(variants, AGGRESSIVE_RE);
   if (aggressive) return { blocked: true, category: 'aggressive', match: aggressive[1] };
 
-  if (hasLink(folded, raw)) return { blocked: true, category: 'link' };
-  if (hasPhone(raw)) return { blocked: true, category: 'phone' };
-  if (hasSocial(folded, raw)) return { blocked: true, category: 'social' };
-  if (hasSpam(folded, raw)) return { blocked: true, category: 'spam' };
+  if (hasEmail(variants)) return { blocked: true, category: 'social' };
+  if (hasLink(variants, raw)) return { blocked: true, category: 'link' };
+  if (hasPhone(variants, raw)) return { blocked: true, category: 'phone' };
+  if (hasSocial(variants, raw)) return { blocked: true, category: 'social' };
+  if (hasSpam(variants, raw)) return { blocked: true, category: 'spam' };
 
   return { blocked: false };
 }

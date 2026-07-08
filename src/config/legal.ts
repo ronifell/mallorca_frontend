@@ -14,10 +14,13 @@ export const LEGAL_LINKS = {
   home: PUBLIC_WEB_BASE,
 } as const;
 
-/** Official company address for all in-app contact and support links. */
+/** Official company address for all in-app contact and general enquiries. */
 export const OFFICIAL_EMAIL = 'info@citasmallorca.es';
+
+/** Dedicated technical-support address (app issues, payments, account help). */
+export const SUPPORT_EMAIL = 'support@citasmallorca.es';
 
 export const CONTACT_EMAILS = {
   general: OFFICIAL_EMAIL,
-  support: OFFICIAL_EMAIL,
+  support: SUPPORT_EMAIL,
 } as const;

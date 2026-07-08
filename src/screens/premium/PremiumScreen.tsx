@@ -2,7 +2,7 @@ import { useNavigation } from '@react-navigation/native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, View } from 'react-native';
+import { Alert, ScrollView, View } from 'react-native';
 import { extractErrorMessage } from '../../api/client';
 import { subscriptionsApi } from '../../api/endpoints';
 import { PremiumActiveCard } from '../../components/premium/PremiumActiveCard';
@@ -141,29 +141,35 @@ export function PremiumScreen() {
 
   return (
     <PremiumShell>
-      <View className="flex-1 justify-between">
-        <View>
-          <PremiumHero />
-          <PremiumBenefitsCard />
-          {isPremium ? <PremiumActiveCard expiryDate={status?.expiryDate} /> : null}
-          {(plans ?? []).map((plan) => (
-            <PremiumPlanCard
-              key={plan.id}
-              plan={plan}
-              selected={selected === plan.id}
-              onSelect={() => setSelected(plan.id)}
-            />
-          ))}
-        </View>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ flexGrow: 1, paddingBottom: 16 }}
+        keyboardShouldPersistTaps="handled"
+      >
+        <View className="flex-1 justify-between">
+          <View>
+            <PremiumHero />
+            <PremiumBenefitsCard />
+            {isPremium ? <PremiumActiveCard expiryDate={status?.expiryDate} /> : null}
+            {(plans ?? []).map((plan) => (
+              <PremiumPlanCard
+                key={plan.id}
+                plan={plan}
+                selected={selected === plan.id}
+                onSelect={() => setSelected(plan.id)}
+              />
+            ))}
+          </View>
 
-        <PremiumSubscribeSection
-          onSubscribe={subscribe}
-          onRestore={restore}
-          loading={loading}
-          restoring={restoring}
-          disabled={isPremium}
-        />
-      </View>
+          <PremiumSubscribeSection
+            onSubscribe={subscribe}
+            onRestore={restore}
+            loading={loading}
+            restoring={restoring}
+            disabled={isPremium}
+          />
+        </View>
+      </ScrollView>
     </PremiumShell>
   );
 }

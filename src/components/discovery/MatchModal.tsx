@@ -202,57 +202,56 @@ export function MatchModal({
       return;
     }
 
-    Animated.sequence([
-      Animated.parallel([
-        Animated.spring(leftAvatar, {
-          toValue: 1,
-          damping: 11,
-          stiffness: 110,
-          mass: 0.9,
-          useNativeDriver: true,
-        }),
-        Animated.spring(rightAvatar, {
-          toValue: 1,
-          damping: 11,
-          stiffness: 110,
-          mass: 0.9,
-          delay: 70,
-          useNativeDriver: true,
-        }),
-        Animated.spring(heartScale, {
-          toValue: 1,
-          damping: 5,
-          stiffness: 140,
-          delay: 220,
-          useNativeDriver: true,
-        }),
-      ]),
-      Animated.parallel([
-        Animated.timing(titleOpacity, {
-          toValue: 1,
-          duration: 380,
-          useNativeDriver: true,
-        }),
-        Animated.timing(titleY, {
-          toValue: 0,
-          duration: 380,
-          easing: Easing.out(Easing.cubic),
-          useNativeDriver: true,
-        }),
-      ]),
-      Animated.parallel([
-        Animated.timing(actionsOpacity, {
-          toValue: 1,
-          duration: 320,
-          useNativeDriver: true,
-        }),
-        Animated.timing(actionsY, {
-          toValue: 0,
-          duration: 320,
-          easing: Easing.out(Easing.cubic),
-          useNativeDriver: true,
-        }),
-      ]),
+    // Run the entrance mostly in parallel so the celebration is fully visible
+    // almost immediately when a match happens (avatars, title and CTAs land
+    // together instead of one after another).
+    Animated.parallel([
+      Animated.spring(leftAvatar, {
+        toValue: 1,
+        damping: 12,
+        stiffness: 130,
+        mass: 0.8,
+        useNativeDriver: true,
+      }),
+      Animated.spring(rightAvatar, {
+        toValue: 1,
+        damping: 12,
+        stiffness: 130,
+        mass: 0.8,
+        delay: 40,
+        useNativeDriver: true,
+      }),
+      Animated.spring(heartScale, {
+        toValue: 1,
+        damping: 6,
+        stiffness: 150,
+        delay: 120,
+        useNativeDriver: true,
+      }),
+      Animated.timing(titleOpacity, {
+        toValue: 1,
+        duration: 260,
+        useNativeDriver: true,
+      }),
+      Animated.timing(titleY, {
+        toValue: 0,
+        duration: 260,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }),
+      Animated.timing(actionsOpacity, {
+        toValue: 1,
+        duration: 300,
+        delay: 120,
+        useNativeDriver: true,
+      }),
+      Animated.timing(actionsY, {
+        toValue: 0,
+        duration: 300,
+        delay: 120,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }),
     ]).start();
 
     // Continuous gentle pulse on the heart badge.

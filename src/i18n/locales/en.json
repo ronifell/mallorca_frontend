@@ -351,6 +351,7 @@
     "blockedUsersDesc": "View and manage users you've blocked.",
     "exportData": "Export my data (GDPR)",
     "exportDataDesc": "Download a copy of your data.",
+    "exportDataSaved": "Your data file was saved to:\n{{path}}",
     "deleteAccount": "Delete account",
     "deleteAccountDesc": "Permanently delete your account",
     "deleteAccountConfirm": "This action is permanent. Continue?",

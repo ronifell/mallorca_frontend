@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -14,7 +14,7 @@ import { CandidatePhotoHero } from '../../components/discovery/CandidatePhotoHer
 import { CandidatePhotoThumbnails } from '../../components/discovery/CandidatePhotoThumbnails';
 import { CandidateProfileHeader } from '../../components/discovery/CandidateProfileHeader';
 import { ReportUserSheet } from '../../components/moderation/ReportUserSheet';
-import { ProfileSafetySection } from '../../components/moderation/ProfileSafetySection';
+import { ProfileOptionsMenu } from '../../components/moderation/ProfileOptionsMenu';
 import { useTopScreenPadding } from '../../hooks/useTopScreenPadding';
 import { RootStackParamList } from '../../navigation/types';
 import { colors } from '../../theme/colors';
@@ -30,8 +30,6 @@ export function MatchProfileScreen({ route, navigation }: Props) {
 
   const [photoIndex, setPhotoIndex] = useState(0);
   const [reportOpen, setReportOpen] = useState(false);
-  const scrollRef = useRef<ScrollView>(null);
-  const safetyOffsetRef = useRef(0);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['match-profile', matchId],
@@ -125,10 +123,6 @@ export function MatchProfileScreen({ route, navigation }: Props) {
     setReportOpen(true);
   };
 
-  const scrollToSafety = () => {
-    scrollRef.current?.scrollTo({ y: safetyOffsetRef.current, animated: true });
-  };
-
   if (isLoading) {
     return (
       <SafeAreaView
@@ -172,7 +166,6 @@ export function MatchProfileScreen({ route, navigation }: Props) {
         <CandidateProfileHeader />
 
         <ScrollView
-          ref={scrollRef}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingBottom: 32 }}
         >
@@ -184,7 +177,13 @@ export function MatchProfileScreen({ route, navigation }: Props) {
             isPremium={profile.isPremium}
             onPrev={photoCount > 1 ? goPrev : undefined}
             onNext={photoCount > 1 ? goNext : undefined}
-            onSafetyPress={scrollToSafety}
+            topRightSlot={
+              <ProfileOptionsMenu
+                onReport={handleReport}
+                onBlock={handleBlock}
+                onUnmatch={handleUnmatch}
+              />
+            }
           />
 
           {photoCount > 1 ? (
@@ -253,17 +252,6 @@ export function MatchProfileScreen({ route, navigation }: Props) {
             ) : null}
           </View>
 
-          <View
-            onLayout={(e) => {
-              safetyOffsetRef.current = e.nativeEvent.layout.y;
-            }}
-          >
-            <ProfileSafetySection
-              onReport={handleReport}
-              onBlock={handleBlock}
-              onUnmatch={handleUnmatch}
-            />
-          </View>
         </ScrollView>
       </View>
 

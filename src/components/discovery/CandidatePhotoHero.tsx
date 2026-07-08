@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import React from 'react';
+import React, { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Image, Pressable, Text, View } from 'react-native';
 import { colors } from '../../theme/colors';
@@ -12,15 +12,15 @@ interface Props {
   isPremium?: boolean;
   onPrev?: () => void;
   onNext?: () => void;
-  onMenuPress?: () => void;
-  onSafetyPress?: () => void;
+  /** Optional control rendered on the top-right of the photo (e.g. options menu). */
+  topRightSlot?: ReactNode;
 }
 
 /**
  * Large hero photo for the candidate profile screen. Contains:
  *  - the active photo (rounded card with soft shadow)
  *  - top-left "Online" pill
- *  - top-right "ellipsis" menu trigger
+ *  - optional top-right slot (e.g. the profile options menu)
  *  - bottom-right photo counter (1 / N)
  *  - optional premium pill (right of online pill)
  *  - invisible tap zones on the left/right thirds to step between photos
@@ -33,11 +33,9 @@ export function CandidatePhotoHero({
   isPremium = false,
   onPrev,
   onNext,
-  onMenuPress,
-  onSafetyPress,
+  topRightSlot,
 }: Props) {
   const { t } = useTranslation();
-  const safetyHandler = onSafetyPress ?? onMenuPress;
 
   return (
     <View
@@ -88,20 +86,8 @@ export function CandidatePhotoHero({
         </View>
       ) : null}
 
-      {safetyHandler ? (
-        <Pressable
-          onPress={safetyHandler}
-          accessibilityRole="button"
-          accessibilityLabel={t('profile.safetyTitle')}
-          className="absolute top-3 right-3 flex-row items-center rounded-full px-3 py-1.5"
-          style={{ backgroundColor: 'rgba(0,0,0,0.62)' }}
-          hitSlop={4}
-        >
-          <Ionicons name="shield-checkmark" size={15} color="#FFFFFF" />
-          <Text className="text-white text-xs font-bold ml-1.5">
-            {t('profile.safetyTitle')}
-          </Text>
-        </Pressable>
+      {topRightSlot ? (
+        <View className="absolute top-3 right-3">{topRightSlot}</View>
       ) : null}
 
       {photoCount > 0 ? (

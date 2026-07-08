@@ -11,7 +11,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { OFFICIAL_EMAIL } from '../../config/legal';
+import { OFFICIAL_EMAIL, SUPPORT_EMAIL } from '../../config/legal';
 import { useTopScreenPadding } from '../../hooks/useTopScreenPadding';
 import { colors } from '../../theme/colors';
 
@@ -99,6 +99,13 @@ export function ContactScreen() {
               title={t('settings.contactOfficial')}
               description={t('settings.contactOfficialDesc')}
               email={OFFICIAL_EMAIL}
+              showDivider
+            />
+            <ContactRow
+              icon="help-buoy-outline"
+              title={t('settings.contactSupport')}
+              description={t('settings.contactSupportDesc')}
+              email={SUPPORT_EMAIL}
               showDivider={false}
             />
           </View>

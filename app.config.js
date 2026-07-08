@@ -369,7 +369,7 @@ module.exports = {
       googleWebClientId,
       googleAndroidClientId,
       eas: {
-        projectId: '2a257000-2886-4f51-a75a-c6694a8c4ee6',
+        projectId: '56e6fb89-8a8c-4dbe-a025-696a01924dc1',
       },
     },
   },

@@ -1,6 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import * as FileSystem from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -34,10 +36,24 @@ export function PrivacyScreen() {
     setExporting(true);
     try {
       const data = await usersApi.exportData();
-      Alert.alert(
-        t('settings.exportData'),
-        `OK — ${Object.keys(data).join(', ')}\n\n${t('common.ok')}`,
-      );
+      const json = JSON.stringify(data, null, 2);
+
+      const stamp = new Date().toISOString().slice(0, 10);
+      const fileUri = `${FileSystem.cacheDirectory}citas-mallorca-data-${stamp}.json`;
+      await FileSystem.writeAsStringAsync(fileUri, json, {
+        encoding: FileSystem.EncodingType.UTF8,
+      });
+
+      const canShare = await Sharing.isAvailableAsync();
+      if (canShare) {
+        await Sharing.shareAsync(fileUri, {
+          mimeType: 'application/json',
+          dialogTitle: t('settings.exportData'),
+          UTI: 'public.json',
+        });
+      } else {
+        Alert.alert(t('settings.exportData'), t('settings.exportDataSaved', { path: fileUri }));
+      }
     } catch (e) {
       Alert.alert(t('common.error'), extractErrorMessage(e));
     } finally {

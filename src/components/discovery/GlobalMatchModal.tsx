@@ -24,7 +24,13 @@ export function GlobalMatchModal() {
   const nav = useNavigation<Nav>();
   const current = useMatchPopup((s) => s.current);
   const hide = useMatchPopup((s) => s.hide);
-  const { data: me } = useQuery({ queryKey: ['me'], queryFn: () => usersApi.me() });
+  // Keep "my" profile warm so the match modal can render my photo instantly
+  // instead of flashing initials while a fetch resolves.
+  const { data: me } = useQuery({
+    queryKey: ['me'],
+    queryFn: () => usersApi.me(),
+    staleTime: 5 * 60 * 1000,
+  });
   const [sending, setSending] = useState(false);
 
   const onSendMessage = async () => {

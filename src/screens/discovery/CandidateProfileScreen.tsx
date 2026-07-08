@@ -15,7 +15,7 @@ import { CandidatePhotoHero } from '../../components/discovery/CandidatePhotoHer
 import { CandidatePhotoThumbnails } from '../../components/discovery/CandidatePhotoThumbnails';
 import { CandidateProfileHeader } from '../../components/discovery/CandidateProfileHeader';
 import { ReportUserSheet } from '../../components/moderation/ReportUserSheet';
-import { ProfileSafetySection } from '../../components/moderation/ProfileSafetySection';
+import { ProfileOptionsMenu } from '../../components/moderation/ProfileOptionsMenu';
 import { useTopScreenPadding } from '../../hooks/useTopScreenPadding';
 import { useSuperLikeAccess } from '../../hooks/useSuperLikeAccess';
 import { RootStackParamList } from '../../navigation/types';
@@ -47,8 +47,6 @@ export function CandidateProfileScreen({ route, navigation }: Props) {
   const showMatchPopup = useMatchPopup((s) => s.show);
   const matchOpen = useMatchPopup((s) => s.current != null);
   const hadMatchRef = useRef(false);
-  const scrollRef = useRef<ScrollView>(null);
-  const safetyOffsetRef = useRef(0);
 
   const photoUris = useMemo(
     () =>
@@ -153,10 +151,6 @@ export function CandidateProfileScreen({ route, navigation }: Props) {
     }
   };
 
-  const scrollToSafety = () => {
-    scrollRef.current?.scrollTo({ y: safetyOffsetRef.current, animated: true });
-  };
-
   const handleBlock = () => {
     Alert.alert(t('profile.block'), t('profile.blockConfirm'), [
       { text: t('common.cancel'), style: 'cancel' },
@@ -187,7 +181,6 @@ export function CandidateProfileScreen({ route, navigation }: Props) {
         <CandidateProfileHeader />
 
         <ScrollView
-          ref={scrollRef}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingBottom: ACTION_BAR_HEIGHT + 24 }}
         >
@@ -199,7 +192,12 @@ export function CandidateProfileScreen({ route, navigation }: Props) {
             isPremium={candidate.isPremium}
             onPrev={photoCount > 1 ? goPrev : undefined}
             onNext={photoCount > 1 ? goNext : undefined}
-            onSafetyPress={scrollToSafety}
+            topRightSlot={
+              <ProfileOptionsMenu
+                onReport={() => setReportOpen(true)}
+                onBlock={handleBlock}
+              />
+            }
           />
 
           {photoCount > 1 ? (
@@ -257,16 +255,6 @@ export function CandidateProfileScreen({ route, navigation }: Props) {
             </View>
           ) : null}
 
-          <View
-            onLayout={(e) => {
-              safetyOffsetRef.current = e.nativeEvent.layout.y;
-            }}
-          >
-            <ProfileSafetySection
-              onReport={() => setReportOpen(true)}
-              onBlock={handleBlock}
-            />
-          </View>
         </ScrollView>
 
         <CandidateActionBar
