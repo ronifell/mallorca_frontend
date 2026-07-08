@@ -6,6 +6,7 @@ import * as Haptics from 'expo-haptics';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
+  ActivityIndicator,
   Alert,
   FlatList,
   Image,
@@ -126,11 +127,15 @@ function LikeRow({ user, variant, busy, onOpen, onAction }: RowProps) {
           opacity: busy ? 0.5 : 1,
         }}
       >
-        <Ionicons
-          name={variant === 'received' ? 'heart' : 'close'}
-          size={variant === 'received' ? 20 : 22}
-          color={variant === 'received' ? '#FFFFFF' : colors.coral[500]}
-        />
+        {busy && variant === 'received' ? (
+          <ActivityIndicator color="#FFFFFF" size="small" />
+        ) : (
+          <Ionicons
+            name={variant === 'received' ? 'heart' : 'close'}
+            size={variant === 'received' ? 20 : 22}
+            color={variant === 'received' ? '#FFFFFF' : colors.coral[500]}
+          />
+        )}
       </Pressable>
     </Pressable>
   );

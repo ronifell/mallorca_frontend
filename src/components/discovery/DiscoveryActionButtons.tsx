@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import { colors } from '../../theme/colors';
 
 interface Props {
@@ -11,6 +11,9 @@ interface Props {
   superLikeRemaining?: number | null;
   /** When false, the Super Like star is shown locked (non-Premium users). */
   superLikeEnabled?: boolean;
+  likeLoading?: boolean;
+  superLikeLoading?: boolean;
+  disabled?: boolean;
 }
 
 export function DiscoveryActionButtons({
@@ -19,11 +22,17 @@ export function DiscoveryActionButtons({
   onSuperLike,
   superLikeRemaining,
   superLikeEnabled = true,
+  likeLoading = false,
+  superLikeLoading = false,
+  disabled = false,
 }: Props) {
+  const blocked = disabled || likeLoading || superLikeLoading;
+
   return (
     <View className="flex-row items-center justify-center mt-5 mb-2">
       <Pressable
-        onPress={onPass}
+        onPress={blocked ? undefined : onPass}
+        disabled={blocked}
         className="w-14 h-14 rounded-full bg-white border border-cream-300 items-center justify-center"
         style={{
           shadowColor: '#3D2618',
@@ -31,13 +40,16 @@ export function DiscoveryActionButtons({
           shadowOpacity: 0.1,
           shadowRadius: 6,
           elevation: 3,
+          opacity: blocked ? 0.5 : 1,
         }}
       >
         <Text className="text-coral-500 text-2xl font-bold leading-none">×</Text>
       </Pressable>
 
       <Pressable
-        onPress={onLike}
+        onPress={blocked ? undefined : onLike}
+        disabled={blocked}
+        accessibilityRole="button"
         className="w-[72px] h-[72px] rounded-full bg-coral-500 items-center justify-center mx-6"
         style={{
           shadowColor: '#E8554E',
@@ -45,24 +57,35 @@ export function DiscoveryActionButtons({
           shadowOpacity: 0.35,
           shadowRadius: 8,
           elevation: 6,
+          opacity: blocked && !likeLoading ? 0.7 : 1,
         }}
       >
-        <Ionicons name="heart" size={30} color="#FFFFFF" />
+        {likeLoading ? (
+          <ActivityIndicator color="#FFFFFF" size="small" />
+        ) : (
+          <Ionicons name="heart" size={30} color="#FFFFFF" />
+        )}
       </Pressable>
 
       <Pressable
-        onPress={onSuperLike}
-        className="w-14 h-14 rounded-full bg-white border border-cream-300 items-center justify-center"
+        onPress={blocked ? undefined : onSuperLike}
+        disabled={blocked}
         accessibilityRole="button"
+        className="w-14 h-14 rounded-full bg-white border border-cream-300 items-center justify-center"
         style={{
           shadowColor: '#3D2618',
           shadowOffset: { width: 0, height: 2 },
           shadowOpacity: 0.1,
           shadowRadius: 6,
           elevation: 3,
+          opacity: blocked && !superLikeLoading ? 0.5 : 1,
         }}
       >
-        <Ionicons name="star" size={26} color="#F5B301" />
+        {superLikeLoading ? (
+          <ActivityIndicator color="#F5B301" size="small" />
+        ) : (
+          <Ionicons name="star" size={26} color="#F5B301" />
+        )}
         {!superLikeEnabled ? (
           <View className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-coral-500 items-center justify-center">
             <Ionicons name="lock-closed" size={11} color="#FFFFFF" />

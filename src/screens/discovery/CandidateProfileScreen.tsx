@@ -42,11 +42,15 @@ export function CandidateProfileScreen({ route, navigation }: Props) {
     useSuperLikeAccess();
 
   const [photoIndex, setPhotoIndex] = useState(0);
-  const [busy, setBusy] = useState(false);
+  const [likeLoading, setLikeLoading] = useState(false);
+  const [superLikeLoading, setSuperLikeLoading] = useState(false);
+  const [passLoading, setPassLoading] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const showMatchPopup = useMatchPopup((s) => s.show);
   const matchOpen = useMatchPopup((s) => s.current != null);
   const hadMatchRef = useRef(false);
+
+  const actionBusy = likeLoading || superLikeLoading || passLoading;
 
   const photoUris = useMemo(
     () =>
@@ -96,8 +100,8 @@ export function CandidateProfileScreen({ route, navigation }: Props) {
   }, [matchOpen, navigation]);
 
   const handleLike = async () => {
-    if (busy) return;
-    setBusy(true);
+    if (actionBusy) return;
+    setLikeLoading(true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => undefined);
     try {
       const res = await discoveryApi.like(candidate.id);
@@ -105,30 +109,30 @@ export function CandidateProfileScreen({ route, navigation }: Props) {
     } catch (e) {
       Alert.alert(t('common.error'), extractErrorMessage(e));
     } finally {
-      setBusy(false);
+      setLikeLoading(false);
     }
   };
 
   const handlePass = async () => {
-    if (busy) return;
-    setBusy(true);
+    if (actionBusy) return;
+    setPassLoading(true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => undefined);
     try {
       await discoveryApi.pass(candidate.id);
     } catch {
       // Non-fatal: the feed will resync on the next interaction.
     } finally {
-      setBusy(false);
+      setPassLoading(false);
       qc.invalidateQueries({ queryKey: ['feed'] });
       navigation.goBack();
     }
   };
 
   const handleSuperLike = async () => {
-    if (busy) return;
+    if (actionBusy) return;
     if (!ensureSuperLikeAllowed(superLikeQuota, nav, t, authIsPremium)) return;
 
-    setBusy(true);
+    setSuperLikeLoading(true);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => undefined);
     try {
       const res = await discoveryApi.superLike(candidate.id);
@@ -147,7 +151,7 @@ export function CandidateProfileScreen({ route, navigation }: Props) {
     } catch (e) {
       handleSuperLikeApiError(e, nav, t, superLikeQuota?.limit ?? 5);
     } finally {
-      setBusy(false);
+      setSuperLikeLoading(false);
     }
   };
 
@@ -215,7 +219,7 @@ export function CandidateProfileScreen({ route, navigation }: Props) {
             distanceKm={distanceKm}
             actionIcon="heart"
             actionAccessibilityLabel={t('discovery.like')}
-            onActionPress={busy ? undefined : handleLike}
+            onActionPress={actionBusy ? undefined : handleLike}
           />
 
           <CandidateInfoCard
@@ -261,7 +265,9 @@ export function CandidateProfileScreen({ route, navigation }: Props) {
           onPass={handlePass}
           onLike={handleLike}
           onSuperLike={handleSuperLike}
-          disabled={busy}
+          disabled={actionBusy}
+          likeLoading={likeLoading}
+          superLikeLoading={superLikeLoading}
           superLikeEnabled={superLikeUnlocked}
           superLikeRemaining={superLikeRemaining}
         />

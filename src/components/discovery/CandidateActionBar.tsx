@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '../../theme/colors';
 
@@ -10,6 +10,8 @@ interface Props {
   onLike: () => void;
   onSuperLike: () => void;
   disabled?: boolean;
+  likeLoading?: boolean;
+  superLikeLoading?: boolean;
   superLikeRemaining?: number | null;
   superLikeEnabled?: boolean;
 }
@@ -26,11 +28,14 @@ export function CandidateActionBar({
   onLike,
   onSuperLike,
   disabled = false,
+  likeLoading = false,
+  superLikeLoading = false,
   superLikeRemaining,
   superLikeEnabled = true,
 }: Props) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+  const blocked = disabled || likeLoading || superLikeLoading;
 
   return (
     <View
@@ -51,12 +56,12 @@ export function CandidateActionBar({
       <View className="flex-row items-center justify-between">
         <Pressable
           onPress={onPass}
-          disabled={disabled}
+          disabled={blocked}
           accessibilityRole="button"
           accessibilityLabel={t('discovery.pass')}
           className="w-12 h-12 rounded-full bg-white items-center justify-center"
           style={{
-            opacity: disabled ? 0.5 : 1,
+            opacity: blocked ? 0.5 : 1,
             shadowColor: '#3D2618',
             shadowOffset: { width: 0, height: 2 },
             shadowOpacity: 0.1,
@@ -69,13 +74,13 @@ export function CandidateActionBar({
 
         <Pressable
           onPress={onLike}
-          disabled={disabled}
+          disabled={blocked}
           accessibilityRole="button"
           accessibilityLabel={t('discovery.like')}
           className="w-16 h-16 rounded-full items-center justify-center"
           style={{
             backgroundColor: colors.coral[500],
-            opacity: disabled ? 0.6 : 1,
+            opacity: blocked && !likeLoading ? 0.6 : 1,
             shadowColor: colors.coral[500],
             shadowOffset: { width: 0, height: 6 },
             shadowOpacity: 0.35,
@@ -83,17 +88,21 @@ export function CandidateActionBar({
             elevation: 8,
           }}
         >
-          <Ionicons name="heart" size={28} color="#FFFFFF" />
+          {likeLoading ? (
+            <ActivityIndicator color="#FFFFFF" size="small" />
+          ) : (
+            <Ionicons name="heart" size={28} color="#FFFFFF" />
+          )}
         </Pressable>
 
         <Pressable
           onPress={onSuperLike}
-          disabled={disabled}
+          disabled={blocked}
           accessibilityRole="button"
           accessibilityLabel={t('discovery.superLike')}
           className="w-12 h-12 rounded-full bg-white items-center justify-center"
           style={{
-            opacity: disabled ? 0.5 : 1,
+            opacity: blocked && !superLikeLoading ? 0.5 : 1,
             shadowColor: '#3D2618',
             shadowOffset: { width: 0, height: 2 },
             shadowOpacity: 0.1,
@@ -101,7 +110,11 @@ export function CandidateActionBar({
             elevation: 3,
           }}
         >
-          <Ionicons name="star-outline" size={24} color="#F5B301" />
+          {superLikeLoading ? (
+            <ActivityIndicator color="#F5B301" size="small" />
+          ) : (
+            <Ionicons name="star-outline" size={24} color="#F5B301" />
+          )}
           {!superLikeEnabled ? (
             <View className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-coral-500 items-center justify-center">
               <Ionicons name="lock-closed" size={11} color="#FFFFFF" />
