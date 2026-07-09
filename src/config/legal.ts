@@ -10,6 +10,8 @@ export const PUBLIC_WEB_BASE = 'http://www.citasmallorca.es';
 export const LEGAL_LINKS = {
   terms: `${PUBLIC_WEB_BASE}/terminos-condiciones.html`,
   privacy: `${PUBLIC_WEB_BASE}/politica-privacidad.html`,
+  /** Published child safety standards (required by Google Play Child Safety policy). */
+  childSafety: `${PUBLIC_WEB_BASE}/estandares-seguridad-infantil.html`,
   /** Generic "where do legal docs live" pointer used in some screens. */
   home: PUBLIC_WEB_BASE,
 } as const;
@@ -19,6 +21,9 @@ export const OFFICIAL_EMAIL = 'info@citasmallorca.es';
 
 /** Dedicated technical-support address (app issues, payments, account help). */
 export const SUPPORT_EMAIL = 'support@citasmallorca.es';
+
+/** Dedicated contact for child safety / CSAE reports (Google Play requirement). */
+export const CHILD_SAFETY_EMAIL = SUPPORT_EMAIL;
 
 export const CONTACT_EMAILS = {
   general: OFFICIAL_EMAIL,
