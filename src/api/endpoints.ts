@@ -169,7 +169,9 @@ export const subscriptionsApi = {
    * a mock purchase token — useful for staging / QA.
    */
   config: () =>
-    api.get<{ mockEnabled: boolean }>('/subscriptions/config').then((r) => r.data),
+    api
+      .get<{ mockEnabled: boolean; googlePlayConfigured?: boolean }>('/subscriptions/config')
+      .then((r) => r.data),
   plans: () =>
     api.get<{ plans: SubscriptionPlan[] }>('/subscriptions/plans').then((r) => r.data.plans),
   status: () =>

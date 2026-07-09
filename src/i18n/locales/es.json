@@ -322,6 +322,7 @@
     "active": "Tienes Premium activo",
     "until": "Hasta",
     "purchaseError": "No se pudo completar la compra",
+    "billingTestMode": "El servidor está en modo de prueba de facturación (sin cargo real de Google Play).",
     "acceptTermsIntro": "He leído y acepto los ",
     "acceptPrivacyIntro": "He leído y acepto la "
   },

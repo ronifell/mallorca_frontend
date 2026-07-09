@@ -322,6 +322,7 @@
     "active": "You have Premium",
     "until": "Until",
     "purchaseError": "We couldn't complete the purchase",
+    "billingTestMode": "Test billing mode is active on the server (no real Google Play charge).",
     "acceptTermsIntro": "I have read and accept the ",
     "acceptPrivacyIntro": "I have read and accept the "
   },

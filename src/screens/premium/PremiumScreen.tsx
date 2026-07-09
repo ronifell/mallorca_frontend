@@ -2,7 +2,7 @@ import { useNavigation } from '@react-navigation/native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, ScrollView, View } from 'react-native';
+import { Alert, ScrollView, Text, View } from 'react-native';
 import { extractErrorMessage } from '../../api/client';
 import { subscriptionsApi } from '../../api/endpoints';
 import { PremiumActiveCard } from '../../components/premium/PremiumActiveCard';
@@ -41,7 +41,8 @@ export function PremiumScreen() {
   const { data: billingConfig } = useQuery({
     queryKey: ['subscription-config'],
     queryFn: () => subscriptionsApi.config(),
-    staleTime: 60_000,
+    staleTime: 0,
+    refetchOnMount: 'always',
   });
 
   useEffect(() => {
@@ -149,6 +150,11 @@ export function PremiumScreen() {
         <View className="flex-1 justify-between">
           <View>
             <PremiumHero />
+            {billingConfig?.mockEnabled ? (
+              <View className="mb-3 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3">
+                <Text className="text-sm text-amber-900">{t('premium.billingTestMode')}</Text>
+              </View>
+            ) : null}
             <PremiumBenefitsCard />
             {isPremium ? <PremiumActiveCard expiryDate={status?.expiryDate} /> : null}
             {(plans ?? []).map((plan) => (

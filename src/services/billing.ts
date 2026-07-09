@@ -70,9 +70,9 @@ export function setBillingMockMode(enabled: boolean): void {
   mockModeFromServer = enabled;
 }
 
-/** Effective flag: use mock either because native IAP is missing or the server said so. */
+/** Effective flag: server explicitly enabled mock billing. */
 function shouldUseMock(): boolean {
-  return mockModeFromServer || !IAP_NATIVE_AVAILABLE;
+  return mockModeFromServer;
 }
 
 let connectionReady = false;
@@ -209,10 +209,15 @@ function waitForPurchase(sku: string, timeoutMs = 90_000): Promise<Purchase> {
  */
 export async function startPurchase(productId: ProductId): Promise<PurchaseResult> {
   if (shouldUseMock()) {
-    // Either Expo Go (no native module) or the backend reported
-    // BILLING_ALLOW_MOCK=true — skip Google Play and finish the purchase with
-    // a mock token that the backend validator will accept.
+    // Backend reported BILLING_ALLOW_MOCK=true — skip Google Play and finish
+    // the purchase with a mock token that the backend validator will accept.
     return mockPurchase(productId);
+  }
+
+  if (!IAP_NATIVE_AVAILABLE) {
+    throw new Error(
+      'Google Play billing is not available in Expo Go. Install a preview or production build to test real purchases.',
+    );
   }
 
   await initBillingConnection();
