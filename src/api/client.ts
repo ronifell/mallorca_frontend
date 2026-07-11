@@ -133,11 +133,11 @@ export async function postMultipartFile<T>(
       if (newAccess) return send(newAccess, true, networkRetried);
       await tokenStorage.clear();
       onUnauthorized?.();
-      throw new ApiRequestError('Unauthorized', 401);
+      throw new ApiRequestError('Sesión expirada. Inicia sesión de nuevo.', 401);
     }
 
     if (!response.ok) {
-      let message = `Request failed (${response.status})`;
+      let message = `La solicitud ha fallado (${response.status}).`;
       try {
         const data = (await response.json()) as { error?: { message?: string } };
         message = data?.error?.message ?? message;
@@ -168,12 +168,12 @@ export function extractErrorMessage(err: unknown): string {
         code === 'econnaborted' ||
         msg.includes('timeout')
       ) {
-        return `Cannot reach server at ${env.apiBaseUrl}. Check your internet connection.`;
+        return 'No se puede conectar con el servidor. Comprueba tu conexión a internet.';
       }
     }
-    return err.message ?? 'Request failed';
+    return err.message ?? 'La solicitud ha fallado.';
   }
   if (err instanceof ApiRequestError) return err.message;
   if (err instanceof Error) return err.message;
-  return 'Unknown error';
+  return 'Error desconocido.';
 }

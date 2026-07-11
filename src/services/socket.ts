@@ -11,7 +11,7 @@ function waitForConnect(sock: Socket, timeoutMs = 15_000): Promise<void> {
   return new Promise((resolve, reject) => {
     const timer = setTimeout(() => {
       cleanup();
-      reject(new Error('Socket connect timeout'));
+      reject(new Error('Tiempo de conexión agotado.'));
     }, timeoutMs);
 
     const onConnect = () => {

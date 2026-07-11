@@ -167,6 +167,9 @@ export function LoginScreen({ navigation }: Props) {
                       }}
                       loading={googleLoading}
                     />
+                    <Text className="text-ink-400 text-xs text-center leading-5 px-1 -mt-1 mb-2">
+                      {t('auth.googleExplanation')}
+                    </Text>
                   </>
                 ) : null}
 

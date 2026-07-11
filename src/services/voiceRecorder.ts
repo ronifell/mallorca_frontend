@@ -40,7 +40,7 @@ export async function ensureMicPermission(): Promise<boolean> {
  */
 export async function startVoiceRecording(): Promise<void> {
   if (activeRecording) {
-    throw new Error('A recording is already in progress');
+    throw new Error('Ya hay una grabación en curso.');
   }
 
   await Audio.setAudioModeAsync({

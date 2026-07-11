@@ -98,6 +98,17 @@ export async function signInWithGoogle(): Promise<GoogleSignInOutcome> {
 
   try {
     await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+
+    // Always show the Google account chooser (even after a previous sign-in on
+    // this device) so the user can pick between personal / work / corporate
+    // Google accounts. Without this, Google silently reuses the last account,
+    // which is confusing when a user has several accounts on the same phone.
+    try {
+      await GoogleSignin.signOut();
+    } catch {
+      // Ignore — no previous session or already signed out.
+    }
+
     const response = await GoogleSignin.signIn();
 
     if (isCancelledResponse(response)) return { type: 'cancelled' };
@@ -117,14 +128,14 @@ export async function signInWithGoogle(): Promise<GoogleSignInOutcome> {
           type: 'error',
           code: 'developer_error',
           message:
-            'Google returned no ID token. Verify the EAS APK SHA-1 is on the Android OAuth client ' +
-            'and google-services.json includes oauth_client entries, then rebuild the APK.',
+            'Google no ha devuelto un ID token. Verifica que la huella SHA-1 del APK EAS está en el cliente OAuth de Android y ' +
+            'que google-services.json incluye las entradas oauth_client, y vuelve a compilar el APK.',
         };
       }
       return { type: 'success', idToken };
     }
 
-    return { type: 'error', code: 'unknown', message: 'Unexpected Google sign-in response' };
+    return { type: 'error', code: 'unknown', message: 'Respuesta inesperada del inicio de sesión con Google.' };
   } catch (e) {
     if (isErrorWithCode(e)) {
       if (isDeveloperError(e.code)) {

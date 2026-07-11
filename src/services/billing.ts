@@ -172,7 +172,7 @@ function waitForPurchase(sku: string, timeoutMs = 90_000): Promise<Purchase> {
       if (settled) return;
       settled = true;
       cleanup();
-      reject(new Error('Purchase timed out'));
+      reject(new Error('La compra ha tardado demasiado. Inténtalo de nuevo.'));
     }, timeoutMs);
 
     void import('react-native-iap').then((RNIap) => {
@@ -216,7 +216,7 @@ export async function startPurchase(productId: ProductId): Promise<PurchaseResul
 
   if (!IAP_NATIVE_AVAILABLE) {
     throw new Error(
-      'Google Play billing is not available in Expo Go. Install a preview or production build to test real purchases.',
+      'La facturación de Google Play no está disponible en Expo Go. Instala una compilación de preview o producción para probar compras reales.',
     );
   }
 
@@ -229,12 +229,12 @@ export async function startPurchase(productId: ProductId): Promise<PurchaseResul
     const sub = subs.find((s) => s.productId === productId) as SubscriptionAndroid | undefined;
     if (!sub) {
       throw new Error(
-        `Subscription "${productId}" is not available in Google Play. Make sure the product is created and activated in Play Console.`,
+        `La suscripción «${productId}» no está disponible en Google Play. Asegúrate de que el producto esté creado y activado en Play Console.`,
       );
     }
     const offer = sub.subscriptionOfferDetails?.[0];
     if (!offer?.offerToken) {
-      throw new Error(`No offerToken found for "${productId}".`);
+      throw new Error(`No se encontró un offerToken para «${productId}».`);
     }
 
     const purchasePromise = waitForPurchase(productId);
@@ -244,7 +244,7 @@ export async function startPurchase(productId: ProductId): Promise<PurchaseResul
     const purchase = await purchasePromise;
     const purchaseToken = extractPurchaseToken(purchase);
     if (!purchaseToken) {
-      throw new Error('Google Play did not return a purchase token.');
+      throw new Error('Google Play no ha devuelto un token de compra.');
     }
 
     return {
@@ -258,7 +258,9 @@ export async function startPurchase(productId: ProductId): Promise<PurchaseResul
   // iOS: the backend does not yet support App Store receipt validation.
   // Reject explicitly so the UI can show a clear message rather than the
   // generic "must be validated through Google Play" from the server.
-  throw new Error('App Store subscriptions are not available yet. Please use an Android device.');
+  throw new Error(
+    'Las suscripciones a través de App Store aún no están disponibles. Usa un dispositivo Android.',
+  );
 }
 
 /**

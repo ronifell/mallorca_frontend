@@ -9,13 +9,26 @@ const localGoogleServicesPath = path.join(__dirname, 'google-services.json');
 
 const googleWebClientId =
   process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ??
-  '348711983822-7tp79tt59u3vrsusl2iave6o0taqpaiv.apps.googleusercontent.com';
+  '921193281866-mm69ppb6imu07eggjrua33affmpu2h18.apps.googleusercontent.com';
 const googleAndroidClientId =
   process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID ??
-  '348711983822-t881asjhgq217qmiv1dle7gm00plvd0g.apps.googleusercontent.com';
+  '921193281866-9kve17c76jc3m095r77fda16pr9sjhsj.apps.googleusercontent.com';
 
 /** EAS preview/production APK signing cert (from `eas credentials` / keytool on the APK). */
 const EAS_ANDROID_SHA1 = 'ad617be1fe9b49aed1d13379f80a924e7117836e';
+/** Play App Signing cert from Play Console → App integrity → App signing key certificate. */
+const PLAY_STORE_SHA1 = '0b632e10d5ce2843b7b8f1814e63600e11d80b32';
+
+function androidOAuthHashes(oauthClients) {
+  return oauthClients
+    .filter(
+      (c) =>
+        c.client_type === 1 &&
+        c.android_info?.package_name === 'es.citasmallorca.app' &&
+        c.android_info?.certificate_hash,
+    )
+    .map((c) => String(c.android_info.certificate_hash).toLowerCase());
+}
 
 /**
  * react-native-iap publishes amazon + play product flavors. The app module must
@@ -45,27 +58,28 @@ function assertGoogleServicesOAuth(sourcePath) {
   const raw = fs.readFileSync(sourcePath, 'utf8');
   const json = JSON.parse(raw);
   const oauthClients = json?.client?.[0]?.oauth_client ?? [];
-  const androidOAuth = oauthClients.find(
-    (c) =>
-      c.client_type === 1 &&
-      c.android_info?.package_name === 'es.citasmallorca.app' &&
-      c.android_info?.certificate_hash,
-  );
+  const androidHashes = androidOAuthHashes(oauthClients);
   const webOAuth = oauthClients.find((c) => c.client_type === 3);
 
-  if (!androidOAuth || !webOAuth) {
+  if (androidHashes.length === 0 || !webOAuth) {
     throw new Error(
       `[google-services.json] Missing Android/Web oauth_client entries for Google Sign-In. ` +
-        'In Firebase Console → Project settings → Your Android app, add the EAS APK SHA-1 fingerprint, ' +
+        'In Firebase Console add the EAS upload SHA-1 and Play App Signing SHA-1, resolve any duplicate-project warning, ' +
         'then download a fresh google-services.json (do not hand-edit oauth_client).',
     );
   }
 
-  const hash = String(androidOAuth.android_info.certificate_hash).toLowerCase();
-  if (hash !== EAS_ANDROID_SHA1) {
+  if (!androidHashes.includes(EAS_ANDROID_SHA1)) {
     console.warn(
-      `[app.config] google-services.json Android SHA-1 is ${hash}; expected EAS SHA-1 ${EAS_ANDROID_SHA1}. ` +
-        'Google Sign-In will fail in preview APK builds until Firebase has the EAS fingerprint.',
+      `[app.config] google-services.json is missing EAS upload SHA-1 ${EAS_ANDROID_SHA1}. ` +
+        'Direct EAS APK/AAB installs will fail Google Sign-In until Firebase has that fingerprint.',
+    );
+  }
+
+  if (!androidHashes.includes(PLAY_STORE_SHA1)) {
+    console.warn(
+      `[app.config] google-services.json is missing Play App Signing SHA-1 ${PLAY_STORE_SHA1}. ` +
+        'Play Store installs will fail Google Sign-In until Firebase has that fingerprint and you re-download this file.',
     );
   }
 
@@ -114,21 +128,12 @@ function resolveGoogleServicesAbsolutePath(projectRoot = __dirname) {
   return localPath;
 }
 
-function resolveGoogleServicesFile() {
-  const easPath = process.env.GOOGLE_SERVICES_JSON;
-  if (easPath && fs.existsSync(easPath)) {
-    return easPath;
+function resolveGoogleServicesFile(projectRoot = __dirname) {
+  const absolute = resolveGoogleServicesAbsolutePath(projectRoot);
+  if (path.isAbsolute(absolute)) {
+    return path.relative(projectRoot, absolute) || './google-services.json';
   }
-  if (fs.existsSync(localGoogleServicesPath)) {
-    return './google-services.json';
-  }
-  if (process.env.EAS_BUILD === 'true') {
-    throw new Error(
-      'google-services.json missing for EAS Android build. Commit Frontend/google-services.json ' +
-        'or upload it as GOOGLE_SERVICES_JSON.',
-    );
-  }
-  return './google-services.json';
+  return absolute;
 }
 
 /** Fail the build if Firebase config is not copied into android/app/. */
@@ -316,7 +321,7 @@ module.exports = {
         '@react-native-google-signin/google-signin',
         {
           iosUrlScheme:
-            'com.googleusercontent.apps.348711983822-7tp79tt59u3vrsusl2iave6o0taqpaiv',
+            'com.googleusercontent.apps.921193281866-mm69ppb6imu07eggjrua33affmpu2h18',
         },
       ],
       [
