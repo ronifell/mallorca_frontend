@@ -291,7 +291,19 @@
     "premiumActive": "You're Premium — You can start conversations",
     "premiumRequired": "You need Premium to start the conversation.",
     "upgrade": "Go Premium",
-    "read": "Read"
+    "read": "Read",
+    "pushPreviewImage": "📷 Sent you a photo",
+    "pushPreviewAudio": "🎤 Sent you a voice message",
+    "pushPreviewGeneric": "You have a new message.",
+    "pushDefaultSenderTitle": "Citas Mallorca",
+    "pushLikeTitle": "💖 New Like!",
+    "pushLikeBody": "{{name}} liked you. Check out their profile!",
+    "pushLikeBodyAnonymous": "Someone liked you! Find out who.",
+    "pushSuperLikeTitle": "⭐ You're a superstar!",
+    "pushSuperLikeBody": "Someone sent you their weekly star. Discover who!",
+    "pushMatchTitle": "🎉 Congrats!",
+    "pushMatchBody": "You matched with {{name}}! Start the conversation.",
+    "pushMatchBodyAnonymous": "You have a new match! Open it and discover who you connected with."
   },
   "premium": {
     "title": "Citas Mallorca Premium",

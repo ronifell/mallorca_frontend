@@ -202,53 +202,51 @@ export function MatchModal({
       return;
     }
 
-    // Run the entrance mostly in parallel so the celebration is fully visible
-    // almost immediately when a match happens (avatars, title and CTAs land
-    // together instead of one after another).
+    // Run the entrance in parallel with tight timings so the celebration is
+    // fully visible within ~200ms of the modal appearing.
     Animated.parallel([
       Animated.spring(leftAvatar, {
         toValue: 1,
-        damping: 12,
-        stiffness: 130,
-        mass: 0.8,
+        damping: 14,
+        stiffness: 180,
+        mass: 0.7,
         useNativeDriver: true,
       }),
       Animated.spring(rightAvatar, {
         toValue: 1,
-        damping: 12,
-        stiffness: 130,
-        mass: 0.8,
-        delay: 40,
+        damping: 14,
+        stiffness: 180,
+        mass: 0.7,
         useNativeDriver: true,
       }),
       Animated.spring(heartScale, {
         toValue: 1,
-        damping: 6,
-        stiffness: 150,
-        delay: 120,
+        damping: 7,
+        stiffness: 200,
+        delay: 60,
         useNativeDriver: true,
       }),
       Animated.timing(titleOpacity, {
         toValue: 1,
-        duration: 260,
+        duration: 180,
         useNativeDriver: true,
       }),
       Animated.timing(titleY, {
         toValue: 0,
-        duration: 260,
+        duration: 180,
         easing: Easing.out(Easing.cubic),
         useNativeDriver: true,
       }),
       Animated.timing(actionsOpacity, {
         toValue: 1,
-        duration: 300,
-        delay: 120,
+        duration: 200,
+        delay: 60,
         useNativeDriver: true,
       }),
       Animated.timing(actionsY, {
         toValue: 0,
-        duration: 300,
-        delay: 120,
+        duration: 200,
+        delay: 60,
         easing: Easing.out(Easing.cubic),
         useNativeDriver: true,
       }),
@@ -326,7 +324,11 @@ export function MatchModal({
     <Modal
       visible={visible}
       transparent
-      animationType="none"
+      // Fade cross-dissolves the modal in/out. Combined with the choreographed
+      // entrance we get a smooth arrival AND a soft exit — so navigating from
+      // "It's a Match" straight to the chat no longer flashes the previous
+      // screen in between.
+      animationType="fade"
       statusBarTranslucent
       onRequestClose={onClose}
     >
@@ -368,11 +370,20 @@ export function MatchModal({
           <Animated.View
             style={{
               alignItems: 'center',
+              width: '100%',
               opacity: titleOpacity,
               transform: [{ translateY: titleY }],
             }}
           >
-            <Text style={styles.title}>{t('discovery.matchTitle')}</Text>
+            <Text
+              style={styles.title}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.6}
+              allowFontScaling={false}
+            >
+              {t('discovery.matchTitle')}
+            </Text>
           </Animated.View>
 
           {/* Avatars + heart */}
@@ -505,10 +516,14 @@ const styles = StyleSheet.create({
 
   title: {
     fontFamily: 'PlayfairDisplay_700Bold_Italic',
-    fontSize: 56,
-    lineHeight: 64,
+    // Slightly smaller than before so the full "¡Es un Match!" phrase fits on
+    // narrow phones. Combined with numberOfLines={1} + adjustsFontSizeToFit,
+    // the text auto-shrinks further if the device is exceptionally small.
+    fontSize: 48,
+    lineHeight: 56,
     color: colors.white,
     textAlign: 'center',
+    paddingHorizontal: 4,
     textShadowColor: 'rgba(0,0,0,0.25)',
     textShadowOffset: { width: 0, height: 4 },
     textShadowRadius: 12,

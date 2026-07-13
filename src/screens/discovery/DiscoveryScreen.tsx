@@ -43,21 +43,24 @@ export function DiscoveryScreen() {
 
   const [deck, setDeck] = useState<FeedCandidate[]>([]);
   const [isRetrying, setIsRetrying] = useState(false);
-  const [likeLoading, setLikeLoading] = useState(false);
+  // Track in-flight super-like — the star button still waits for its API
+  // response to update the quota badge. Regular like / pass are optimistic
+  // (see below) so we no longer track a "likeLoading" state.
   const [superLikeLoading, setSuperLikeLoading] = useState(false);
-  // True while an in-flight like / super-like / pass call is awaiting the
-  // backend. Used to suppress the "no compatible profiles" empty state
-  // from flashing when the user swipes the very last card and a match is
-  // about to be celebrated (otherwise the empty screen briefly appears
-  // behind the match modal between the swipe and the API response).
-  const [pendingAction, setPendingAction] = useState(false);
-
-  const actionBusy = likeLoading || superLikeLoading || pendingAction;
+  // Count of in-flight optimistic like/pass calls. When the deck becomes
+  // empty because we advanced ahead of the server, we keep showing the
+  // "loading" placeholder instead of the empty state until the network
+  // resolves and we can decide whether to replenish or truly show empty.
+  const [pendingCount, setPendingCount] = useState(0);
+  const pendingAction = pendingCount > 0;
 
   useEffect(() => {
-    if (!data || actionBusy) return;
-    setDeck((prev) => (prev.length === 0 ? data : prev));
-  }, [data, actionBusy]);
+    // Only seed the deck from the server response when we don't have any
+    // cards locally. If the user has been swiping, we don't want the query
+    // refetching to reset their queue.
+    if (!data) return;
+    setDeck((prev) => (prev.length === 0 && pendingCount === 0 ? data : prev));
+  }, [data, pendingCount]);
 
   const top = deck[0];
   const next = deck[1];
@@ -73,76 +76,81 @@ export function DiscoveryScreen() {
     });
   };
 
-  const runLike = async (candidate: FeedCandidate) => {
-    if (likeLoading || superLikeLoading) return;
-    setLikeLoading(true);
-    setPendingAction(true);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => undefined);
-    try {
-      const res = await discoveryApi.like(candidate.id);
-      let remaining = 0;
-      setDeck((prev) => {
-        const next = prev.slice(1);
-        remaining = next.length;
-        return next;
-      });
-      if (res.matched && res.matchId) {
-        showMatchPopup({
-          matchId: res.matchId,
-          otherUser: {
-            id: candidate.id,
-            firstName: candidate.firstName,
-            photo: candidate.photos[0]?.url ?? null,
-          },
-        });
-        qc.invalidateQueries({ queryKey: ['matches'] });
-      }
-      await replenishIfNeeded(remaining);
-    } catch {
-      // Networking failures are non-fatal here: the next call will resync.
-    } finally {
-      setLikeLoading(false);
-      setPendingAction(false);
-    }
-  };
-
-  const runPass = async (candidate: FeedCandidate) => {
-    if (actionBusy) return;
+  const advanceDeck = (): number => {
     let remaining = 0;
     setDeck((prev) => {
-      const next = prev.slice(1);
-      remaining = next.length;
-      return next;
+      const nextDeck = prev.slice(1);
+      remaining = nextDeck.length;
+      return nextDeck;
     });
-    setPendingAction(true);
+    return remaining;
+  };
+
+  /**
+   * Optimistic like: we advance the deck synchronously so the next profile
+   * appears immediately, and fire the API call in the background. If the
+   * response reports a match we still surface the celebration popup.
+   */
+  const runLike = (candidate: FeedCandidate) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => undefined);
+    const remaining = advanceDeck();
+    setPendingCount((n) => n + 1);
+    void (async () => {
+      try {
+        const res = await discoveryApi.like(candidate.id);
+        if (res.matched && res.matchId) {
+          showMatchPopup({
+            matchId: res.matchId,
+            otherUser: {
+              id: candidate.id,
+              firstName: candidate.firstName,
+              photo: candidate.photos[0]?.url ?? null,
+            },
+          });
+          qc.invalidateQueries({ queryKey: ['matches'] });
+        }
+        await replenishIfNeeded(remaining);
+      } catch {
+        // Non-fatal: the feed will resync on the next interaction.
+      } finally {
+        setPendingCount((n) => Math.max(0, n - 1));
+      }
+    })();
+  };
+
+  const runPass = (candidate: FeedCandidate) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => undefined);
-    try {
-      await discoveryApi.pass(candidate.id);
-    } catch {
-      // Non-fatal: the feed will resync on the next interaction.
-    } finally {
-      setPendingAction(false);
-    }
-    await replenishIfNeeded(remaining);
+    const remaining = advanceDeck();
+    setPendingCount((n) => n + 1);
+    void (async () => {
+      try {
+        await discoveryApi.pass(candidate.id);
+      } catch {
+        // Non-fatal: the feed will resync on the next interaction.
+      } finally {
+        setPendingCount((n) => Math.max(0, n - 1));
+      }
+      await replenishIfNeeded(remaining);
+    })();
   };
 
-  const handleSwipe = async (dir: 'left' | 'right') => {
-    if (!top || actionBusy) return;
+  const handleSwipe = (dir: 'left' | 'right') => {
+    if (!top) return;
     if (dir === 'right') {
-      await runLike(top);
+      runLike(top);
     } else {
-      await runPass(top);
+      runPass(top);
     }
   };
 
-  const handleLikePress = async () => {
+  const handleLikePress = () => {
     if (!top) return;
-    await runLike(top);
+    runLike(top);
   };
 
-  const handlePassPress = async () => {
+  const handlePassPress = () => {
     if (!top) return;
-    await runPass(top);
+    runPass(top);
   };
 
   const openCandidateProfile = (candidate: FeedCandidate) => {
@@ -150,21 +158,18 @@ export function DiscoveryScreen() {
   };
 
   const handleSuperLike = async () => {
-    if (!top || actionBusy) return;
+    if (!top || superLikeLoading) return;
     if (!ensureSuperLikeAllowed(superLikeQuota, nav, t, authIsPremium)) return;
 
     const candidate = top;
     setSuperLikeLoading(true);
-    setPendingAction(true);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => undefined);
+    // Advance the deck optimistically for a snappy feel; if the API rejects
+    // the super-like we still show the error but keep the queue moving.
+    const remaining = advanceDeck();
+    setPendingCount((n) => n + 1);
     try {
       const res = await discoveryApi.superLike(candidate.id);
-      let remaining = 0;
-      setDeck((prev) => {
-        const next = prev.slice(1);
-        remaining = next.length;
-        return next;
-      });
       if (res.matched && res.matchId) {
         showMatchPopup({
           matchId: res.matchId,
@@ -186,7 +191,7 @@ export function DiscoveryScreen() {
       handleSuperLikeApiError(e, nav, t, superLikeQuota?.limit ?? 5);
     } finally {
       setSuperLikeLoading(false);
-      setPendingAction(false);
+      setPendingCount((n) => Math.max(0, n - 1));
       refetchQuota();
     }
   };
@@ -235,7 +240,6 @@ export function DiscoveryScreen() {
                   onSwipe={handleSwipe}
                   onInfoPress={() => openCandidateProfile(top)}
                   onCardPress={() => openCandidateProfile(top)}
-                  swipeable={!actionBusy}
                 />
               </View>
 
@@ -245,9 +249,8 @@ export function DiscoveryScreen() {
                 onSuperLike={handleSuperLike}
                 superLikeEnabled={superLikeUnlocked}
                 superLikeRemaining={superLikeRemaining}
-                likeLoading={likeLoading}
                 superLikeLoading={superLikeLoading}
-                disabled={actionBusy}
+                disabled={superLikeLoading}
               />
             </View>
           ) : pendingAction || matchOpen ? (

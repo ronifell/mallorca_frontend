@@ -13,8 +13,8 @@ import { CandidateInfoCard } from '../../components/discovery/CandidateInfoCard'
 import { CandidatePhotoHero } from '../../components/discovery/CandidatePhotoHero';
 import { CandidatePhotoThumbnails } from '../../components/discovery/CandidatePhotoThumbnails';
 import { CandidateProfileHeader } from '../../components/discovery/CandidateProfileHeader';
+import { ProfileSafetyActions } from '../../components/moderation/ProfileSafetyActions';
 import { ReportUserSheet } from '../../components/moderation/ReportUserSheet';
-import { ProfileOptionsMenu } from '../../components/moderation/ProfileOptionsMenu';
 import { useTopScreenPadding } from '../../hooks/useTopScreenPadding';
 import { RootStackParamList } from '../../navigation/types';
 import { colors } from '../../theme/colors';
@@ -177,13 +177,6 @@ export function MatchProfileScreen({ route, navigation }: Props) {
             isPremium={profile.isPremium}
             onPrev={photoCount > 1 ? goPrev : undefined}
             onNext={photoCount > 1 ? goNext : undefined}
-            topRightSlot={
-              <ProfileOptionsMenu
-                onReport={handleReport}
-                onBlock={handleBlock}
-                onUnmatch={handleUnmatch}
-              />
-            }
           />
 
           {photoCount > 1 ? (
@@ -251,6 +244,16 @@ export function MatchProfileScreen({ route, navigation }: Props) {
               </View>
             ) : null}
           </View>
+
+          <View className="mt-6" />
+          {/* Options (report / block / unmatch) live at the very bottom of
+              the profile so they no longer sit on top of the photo and
+              interfere with the swipe-between-photos gesture. */}
+          <ProfileSafetyActions
+            onReport={handleReport}
+            onBlock={handleBlock}
+            onUnmatch={handleUnmatch}
+          />
 
         </ScrollView>
       </View>

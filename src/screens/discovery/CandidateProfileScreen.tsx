@@ -14,8 +14,8 @@ import { CandidateInfoCard } from '../../components/discovery/CandidateInfoCard'
 import { CandidatePhotoHero } from '../../components/discovery/CandidatePhotoHero';
 import { CandidatePhotoThumbnails } from '../../components/discovery/CandidatePhotoThumbnails';
 import { CandidateProfileHeader } from '../../components/discovery/CandidateProfileHeader';
+import { ProfileSafetyActions } from '../../components/moderation/ProfileSafetyActions';
 import { ReportUserSheet } from '../../components/moderation/ReportUserSheet';
-import { ProfileOptionsMenu } from '../../components/moderation/ProfileOptionsMenu';
 import { useTopScreenPadding } from '../../hooks/useTopScreenPadding';
 import { useSuperLikeAccess } from '../../hooks/useSuperLikeAccess';
 import { RootStackParamList } from '../../navigation/types';
@@ -42,15 +42,13 @@ export function CandidateProfileScreen({ route, navigation }: Props) {
     useSuperLikeAccess();
 
   const [photoIndex, setPhotoIndex] = useState(0);
-  const [likeLoading, setLikeLoading] = useState(false);
   const [superLikeLoading, setSuperLikeLoading] = useState(false);
-  const [passLoading, setPassLoading] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const showMatchPopup = useMatchPopup((s) => s.show);
   const matchOpen = useMatchPopup((s) => s.current != null);
   const hadMatchRef = useRef(false);
 
-  const actionBusy = likeLoading || superLikeLoading || passLoading;
+  const actionBusy = superLikeLoading;
 
   const photoUris = useMemo(
     () =>
@@ -74,24 +72,6 @@ export function CandidateProfileScreen({ route, navigation }: Props) {
     setPhotoIndex((i) => (i + 1) % photoCount);
   };
 
-  const finishSwipe = (matched: boolean, matchId?: string) => {
-    qc.invalidateQueries({ queryKey: ['feed'] });
-    if (matched && matchId) {
-      qc.invalidateQueries({ queryKey: ['matches'] });
-      hadMatchRef.current = true;
-      showMatchPopup({
-        matchId,
-        otherUser: {
-          id: candidate.id,
-          firstName: candidate.firstName,
-          photo: candidate.photos[0]?.url ?? null,
-        },
-      });
-      return;
-    }
-    navigation.goBack();
-  };
-
   useEffect(() => {
     if (hadMatchRef.current && !matchOpen) {
       hadMatchRef.current = false;
@@ -99,33 +79,47 @@ export function CandidateProfileScreen({ route, navigation }: Props) {
     }
   }, [matchOpen, navigation]);
 
-  const handleLike = async () => {
+  const handleLike = () => {
     if (actionBusy) return;
-    setLikeLoading(true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => undefined);
-    try {
-      const res = await discoveryApi.like(candidate.id);
-      finishSwipe(res.matched, res.matchId);
-    } catch (e) {
-      Alert.alert(t('common.error'), extractErrorMessage(e));
-    } finally {
-      setLikeLoading(false);
-    }
+    // Fire the like in the background so the transition back to the deck is
+    // immediate. If the like turns out to be a match, the socket-driven
+    // GlobalMatchModal will surface the celebration on top of the feed.
+    void (async () => {
+      try {
+        const res = await discoveryApi.like(candidate.id);
+        if (res.matched && res.matchId) {
+          qc.invalidateQueries({ queryKey: ['matches'] });
+          showMatchPopup({
+            matchId: res.matchId,
+            otherUser: {
+              id: candidate.id,
+              firstName: candidate.firstName,
+              photo: candidate.photos[0]?.url ?? null,
+            },
+          });
+        } else {
+          qc.invalidateQueries({ queryKey: ['feed'] });
+        }
+      } catch (e) {
+        Alert.alert(t('common.error'), extractErrorMessage(e));
+      }
+    })();
+    navigation.goBack();
   };
 
-  const handlePass = async () => {
+  const handlePass = () => {
     if (actionBusy) return;
-    setPassLoading(true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => undefined);
-    try {
-      await discoveryApi.pass(candidate.id);
-    } catch {
-      // Non-fatal: the feed will resync on the next interaction.
-    } finally {
-      setPassLoading(false);
+    void (async () => {
+      try {
+        await discoveryApi.pass(candidate.id);
+      } catch {
+        // Non-fatal: the feed will resync on the next interaction.
+      }
       qc.invalidateQueries({ queryKey: ['feed'] });
-      navigation.goBack();
-    }
+    })();
+    navigation.goBack();
   };
 
   const handleSuperLike = async () => {
@@ -137,16 +131,25 @@ export function CandidateProfileScreen({ route, navigation }: Props) {
     try {
       const res = await discoveryApi.superLike(candidate.id);
       refetchQuota();
+      qc.invalidateQueries({ queryKey: ['feed'] });
       if (res.matched && res.matchId) {
-        finishSwipe(true, res.matchId);
+        qc.invalidateQueries({ queryKey: ['matches'] });
+        hadMatchRef.current = true;
+        showMatchPopup({
+          matchId: res.matchId,
+          otherUser: {
+            id: candidate.id,
+            firstName: candidate.firstName,
+            photo: candidate.photos[0]?.url ?? null,
+          },
+        });
       } else {
+        qc.invalidateQueries({ queryKey: ['likes'] });
         Alert.alert(
           t('discovery.superLike'),
           t('discovery.superLikeSent', { name: candidate.firstName ?? '' }),
           [{ text: t('common.ok'), onPress: () => navigation.goBack() }],
         );
-        qc.invalidateQueries({ queryKey: ['feed'] });
-        qc.invalidateQueries({ queryKey: ['likes'] });
       }
     } catch (e) {
       handleSuperLikeApiError(e, nav, t, superLikeQuota?.limit ?? 5);
@@ -196,12 +199,6 @@ export function CandidateProfileScreen({ route, navigation }: Props) {
             isPremium={candidate.isPremium}
             onPrev={photoCount > 1 ? goPrev : undefined}
             onNext={photoCount > 1 ? goNext : undefined}
-            topRightSlot={
-              <ProfileOptionsMenu
-                onReport={() => setReportOpen(true)}
-                onBlock={handleBlock}
-              />
-            }
           />
 
           {photoCount > 1 ? (
@@ -259,6 +256,14 @@ export function CandidateProfileScreen({ route, navigation }: Props) {
             </View>
           ) : null}
 
+          {/* Options (report / block) moved out of the photo overlay so
+              they no longer intercept swipes on the hero. Sits at the
+              bottom of the profile — under all the content. */}
+          <ProfileSafetyActions
+            onReport={() => setReportOpen(true)}
+            onBlock={handleBlock}
+          />
+
         </ScrollView>
 
         <CandidateActionBar
@@ -266,7 +271,6 @@ export function CandidateProfileScreen({ route, navigation }: Props) {
           onLike={handleLike}
           onSuperLike={handleSuperLike}
           disabled={actionBusy}
-          likeLoading={likeLoading}
           superLikeLoading={superLikeLoading}
           superLikeEnabled={superLikeUnlocked}
           superLikeRemaining={superLikeRemaining}

@@ -1,6 +1,10 @@
 import * as Notifications from 'expo-notifications';
 import { AppState, Platform } from 'react-native';
-import { usersApi } from '../api/endpoints';
+import type {
+  NavigationContainerRef,
+} from '@react-navigation/native';
+import { matchesApi, usersApi } from '../api/endpoints';
+import { RootStackParamList } from '../navigation/types';
 import { tokenStorage } from './storage';
 
 Notifications.setNotificationHandler({
@@ -132,6 +136,120 @@ export async function showMessageNotification(
   }
 }
 
+// ───────────────────────────────────────────────────────────────────────────
+// Notification tap deep-linking
+// ───────────────────────────────────────────────────────────────────────────
+
+type NavRef = NavigationContainerRef<RootStackParamList>;
+
+let navigationRef: NavRef | null = null;
+let pendingResponse: Notifications.NotificationResponse | null = null;
+let tapListenersAttached = false;
+
+/**
+ * Called from the RootNavigator once the NavigationContainer is ready. Buffers
+ * any notification response that arrived before the navigator was mounted
+ * (e.g. the user tapped a push while the app was cold-launching) and replays
+ * it as soon as we have a nav ref.
+ */
+export function setNavigationRef(ref: NavRef | null): void {
+  navigationRef = ref;
+  if (ref && pendingResponse) {
+    const buffered = pendingResponse;
+    pendingResponse = null;
+    void handleNotificationResponse(buffered);
+  }
+}
+
+function readData(response: Notifications.NotificationResponse): Record<string, unknown> {
+  const dataFromRequest = response.notification?.request?.content?.data ?? {};
+  return (dataFromRequest as Record<string, unknown>) ?? {};
+}
+
+async function handleNotificationResponse(
+  response: Notifications.NotificationResponse,
+): Promise<void> {
+  const nav = navigationRef;
+  if (!nav || !nav.isReady()) {
+    pendingResponse = response;
+    return;
+  }
+
+  const data = readData(response);
+  const type = String(data.type ?? '');
+
+  try {
+    if (type === 'new_message') {
+      const conversationId = data.conversationId ? String(data.conversationId) : null;
+      if (!conversationId) {
+        nav.navigate('Main', { screen: 'Chat' } as never);
+        return;
+      }
+      // Enrich with the match info so the Conversation screen shows the right header.
+      let otherName: string | null = null;
+      let otherUserId = '';
+      let otherUserPhoto: string | null = null;
+      let otherUserAge: number | null = null;
+      try {
+        const matches = await matchesApi.list();
+        const match = matches.find((m) => m.conversationId === conversationId);
+        if (match) {
+          otherName = match.otherUser.firstName;
+          otherUserId = match.otherUser.id;
+          otherUserPhoto = match.otherUser.coverPhoto;
+          otherUserAge = match.otherUser.age;
+        }
+      } catch (err) {
+        logPushWarning('Failed to enrich conversation from notification data', err);
+      }
+      nav.navigate('Conversation', {
+        conversationId,
+        otherName,
+        otherUserId,
+        otherUserPhoto,
+        otherUserAge,
+      });
+      return;
+    }
+
+    if (type === 'new_match') {
+      const matchId = data.matchId ? String(data.matchId) : null;
+      if (matchId) {
+        nav.navigate('MatchProfile', { matchId });
+        return;
+      }
+      nav.navigate('Main', { screen: 'Matches' } as never);
+      return;
+    }
+
+    if (type === 'new_like' || type === 'super_like') {
+      nav.navigate('Main', { screen: 'Discover' } as never);
+      return;
+    }
+  } catch (err) {
+    logPushWarning('Failed to route notification tap', err);
+  }
+}
+
+function attachTapListeners(): void {
+  if (tapListenersAttached) return;
+  tapListenersAttached = true;
+
+  Notifications.addNotificationResponseReceivedListener((response) => {
+    void handleNotificationResponse(response);
+  });
+
+  // If the app was launched by tapping a notification while it was fully
+  // closed, `getLastNotificationResponseAsync` returns that response once.
+  Notifications.getLastNotificationResponseAsync()
+    .then((response) => {
+      if (response) {
+        void handleNotificationResponse(response);
+      }
+    })
+    .catch((err) => logPushWarning('getLastNotificationResponseAsync failed', err));
+}
+
 let pushRegistrationStarted = false;
 
 /** Register for FCM and keep the backend token in sync (login, cold start, token refresh). */
@@ -156,6 +274,8 @@ export function initPushNotifications(userAuthenticated: boolean) {
         });
       }
     });
+
+    attachTapListeners();
 
     AppState.addEventListener('change', (state) => {
       if (state === 'active') register();

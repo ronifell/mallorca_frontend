@@ -1,8 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Dimensions, Image, Pressable, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
   interpolate,
   runOnJS,
@@ -14,13 +15,6 @@ import Animated, {
 import { FeedCandidate } from '../api/types';
 import { colors } from '../theme/colors';
 import { resolveMediaUrl } from '../utils/mediaUrl';
-import {
-  genderIcon,
-  genderLabel,
-  interestedInIcon,
-  interestedInLabel,
-  languageLabel,
-} from '../utils/profileDisplay';
 
 interface Props {
   candidate: FeedCandidate;
@@ -32,45 +26,6 @@ interface Props {
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.25;
-
-interface QuickFact {
-  icon: keyof typeof Ionicons.glyphMap;
-  label: string;
-  value: string;
-}
-
-function buildQuickFacts(candidate: FeedCandidate, t: (k: string) => string): QuickFact[] {
-  const facts: QuickFact[] = [];
-
-  if (candidate.gender) {
-    facts.push({
-      icon: genderIcon(candidate.gender),
-      label: t('profile.iAm'),
-      value: genderLabel(candidate.gender, t),
-    });
-  }
-
-  if (candidate.interestedIn) {
-    facts.push({
-      icon: interestedInIcon(candidate.interestedIn),
-      label: t('profile.lookingFor'),
-      value: interestedInLabel(candidate.interestedIn, t),
-    });
-  }
-
-  if (candidate.languages.length) {
-    facts.push({
-      icon: 'globe-outline',
-      label: t('profile.languages'),
-      value: candidate.languages
-        .slice(0, 2)
-        .map((id) => languageLabel(id, t))
-        .join(', '),
-    });
-  }
-
-  return facts;
-}
 
 export function SwipeCard({ candidate, onSwipe, onInfoPress, onCardPress, swipeable = true }: Props) {
   const { t } = useTranslation();
@@ -87,11 +42,15 @@ export function SwipeCard({ candidate, onSwipe, onInfoPress, onCardPress, swipea
   }, [candidate.id]);
 
   const fly = (dir: 'left' | 'right') => {
+    // Short fly-out animation. We schedule the deck-advance callback for
+    // right when the card leaves the visible viewport so the next profile
+    // fades into place without any perceptible wait.
+    const duration = 180;
     x.value = withTiming(dir === 'right' ? SCREEN_WIDTH * 1.5 : -SCREEN_WIDTH * 1.5, {
-      duration: 250,
+      duration,
     });
-    rotate.value = withTiming(dir === 'right' ? 0.3 : -0.3, { duration: 250 });
-    setTimeout(() => onSwipe(dir), 250);
+    rotate.value = withTiming(dir === 'right' ? 0.3 : -0.3, { duration });
+    setTimeout(() => onSwipe(dir), duration);
   };
 
   const pan = Gesture.Pan()
@@ -130,7 +89,6 @@ export function SwipeCard({ candidate, onSwipe, onInfoPress, onCardPress, swipea
 
   const photo = resolveMediaUrl(candidate.photos[photoIdx]?.url);
   const photoCount = candidate.photos.length;
-  const facts = useMemo(() => buildQuickFacts(candidate, t), [candidate, t]);
 
   const locationLine = candidate.city
     ? `${candidate.city}${candidate.city.toLowerCase().includes('mallorca') ? '' : ', Mallorca'}`
@@ -200,64 +158,85 @@ export function SwipeCard({ candidate, onSwipe, onInfoPress, onCardPress, swipea
           <>
             <Pressable
               onPress={() => setPhotoIdx((i) => Math.max(0, i - 1))}
-              className="absolute top-0 bottom-44 left-0 w-1/3"
+              className="absolute top-0 bottom-32 left-0 w-1/3"
             />
             <Pressable
               onPress={() => setPhotoIdx((i) => Math.min(photoCount - 1, i + 1))}
-              className="absolute top-0 bottom-44 right-0 w-1/3"
+              className="absolute top-0 bottom-32 right-0 w-1/3"
             />
           </>
         ) : null}
 
+        {/* Minimal identity overlay: only name/age + city, no dark full-width
+            background so the photo stays the protagonist. A soft gradient
+            keeps the text readable without hiding the picture. */}
+        <LinearGradient
+          colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.55)']}
+          pointerEvents="none"
+          style={{
+            position: 'absolute',
+            left: 0,
+            right: 0,
+            bottom: 0,
+            height: 150,
+          }}
+        />
         <View
-          className="absolute bottom-0 left-0 right-0 px-4 pt-16 pb-4"
-          style={{ backgroundColor: 'rgba(26, 14, 7, 0.62)' }}
+          className="absolute bottom-0 left-0 right-0 px-4 pb-4 pt-8"
+          pointerEvents="box-none"
         >
-          <View className="flex-row items-center mb-1">
-            <Text className="text-white text-3xl font-bold">
-              {candidate.firstName ?? '—'}, {candidate.age}
-            </Text>
-            <View className="ml-2 w-6 h-6 rounded-full bg-coral-500 items-center justify-center">
-              <Ionicons name="checkmark" size={14} color="#FFFFFF" />
-            </View>
-          </View>
+          <View className="flex-row items-end justify-between">
+            <View className="flex-1 pr-3">
+              <View className="flex-row items-center">
+                <Text
+                  className="text-white text-3xl font-bold"
+                  numberOfLines={1}
+                  style={{
+                    textShadowColor: 'rgba(0,0,0,0.35)',
+                    textShadowOffset: { width: 0, height: 1 },
+                    textShadowRadius: 4,
+                  }}
+                >
+                  {candidate.firstName ?? '—'}, {candidate.age}
+                </Text>
+                <View className="ml-2 w-6 h-6 rounded-full bg-coral-500 items-center justify-center">
+                  <Ionicons name="checkmark" size={14} color="#FFFFFF" />
+                </View>
+              </View>
 
-          {locationLine ? (
-            <View className="flex-row items-center mb-2.5">
-              <Ionicons name="location-outline" size={14} color="#FFFFFF" style={{ marginRight: 4 }} />
-              <Text className="text-white text-sm">{locationLine}</Text>
-              <Text className="text-white/75 text-sm ml-2">· {t('discovery.nearby')}</Text>
-            </View>
-          ) : null}
-
-          {facts.length ? (
-            <View className="mb-2 gap-1">
-              {facts.map((f) => (
-                <View key={`${f.label}-${f.value}`} className="flex-row items-center">
-                  <Ionicons name={f.icon} size={13} color="#FFFFFF" style={{ marginRight: 6 }} />
-                  <Text className="text-white/70 text-xs mr-1.5">{f.label}:</Text>
-                  <Text className="text-white text-xs font-semibold flex-1" numberOfLines={1}>
-                    {f.value}
+              {locationLine ? (
+                <View className="flex-row items-center mt-1">
+                  <Ionicons name="location-outline" size={14} color="#FFFFFF" style={{ marginRight: 4 }} />
+                  <Text
+                    className="text-white text-sm"
+                    numberOfLines={1}
+                    style={{
+                      textShadowColor: 'rgba(0,0,0,0.35)',
+                      textShadowOffset: { width: 0, height: 1 },
+                      textShadowRadius: 4,
+                    }}
+                  >
+                    {locationLine}
                   </Text>
                 </View>
-              ))}
+              ) : null}
             </View>
-          ) : null}
 
-          <View className="flex-row items-end">
-            {candidate.bio ? (
-              <Text className="text-white/95 text-sm flex-1 pr-3" numberOfLines={2}>
-                {candidate.bio}
-              </Text>
-            ) : (
-              <View className="flex-1" />
-            )}
             {onInfoPress ? (
               <Pressable
                 onPress={onInfoPress}
-                className="w-9 h-9 rounded-full bg-white/90 items-center justify-center"
+                accessibilityRole="button"
+                accessibilityLabel={t('profile.viewFullProfile')}
+                className="w-10 h-10 rounded-full bg-white/95 items-center justify-center"
+                style={{
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: 0.2,
+                  shadowRadius: 4,
+                  elevation: 3,
+                }}
               >
-                <Ionicons name="open-outline" size={18} color={colors.ink[700]} />
+                <Ionicons name="information" size={20} color={colors.ink[700]} />
               </Pressable>
             ) : null}
           </View>

@@ -1,9 +1,14 @@
-import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
+import {
+  NavigationContainer,
+  DefaultTheme,
+  NavigationContainerRef,
+} from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import React, { useRef } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import { ImageBackground, StyleSheet, View } from 'react-native';
 import { GlobalMatchModal } from '../components/discovery/GlobalMatchModal';
 import { LanguageSwitcher } from '../components/LanguageSwitcher';
+import { setNavigationRef } from '../services/notifications';
 import { useAuthStore } from '../store/auth';
 import { colors } from '../theme/colors';
 import { AuthStack } from './AuthStack';
@@ -51,12 +56,25 @@ export function RootNavigator() {
   const hasBeenAuthenticated = useRef(false);
   if (isAuthenticated) hasBeenAuthenticated.current = true;
 
+  const navigationRef = useRef<NavigationContainerRef<RootStackParamList>>(null);
+
+  // Expose the navigator to the push-notification service so tapping a
+  // notification can deep-link to the right screen (chat, match, likes…).
+  useEffect(() => {
+    setNavigationRef(navigationRef.current);
+    return () => setNavigationRef(null);
+  }, []);
+
+  const onNavReady = useCallback(() => {
+    setNavigationRef(navigationRef.current);
+  }, []);
+
   const contentStyle = isAuthenticated
     ? { backgroundColor: 'transparent' as const }
     : { backgroundColor: colors.cream[200] };
 
   return (
-    <NavigationContainer theme={navTheme}>
+    <NavigationContainer ref={navigationRef} theme={navTheme} onReady={onNavReady}>
       <View style={[styles.root, { backgroundColor: colors.cream[200] }]}>
         {isAuthenticated ? (
           <ImageBackground
@@ -73,6 +91,12 @@ export function RootNavigator() {
             headerShadowVisible: false,
             headerStatusBarHeight: 0,
             statusBarTranslucent: true,
+            // Faster, snappier transitions between screens. Native-stack lets
+            // us customise the underlying platform transition — on Android
+            // we use the fade-in-from-bottom style (fast, minimal), on iOS
+            // the default slide but with a shorter duration.
+            animation: 'slide_from_right',
+            animationDuration: 220,
             contentStyle,
           }}
         >

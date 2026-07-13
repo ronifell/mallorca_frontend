@@ -39,6 +39,10 @@ export function GlobalMatchModal() {
     setSending(true);
     try {
       const conv = await chatApi.ensureConversation(popup.matchId);
+      // Navigate FIRST — the new screen slides in on top of the celebration
+      // modal, so we get a clean "Match → Chat" sequence with no flash of
+      // any intermediate empty screen. We then dismiss the modal so it
+      // fades out behind the new Conversation view.
       nav.navigate('Conversation', {
         conversationId: conv.id,
         otherName: popup.otherUser.firstName,
@@ -46,6 +50,7 @@ export function GlobalMatchModal() {
         otherUserAge: null,
         otherUserPhoto: popup.otherUser.photo,
       });
+      hide();
     } catch (e) {
       Alert.alert(t('common.error'), extractErrorMessage(e));
     } finally {

@@ -291,7 +291,19 @@
     "premiumActive": "Tienes Premium — Puedes iniciar conversaciones",
     "premiumRequired": "Necesitas Premium para iniciar la conversación.",
     "upgrade": "Hazte Premium",
-    "read": "Leído"
+    "read": "Leído",
+    "pushPreviewImage": "📷 Te ha enviado una foto",
+    "pushPreviewAudio": "🎤 Te ha enviado un mensaje de voz",
+    "pushPreviewGeneric": "Tienes un nuevo mensaje.",
+    "pushDefaultSenderTitle": "Citas Mallorca",
+    "pushLikeTitle": "💖 ¡Nuevo Like!",
+    "pushLikeBody": "A {{name}} le gustas. ¡Descubre su perfil!",
+    "pushLikeBodyAnonymous": "¡Alguien te ha dado like! Descubre quién ha sido.",
+    "pushSuperLikeTitle": "⭐ ¡Eres una superestrella!",
+    "pushSuperLikeBody": "Alguien te ha enviado su estrella semanal. ¡Descubre quién!",
+    "pushMatchTitle": "🎉 ¡Enhorabuena!",
+    "pushMatchBody": "¡Has hecho un match con {{name}}! Empieza la conversación.",
+    "pushMatchBodyAnonymous": "¡Has hecho un nuevo match! Ábrelo y descubre con quién has conectado."
   },
   "premium": {
     "title": "Citas Mallorca Premium",

@@ -1,6 +1,7 @@
 import { AppState } from 'react-native';
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Match, Message } from '../api/types';
 import { getActiveConversationId } from '../services/activeConversation';
 import { syncRecentMatchPopups } from '../services/matchSync';
@@ -9,33 +10,22 @@ import { connectSocket } from '../services/socket';
 import { useAuthStore } from '../store/auth';
 import { MatchPopupPayload, useMatchPopup } from '../store/matchPopup';
 
-function previewForMessage(message: Message): string {
+function previewForMessage(message: Message, t: (k: string) => string): string {
   if (message.type === 'text' && message.text?.trim()) {
     return message.text.trim();
   }
-  if (message.type === 'image') return 'Sent a photo';
-  if (message.type === 'audio') return 'Sent a voice message';
-  return 'You received a new message.';
+  if (message.type === 'image') return t('chat.pushPreviewImage');
+  if (message.type === 'audio') return t('chat.pushPreviewAudio');
+  return t('chat.pushPreviewGeneric');
 }
 
 function senderNameForConversation(
   matches: Match[] | undefined,
   conversationId: string,
+  fallback: string,
 ): string {
   const match = matches?.find((m) => m.conversationId === conversationId);
-  return match?.otherUser.firstName?.trim() || 'Citas Mallorca';
-}
-
-function superLikeBody(fromName: string | null | undefined): string {
-  const name = fromName?.trim();
-  return name
-    ? `${name} sent you a Super Like.`
-    : 'Someone sent you a Super Like.';
-}
-
-function newLikeBody(fromName: string | null | undefined): string {
-  const name = fromName?.trim();
-  return name ? `${name} liked you.` : 'Someone liked you.';
+  return match?.otherUser.firstName?.trim() || fallback;
 }
 
 /**
@@ -46,9 +36,12 @@ function newLikeBody(fromName: string | null | undefined): string {
  *
  * Also shows a local notification when a message, like, or super like arrives
  * while the app is open (FCM alone is unreliable in the Android foreground).
+ * Every user-facing string is routed through i18n so the notifications match
+ * the rest of the (Spanish) app.
  */
 export function useChatSync() {
   const qc = useQueryClient();
+  const { t } = useTranslation();
   const showMatchPopup = useMatchPopup((s) => s.show);
 
   useEffect(() => {
@@ -70,8 +63,12 @@ export function useChatSync() {
         if (AppState.currentState !== 'active') return;
 
         const matches = qc.getQueryData<Match[]>(['matches']);
-        const title = senderNameForConversation(matches, conversationId);
-        const body = previewForMessage(m);
+        const title = senderNameForConversation(
+          matches,
+          conversationId,
+          t('chat.pushDefaultSenderTitle'),
+        );
+        const body = previewForMessage(m, t);
         void showMessageNotification(title, body, {
           type: 'new_message',
           conversationId,
@@ -88,10 +85,17 @@ export function useChatSync() {
         qc.invalidateQueries({ queryKey: ['likes'] });
         qc.invalidateQueries({ queryKey: ['feed'] });
 
-        void showMessageNotification('💖 New Like!', newLikeBody(payload.fromName), {
-          type: 'new_like',
-          fromUserId: payload.fromUserId,
-        });
+        if (AppState.currentState !== 'active') return;
+
+        const name = payload.fromName?.trim();
+        void showMessageNotification(
+          t('chat.pushLikeTitle'),
+          name ? t('chat.pushLikeBody', { name }) : t('chat.pushLikeBodyAnonymous'),
+          {
+            type: 'new_like',
+            fromUserId: payload.fromUserId,
+          },
+        );
       };
       const onSuperLike = (payload: { fromUserId?: string; fromName?: string | null }) => {
         if (!payload?.fromUserId) return;
@@ -102,16 +106,33 @@ export function useChatSync() {
         qc.invalidateQueries({ queryKey: ['feed'] });
         qc.invalidateQueries({ queryKey: ['likes'] });
 
-        void showMessageNotification('⭐ Super Like!', superLikeBody(payload.fromName), {
-          type: 'super_like',
-          fromUserId: payload.fromUserId,
-        });
+        if (AppState.currentState !== 'active') return;
+
+        void showMessageNotification(
+          t('chat.pushSuperLikeTitle'),
+          t('chat.pushSuperLikeBody'),
+          {
+            type: 'super_like',
+            fromUserId: payload.fromUserId,
+          },
+        );
       };
       const onMatch = (payload: MatchPopupPayload) => {
         if (!payload?.matchId || !payload.otherUser) return;
         qc.invalidateQueries({ queryKey: ['matches'] });
         qc.invalidateQueries({ queryKey: ['feed'] });
         showMatchPopup(payload);
+
+        if (AppState.currentState !== 'active') return;
+        const name = payload.otherUser.firstName?.trim();
+        void showMessageNotification(
+          t('chat.pushMatchTitle'),
+          name ? t('chat.pushMatchBody', { name }) : t('chat.pushMatchBodyAnonymous'),
+          {
+            type: 'new_match',
+            matchId: payload.matchId,
+          },
+        );
       };
       const onConnect = () => {
         void syncRecentMatchPopups();
@@ -151,5 +172,5 @@ export function useChatSync() {
       appStateSub.remove();
       cleanup?.();
     };
-  }, [qc, showMatchPopup]);
+  }, [qc, showMatchPopup, t]);
 }
