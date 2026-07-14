@@ -9,13 +9,13 @@ const localGoogleServicesPath = path.join(__dirname, 'google-services.json');
 
 const googleWebClientId =
   process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ??
-  '921193281866-mm69ppb6imu07eggjrua33affmpu2h18.apps.googleusercontent.com';
+  '528899539521-sk200iq6bf4pa3rga03bnr03sqo8k6be.apps.googleusercontent.com';
 const googleAndroidClientId =
   process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID ??
-  '921193281866-9kve17c76jc3m095r77fda16pr9sjhsj.apps.googleusercontent.com';
+  '528899539521-uqicjas911s0c6a1oqsom665bksdd594.apps.googleusercontent.com';
 
-/** EAS preview/production APK signing cert (from `eas credentials` / keytool on the APK). */
-const EAS_ANDROID_SHA1 = 'ad617be1fe9b49aed1d13379f80a924e7117836e';
+/** EAS preview/production APK signing cert (new keystore, Jul 2026). */
+const EAS_ANDROID_SHA1 = '79c24d3d19410301471125b884e573b7a3be730c';
 /** Play App Signing cert from Play Console → App integrity → App signing key certificate. */
 const PLAY_STORE_SHA1 = '0b632e10d5ce2843b7b8f1814e63600e11d80b32';
 

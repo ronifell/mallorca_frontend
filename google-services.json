@@ -1,41 +1,41 @@
 {
   "project_info": {
-    "project_number": "921193281866",
-    "project_id": "citas-mallorca-69a3a",
-    "storage_bucket": "citas-mallorca-69a3a.firebasestorage.app"
+    "project_number": "528899539521",
+    "project_id": "citas-mallorca-bcfa1",
+    "storage_bucket": "citas-mallorca-bcfa1.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:921193281866:android:adeba9c5d2fa2a4e9be9b3",
+        "mobilesdk_app_id": "1:528899539521:android:4c4885c6f2ccbf0bef7cc0",
         "android_client_info": {
           "package_name": "es.citasmallorca.app"
         }
       },
       "oauth_client": [
         {
-          "client_id": "921193281866-9kve17c76jc3m095r77fda16pr9sjhsj.apps.googleusercontent.com",
+          "client_id": "528899539521-uqicjas911s0c6a1oqsom665bksdd594.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "es.citasmallorca.app",
-            "certificate_hash": "0b632e10d5ce2843b7b8f1814e63600e11d80b32"
+            "certificate_hash": "79c24d3d19410301471125b884e573b7a3be730c"
           }
         },
         {
-          "client_id": "921193281866-mm69ppb6imu07eggjrua33affmpu2h18.apps.googleusercontent.com",
+          "client_id": "528899539521-sk200iq6bf4pa3rga03bnr03sqo8k6be.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyA73cYwrMQ1yAJZD0r1bEmErIkzjOsJXJQ"
+          "current_key": "AIzaSyARKX1dKDSdscb84Hyld7YtPsV9d5UcqvI"
         }
       ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "921193281866-mm69ppb6imu07eggjrua33affmpu2h18.apps.googleusercontent.com",
+              "client_id": "528899539521-sk200iq6bf4pa3rga03bnr03sqo8k6be.apps.googleusercontent.com",
               "client_type": 3
             }
           ]

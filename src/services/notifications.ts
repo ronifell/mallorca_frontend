@@ -9,7 +9,7 @@ import { RootStackParamList } from '../navigation/types';
 import { tokenStorage } from './storage';
 
 // Expo Go uses Expo's shared Firebase project for FCM tokens — pushes sent from
-// our own Firebase Admin (citas-mallorca-69a3a) will NOT reach the device with
+// our own Firebase Admin (citas-mallorca-bcfa1) will NOT reach the device with
 // those tokens. Real push delivery requires a dev/preview/production build
 // created via `eas build` (which bundles google-services.json for our project).
 const isExpoGo =
