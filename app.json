@@ -103,8 +103,8 @@
       "expo-secure-store"
     ],
     "extra": {
-      "apiBaseUrl": "http://54.94.85.115:4000",
-      "socketUrl": "http://54.94.85.115:4000"
+      "apiBaseUrl": "http://100.48.93.44:4000",
+      "socketUrl": "http://100.48.93.44:4000"
     }
   }
 }

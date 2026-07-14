@@ -7,7 +7,7 @@ interface Extra {
 
 const extra = (Constants.expoConfig?.extra ?? {}) as Extra;
 
-const defaultBaseUrl = 'http://54.94.85.115:4000';
+const defaultBaseUrl = 'http://100.48.93.44:4000';
 
 function resolveBaseUrl(
   fromExtra: string | undefined,

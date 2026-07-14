@@ -1,3 +1,4 @@
+import Constants, { ExecutionEnvironment } from 'expo-constants';
 import * as Notifications from 'expo-notifications';
 import { AppState, Platform } from 'react-native';
 import type {
@@ -6,6 +7,16 @@ import type {
 import { matchesApi, usersApi } from '../api/endpoints';
 import { RootStackParamList } from '../navigation/types';
 import { tokenStorage } from './storage';
+
+// Expo Go uses Expo's shared Firebase project for FCM tokens — pushes sent from
+// our own Firebase Admin (citas-mallorca-69a3a) will NOT reach the device with
+// those tokens. Real push delivery requires a dev/preview/production build
+// created via `eas build` (which bundles google-services.json for our project).
+const isExpoGo =
+  Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
+
+// Skip redundant PUTs when the same token is already saved.
+let lastPersistedToken: string | null = null;
 
 Notifications.setNotificationHandler({
   handleNotification: async () => {
@@ -61,12 +72,17 @@ async function persistFcmToken(token: string, attempt = 1): Promise<boolean> {
       await sleep(400 * attempt);
       return persistFcmToken(token, attempt + 1);
     }
-    logPushWarning('Skipping FCM upload — user not authenticated yet');
+    logPushWarning('Skipping FCM upload — user not authenticated yet (no access token after 5 retries)');
     return false;
+  }
+  if (lastPersistedToken === token) {
+    console.log('[push] FCM token already saved this session, skipping duplicate PUT');
+    return true;
   }
   try {
     await usersApi.updateFcmToken(token);
-    console.log('[push] FCM token saved to server');
+    lastPersistedToken = token;
+    console.log(`[push] FCM token saved to server (prefix=${token.slice(0, 12)}…, len=${token.length})`);
     return true;
   } catch (err) {
     if (attempt < 3) {
@@ -78,17 +94,38 @@ async function persistFcmToken(token: string, attempt = 1): Promise<boolean> {
   }
 }
 
+/** Called from `logout()` so the next login re-issues a PUT for the new user. */
+export function resetFcmTokenCache(): void {
+  lastPersistedToken = null;
+}
+
 export async function registerForPushNotificationsAsync(): Promise<string | null> {
   await ensureDefaultNotificationChannel();
 
+  if (isExpoGo) {
+    logPushWarning(
+      'Running in Expo Go — FCM tokens are registered against Expo\'s Firebase project, ' +
+        'so pushes from citas-mallorca-69a3a will NOT arrive on this device. ' +
+        'Build a dev/preview APK (eas build --profile preview --platform android) to test real push delivery.',
+    );
+  }
+
   const { status: existing } = await Notifications.getPermissionsAsync();
+  console.log(`[push] Current notification permission = ${existing}`);
   let finalStatus = existing;
   if (existing !== 'granted') {
     const { status } = await Notifications.requestPermissionsAsync();
     finalStatus = status;
+    console.log(`[push] Requested permission → ${status}`);
   }
   if (finalStatus !== 'granted') {
-    logPushWarning(`Notification permission not granted (${finalStatus})`);
+    logPushWarning(
+      `Notification permission not granted (${finalStatus}). ` +
+        (Platform.OS === 'android'
+          ? 'On Android 13+ POST_NOTIFICATIONS must be granted at runtime; ' +
+            'ask the user to enable notifications in the OS settings for this app.'
+          : 'Ask the user to enable notifications in iOS Settings for this app.'),
+    );
     return null;
   }
 
@@ -96,13 +133,17 @@ export async function registerForPushNotificationsAsync(): Promise<string | null
     const tokenData = await Notifications.getDevicePushTokenAsync();
     const token = tokenData.data;
     if (token) {
-      console.log('[push] FCM device token obtained');
+      console.log(
+        `[push] FCM device token obtained (prefix=${token.slice(0, 12)}…, len=${token.length}, expoGo=${isExpoGo})`,
+      );
       await persistFcmToken(token);
+    } else {
+      logPushWarning('getDevicePushTokenAsync returned an empty token');
     }
     return token;
   } catch (err) {
     logPushWarning(
-      'getDevicePushTokenAsync failed — APK must include google-services.json (Firebase not initialized)',
+      'getDevicePushTokenAsync failed — APK must include google-services.json (Firebase not initialized on device)',
       err,
     );
     return null;

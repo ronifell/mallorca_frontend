@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { usersApi } from '../api/endpoints';
 import { AuthUser } from '../api/types';
+import { resetFcmTokenCache } from '../services/notifications';
 import { tokenStorage } from '../services/storage';
 
 interface AuthState {
@@ -50,6 +51,7 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   async logout() {
     await tokenStorage.clear();
+    resetFcmTokenCache();
     set({ user: null, initialized: true });
   },
 
