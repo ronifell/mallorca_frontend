@@ -19,16 +19,12 @@ const isExpoGo =
 let lastPersistedToken: string | null = null;
 
 Notifications.setNotificationHandler({
-  handleNotification: async () => {
-    // Foreground chat/likes use socket + showMessageNotification; suppress FCM duplicates.
-    const isForeground = AppState.currentState === 'active';
-    return {
-      shouldShowAlert: !isForeground,
-      shouldPlaySound: !isForeground,
-      shouldSetBadge: false,
-      priority: Notifications.AndroidNotificationPriority.MAX,
-    };
-  },
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+    priority: Notifications.AndroidNotificationPriority.MAX,
+  }),
   handleError(id, error) {
     console.warn('[push] foreground handler error', id, error);
   },
