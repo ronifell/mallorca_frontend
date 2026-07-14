@@ -105,7 +105,7 @@ export async function registerForPushNotificationsAsync(): Promise<string | null
   if (isExpoGo) {
     logPushWarning(
       'Running in Expo Go — FCM tokens are registered against Expo\'s Firebase project, ' +
-        'so pushes from citas-mallorca-69a3a will NOT arrive on this device. ' +
+        'so pushes from citas-mallorca-bcfa1 will NOT arrive on this device. ' +
         'Build a dev/preview APK (eas build --profile preview --platform android) to test real push delivery.',
     );
   }
@@ -142,8 +142,11 @@ export async function registerForPushNotificationsAsync(): Promise<string | null
     }
     return token;
   } catch (err) {
+    const detail = err instanceof Error ? err.message : String(err);
     logPushWarning(
-      'getDevicePushTokenAsync failed — APK must include google-services.json (Firebase not initialized on device)',
+      `getDevicePushTokenAsync failed — Firebase is not initialized in this APK. ` +
+        `Rebuild with the citas-mallorca-bcfa1 google-services.json (update EAS GOOGLE_SERVICES_JSON). ` +
+        `Detail: ${detail}`,
       err,
     );
     return null;

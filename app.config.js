@@ -6,6 +6,7 @@ const { mergeContents } = require('@expo/config-plugins/build/utils/generateCode
 const appJson = require('./app.json');
 
 const localGoogleServicesPath = path.join(__dirname, 'google-services.json');
+const EXPECTED_FIREBASE_PROJECT_ID = 'citas-mallorca-bcfa1';
 
 const googleWebClientId =
   process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ??
@@ -57,6 +58,13 @@ function withIapPlayStoreFlavor(config) {
 function assertGoogleServicesOAuth(sourcePath) {
   const raw = fs.readFileSync(sourcePath, 'utf8');
   const json = JSON.parse(raw);
+  const projectId = json?.project_info?.project_id;
+  if (projectId !== EXPECTED_FIREBASE_PROJECT_ID) {
+    throw new Error(
+      `[google-services.json] project_id is "${projectId ?? 'missing'}" but expected "${EXPECTED_FIREBASE_PROJECT_ID}". ` +
+        'Download a fresh file from Firebase Console (citas-mallorca-bcfa1) and update EAS GOOGLE_SERVICES_JSON.',
+    );
+  }
   const oauthClients = json?.client?.[0]?.oauth_client ?? [];
   const androidHashes = androidOAuthHashes(oauthClients);
   const webOAuth = oauthClients.find((c) => c.client_type === 3);
@@ -91,49 +99,42 @@ function assertGoogleServicesOAuth(sourcePath) {
   }
 }
 
-function resolveGoogleServicesAbsolutePath(projectRoot = __dirname) {
-  const candidates = [];
-
+/**
+ * EAS injects GOOGLE_SERVICES_JSON as a temp file path on the builder. Copy it
+ * into the project root so Expo's google-services Gradle plugin always finds
+ * ./google-services.json (absolute paths outside the repo break FCM init).
+ */
+function materializeGoogleServicesJson(projectRoot = __dirname) {
+  const targetPath = path.join(projectRoot, 'google-services.json');
   const easPath = process.env.GOOGLE_SERVICES_JSON;
-  if (easPath) {
-    candidates.push(easPath);
+
+  if (easPath && fs.existsSync(easPath)) {
+    fs.copyFileSync(easPath, targetPath);
+    console.log(`[app.config] Copied EAS GOOGLE_SERVICES_JSON -> ${targetPath}`);
   }
 
-  const localPath = path.join(projectRoot, 'google-services.json');
-  if (fs.existsSync(localPath)) {
-    candidates.push(localPath);
-  }
-
-  for (const candidate of candidates) {
-    if (!fs.existsSync(candidate)) {
-      continue;
+  if (!fs.existsSync(targetPath)) {
+    const hint =
+      'FCM requires google-services.json with Android + Web oauth_client entries. Commit Frontend/google-services.json ' +
+      'or run: eas env:update preview --variable-name GOOGLE_SERVICES_JSON --value ./google-services.json --type file';
+    if (process.env.EAS_BUILD === 'true') {
+      throw new Error(`No google-services.json found for EAS Android build. ${hint}`);
     }
-    try {
-      assertGoogleServicesOAuth(candidate);
-      return candidate;
-    } catch (err) {
-      console.warn(`[app.config] Skipping google-services.json at ${candidate}: ${err.message}`);
-    }
+    console.warn(`[app.config] ${hint}`);
+    return null;
   }
 
-  const hint =
-    'FCM requires google-services.json with Android + Web oauth_client entries. Commit Frontend/google-services.json ' +
-    'or run: eas env:update --variable-name GOOGLE_SERVICES_JSON --value ./google-services.json --type file --environment production';
-
-  if (process.env.EAS_BUILD === 'true') {
-    throw new Error(`No valid google-services.json found for EAS Android build. ${hint}`);
-  }
-
-  console.warn(`[app.config] ${hint}`);
-  return localPath;
+  assertGoogleServicesOAuth(targetPath);
+  return targetPath;
 }
 
-function resolveGoogleServicesFile(projectRoot = __dirname) {
-  const absolute = resolveGoogleServicesAbsolutePath(projectRoot);
-  if (path.isAbsolute(absolute)) {
-    return path.relative(projectRoot, absolute) || './google-services.json';
-  }
-  return absolute;
+function resolveGoogleServicesAbsolutePath(projectRoot = __dirname) {
+  return materializeGoogleServicesJson(projectRoot) ?? localGoogleServicesPath;
+}
+
+function resolveGoogleServicesFile() {
+  materializeGoogleServicesJson();
+  return './google-services.json';
 }
 
 /** Fail the build if Firebase config is not copied into android/app/. */
