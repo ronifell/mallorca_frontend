@@ -23,14 +23,14 @@ import {
 } from '../../config/profileOptions';
 import { ProfileSetupStackParamList } from '../../navigation/types';
 import { useContentFilter } from '../../hooks/useContentFilter';
+import {
+  displayToIsoBirthDate,
+  formatBirthDateInput,
+} from '../../utils/birthDateFormat';
 import { validateProfileFields, extractContentBlockedMessage } from '../../utils/contentFilterHelpers';
 import { useAuthStore } from '../../store/auth';
 
 type Props = NativeStackScreenProps<ProfileSetupStackParamList, 'CreateProfile'>;
-
-function isValidIsoDate(s: string): boolean {
-  return /^\d{4}-\d{2}-\d{2}$/.test(s) && !Number.isNaN(new Date(s).getTime());
-}
 
 export function CreateProfileScreen({ navigation }: Props) {
   const { t } = useTranslation();
@@ -88,7 +88,8 @@ export function CreateProfileScreen({ navigation }: Props) {
       setError(t('profile.ageRangeInvalid'));
       return;
     }
-    if (!isValidIsoDate(birthDate)) {
+    const isoBirthDate = displayToIsoBirthDate(birthDate);
+    if (!isoBirthDate) {
       setError(t('profile.birthDateFormat'));
       return;
     }
@@ -104,7 +105,7 @@ export function CreateProfileScreen({ navigation }: Props) {
     try {
       await usersApi.update({
         firstName,
-        birthDate,
+        birthDate: isoBirthDate,
         gender,
         interestSelections: interests,
         relationshipGoals,
@@ -150,8 +151,9 @@ export function CreateProfileScreen({ navigation }: Props) {
         elevated
         placeholder={t('profile.birthDatePlaceholder')}
         value={birthDate}
-        onChangeText={setBirthDate}
-        keyboardType="numbers-and-punctuation"
+        onChangeText={(v) => setBirthDate(formatBirthDateInput(v))}
+        keyboardType="number-pad"
+        maxLength={10}
         rightIcon="calendar-outline"
       />
 

@@ -28,10 +28,11 @@ import {
   LANGUAGE_OPTIONS,
 } from '../../config/profileOptions';
 import { RootStackParamList } from '../../navigation/types';
-
-function isValidIsoDate(s: string): boolean {
-  return /^\d{4}-\d{2}-\d{2}$/.test(s) && !Number.isNaN(new Date(s).getTime());
-}
+import {
+  displayToIsoBirthDate,
+  formatBirthDateInput,
+  isoToDisplayBirthDate,
+} from '../../utils/birthDateFormat';
 
 export function EditProfileScreen() {
   const { t } = useTranslation();
@@ -70,7 +71,7 @@ export function EditProfileScreen() {
   useEffect(() => {
     if (!me) return;
     setFirstName(me.firstName ?? '');
-    setBirthDate(me.birthDate ?? '');
+    setBirthDate(isoToDisplayBirthDate(me.birthDate));
     setGender(me.gender);
     setCity(me.city ?? '');
     setBio(me.bio ?? '');
@@ -149,7 +150,8 @@ export function EditProfileScreen() {
       setError(t('profile.ageRangeInvalid'));
       return;
     }
-    if (!isValidIsoDate(birthDate)) {
+    const isoBirthDate = displayToIsoBirthDate(birthDate);
+    if (!isoBirthDate) {
       setError(t('profile.birthDateFormat'));
       return;
     }
@@ -166,7 +168,7 @@ export function EditProfileScreen() {
     try {
       await usersApi.update({
         firstName,
-        birthDate,
+        birthDate: isoBirthDate,
         gender,
         city,
         bio,
@@ -230,8 +232,9 @@ export function EditProfileScreen() {
         elevated
         placeholder={t('profile.birthDatePlaceholder')}
         value={birthDate}
-        onChangeText={setBirthDate}
-        keyboardType="numbers-and-punctuation"
+        onChangeText={(v) => setBirthDate(formatBirthDateInput(v))}
+        keyboardType="number-pad"
+        maxLength={10}
         rightIcon="calendar-outline"
       />
 
