@@ -18,7 +18,7 @@ const googleAndroidClientId =
 /** EAS preview/production APK signing cert (new keystore, Jul 2026). */
 const EAS_ANDROID_SHA1 = '79c24d3d19410301471125b884e573b7a3be730c';
 /** Play App Signing cert from Play Console → App integrity → App signing key certificate. */
-const PLAY_STORE_SHA1 = '0b632e10d5ce2843b7b8f1814e63600e11d80b32';
+const PLAY_STORE_SHA1 = '607d4fb2ebb8cd4bbd8aa24ba78a85d79cb855e6';
 
 function androidOAuthHashes(oauthClients) {
   return oauthClients

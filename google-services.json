@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "528899539521-0rm1ctk4vaucdeg52n41ifhrr3gcnfbo.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "es.citasmallorca.app",
+            "certificate_hash": "607d4fb2ebb8cd4bbd8aa24ba78a85d79cb855e6"
+          }
+        },
+        {
           "client_id": "528899539521-uqicjas911s0c6a1oqsom665bksdd594.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
