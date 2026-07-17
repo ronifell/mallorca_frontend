@@ -300,7 +300,7 @@
     "pushLikeBody": "A {{name}} le gustas. ¡Descubre su perfil!",
     "pushLikeBodyAnonymous": "¡Alguien te ha dado like! Descubre quién ha sido.",
     "pushSuperLikeTitle": "⭐ ¡Eres una superestrella!",
-    "pushSuperLikeBody": "Alguien te ha enviado su estrella semanal. ¡Descubre quién!",
+    "pushSuperLikeBody": "Alguien te envió un Super Like esta semana. ¡Comprueba quién lo envió!",
     "pushMatchTitle": "🎉 ¡Enhorabuena!",
     "pushMatchBody": "¡Has hecho un match con {{name}}! Empieza la conversación.",
     "pushMatchBodyAnonymous": "¡Has hecho un nuevo match! Ábrelo y descubre con quién has conectado."

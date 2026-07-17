@@ -51,11 +51,9 @@ export function RootNavigator() {
   const isFullyOnboarded =
     !!user && user.emailVerified && user.profileComplete;
 
-  // Track whether the user has ever been authenticated in this app session.
-  // Once true, any subsequent unauthenticated state is a logout → skip Onboarding.
-  const hasBeenAuthenticated = useRef(false);
-  if (isAuthenticated) hasBeenAuthenticated.current = true;
-
+  // The auth stack always lands on Login so users with a previously created
+  // profile can sign in immediately after (re)installing the app; new users
+  // tap "Sign up" from Login to reach Register.
   const navigationRef = useRef<NavigationContainerRef<RootStackParamList>>(null);
 
   // Expose the navigator to the push-notification service so tapping a
@@ -105,11 +103,7 @@ export function RootNavigator() {
               name="Auth"
               options={{ headerShown: false }}
             >
-              {() => (
-                <AuthStack
-                  initialRoute={hasBeenAuthenticated.current ? 'Login' : 'Register'}
-                />
-              )}
+              {() => <AuthStack initialRoute="Login" />}
             </Stack.Screen>
           ) : !user.emailVerified ? (
             <Stack.Screen

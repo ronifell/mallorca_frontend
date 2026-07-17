@@ -1,6 +1,6 @@
 {
   "name": "mallorca-dating-app",
-  "version": "1.0.11",
+  "version": "1.0.12",
   "description": "Mallorca Dating & Networking mobile app (React Native + Expo)",
   "main": "index.js",
   "scripts": {

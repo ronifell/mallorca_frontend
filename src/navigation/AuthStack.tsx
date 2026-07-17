@@ -9,13 +9,13 @@ import { AuthStackParamList } from './types';
 const Stack = createNativeStackNavigator<AuthStackParamList>();
 
 interface Props {
-  /** Where the auth flow should land first.
-   *  - 'Register' on a fresh launch (no prior session).
-   *  - 'Login' after a logout so the user can sign back in quickly. */
+  /** Where the auth flow should land first. Defaults to `Login` so users with
+   *  a previously created profile can sign in immediately after (re)installing
+   *  the app; new users tap "Sign up" to reach Register from there. */
   initialRoute?: 'Login' | 'Register';
 }
 
-export function AuthStack({ initialRoute = 'Register' }: Props) {
+export function AuthStack({ initialRoute = 'Login' }: Props) {
   return (
     <Stack.Navigator
       initialRouteName={initialRoute}
