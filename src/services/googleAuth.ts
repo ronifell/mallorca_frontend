@@ -80,8 +80,13 @@ export type GoogleSignInOutcome =
       message?: string;
     };
 
-function isDeveloperError(code: string | number | undefined): boolean {
-  return code === 10 || code === '10' || code === 'DEVELOPER_ERROR';
+function isDeveloperError(
+  code: string | number | undefined,
+  message?: string,
+): boolean {
+  if (code === 10 || code === '10' || code === 'DEVELOPER_ERROR') return true;
+  const msg = (message ?? '').toUpperCase();
+  return msg.includes('DEVELOPER_ERROR') || msg.includes('APIEXCEPTION: 10');
 }
 
 export async function signInWithGoogle(): Promise<GoogleSignInOutcome> {
@@ -137,12 +142,13 @@ export async function signInWithGoogle(): Promise<GoogleSignInOutcome> {
 
     return { type: 'error', code: 'unknown', message: 'Respuesta inesperada del inicio de sesión con Google.' };
   } catch (e) {
+    const errMessage = (e as Error)?.message;
     if (isErrorWithCode(e)) {
-      if (isDeveloperError(e.code)) {
+      if (isDeveloperError(e.code, errMessage)) {
         return {
           type: 'error',
           code: 'developer_error',
-          message: e.message,
+          message: errMessage,
         };
       }
       switch (e.code) {
@@ -153,10 +159,14 @@ export async function signInWithGoogle(): Promise<GoogleSignInOutcome> {
         case statusCodes.PLAY_SERVICES_NOT_AVAILABLE:
           return { type: 'error', code: 'play_services' };
         default:
-          return { type: 'error', code: 'unknown', message: e.message };
+          return {
+            type: 'error',
+            code: 'unknown',
+            message: errMessage ? `${errMessage} (code ${String(e.code)})` : `code ${String(e.code)}`,
+          };
       }
     }
-    return { type: 'error', code: 'unknown', message: (e as Error)?.message };
+    return { type: 'error', code: 'unknown', message: errMessage };
   }
 }
 

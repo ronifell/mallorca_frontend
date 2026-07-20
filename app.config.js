@@ -17,8 +17,13 @@ const googleAndroidClientId =
 
 /** EAS preview/production APK signing cert (new keystore, Jul 2026). */
 const EAS_ANDROID_SHA1 = '79c24d3d19410301471125b884e573b7a3be730c';
-/** Play App Signing cert from Play Console → App integrity → App signing key certificate. */
-const PLAY_STORE_SHA1 = '607d4fb2ebb8cd4bbd8aa24ba78a85d79cb855e6';
+/**
+ * Play Console → App integrity → App signing key certificate (required for Play installs).
+ * Confirmed from Play Console: 60:7D:4F:B2:EB:B8:CD:4B:BD:8A:A2:4B:A7:8A:85:D7:9C:B8:55:E6
+ */
+const PLAY_APP_SIGNING_SHA1 = '607d4fb2ebb8cd4bbd8aa24ba78a85d79cb855e6';
+/** Legacy Play signing SHA previously used; keep in Firebase if still listed, not required. */
+const LEGACY_PLAY_SIGNING_SHA1 = '0b632e10d5ce2843b7b8f1814e63600e11d80b32';
 
 function androidOAuthHashes(oauthClients) {
   return oauthClients
@@ -84,10 +89,18 @@ function assertGoogleServicesOAuth(sourcePath) {
     );
   }
 
-  if (!androidHashes.includes(PLAY_STORE_SHA1)) {
+  if (!androidHashes.includes(PLAY_APP_SIGNING_SHA1)) {
     console.warn(
-      `[app.config] google-services.json is missing Play App Signing SHA-1 ${PLAY_STORE_SHA1}. ` +
-        'Play Store installs will fail Google Sign-In until Firebase has that fingerprint and you re-download this file.',
+      `[app.config] google-services.json is missing Play App Signing SHA-1 ${PLAY_APP_SIGNING_SHA1}. ` +
+        'Play Store installs will fail Google Sign-In. Add that fingerprint in Firebase / Google Cloud, ' +
+        'then re-download google-services.json.',
+    );
+  }
+
+  if (!androidHashes.includes(LEGACY_PLAY_SIGNING_SHA1)) {
+    // Optional — older Play signing cert; warn only at debug level via console for awareness.
+    console.log(
+      `[app.config] Note: legacy Play SHA-1 ${LEGACY_PLAY_SIGNING_SHA1} is not in google-services.json (OK if Play rotated keys).`,
     );
   }
 

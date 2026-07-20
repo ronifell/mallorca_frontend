@@ -54,7 +54,13 @@ export function useGoogleSignIn({
       const outcome = await signInWithGoogle();
       if (outcome.type === 'cancelled') return;
       if (outcome.type === 'error') {
-        onError?.(t(ERROR_KEYS[outcome.code]));
+        const base = t(ERROR_KEYS[outcome.code]);
+        // Surface native/Google detail so SHA / OAuth misconfig is diagnosable in the field.
+        onError?.(
+          outcome.message && outcome.code !== 'developer_error'
+            ? `${base} (${outcome.message})`
+            : base,
+        );
         return;
       }
 
