@@ -324,7 +324,7 @@
     "perMonth": "/ month",
     "perYear": "/ year",
     "save": "Best value",
-    "subscribe": "Subscribe",
+    "subscribe": "Go Premium",
     "continue": "Continue",
     "payButton": "Accept and pay",
     "autoRenewing": "Auto-renewing",
@@ -339,6 +339,8 @@
     "active": "You have Premium",
     "until": "Until",
     "purchaseError": "We couldn't complete the purchase",
+    "pendingTitle": "Payment processing",
+    "pendingBody": "Your bank authorized the payment. We'll activate Premium as soon as Google Play confirms it. If it doesn't activate within a few minutes, tap «Restore purchases».",
     "billingTestMode": "Test billing mode is active on the server (no real Google Play charge).",
     "acceptTermsIntro": "I have read and accept the ",
     "acceptPrivacyIntro": "I have read and accept the "

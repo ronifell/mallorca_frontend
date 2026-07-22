@@ -79,11 +79,23 @@ export function PremiumScreen() {
     try {
       const purchase = await startPurchase(selected);
       const result = await subscriptionsApi.validate(toApiPayload(purchase));
+
+      if (result.status === 'pending') {
+        // Payment authorized at the bank but Google still clearing it.
+        // Backend already stored the token so RTDN / restore can activate Premium.
+        Alert.alert(t('premium.pendingTitle'), t('premium.pendingBody'));
+        return;
+      }
+
       // Only acknowledge once the backend has recorded the entitlement — otherwise
       // Google auto-refunds. If acknowledge fails, Google will re-emit the pending
       // purchase on the next app open and it will be re-validated then.
       await acknowledgePurchase(purchase);
-      patchUser({ isPremium: result.isPremium });
+      if (!result.isPremium) {
+        Alert.alert(t('premium.purchaseError'), t('premium.pendingBody'));
+        return;
+      }
+      patchUser({ isPremium: true });
       await invalidatePremiumQueries();
       Alert.alert(
         t('premium.active'),
@@ -91,7 +103,7 @@ export function PremiumScreen() {
       );
       nav.goBack();
     } catch (e) {
-      const msg = formatBillingError(e) || extractErrorMessage(e);
+      const msg = formatBillingError(e);
       if (msg) {
         Alert.alert(t('premium.purchaseError'), msg);
       }

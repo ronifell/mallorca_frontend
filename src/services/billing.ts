@@ -154,12 +154,19 @@ export async function fetchSubscriptions(): Promise<Subscription[]> {
   return RNIap.getSubscriptions({ skus: SUBSCRIPTION_SKUS });
 }
 
+type IapModule = typeof import('react-native-iap');
+
 /**
  * Resolve the currently-visible purchase from an updated-listener event.
+ * Callers must attach listeners BEFORE launching the store sheet.
  *
  * @throws When the store fires an error (user cancel, network, invalid SKU…).
  */
-function waitForPurchase(sku: string, timeoutMs = 90_000): Promise<Purchase> {
+function waitForPurchase(
+  RNIap: IapModule,
+  sku: string,
+  timeoutMs = 90_000,
+): Promise<Purchase> {
   return new Promise((resolve, reject) => {
     let settled = false;
     let unsubUpdate: { remove: () => void } | null = null;
@@ -175,25 +182,22 @@ function waitForPurchase(sku: string, timeoutMs = 90_000): Promise<Purchase> {
       reject(new Error('La compra ha tardado demasiado. Inténtalo de nuevo.'));
     }, timeoutMs);
 
-    void import('react-native-iap').then((RNIap) => {
+    unsubUpdate = RNIap.purchaseUpdatedListener((purchase) => {
       if (settled) return;
-      unsubUpdate = RNIap.purchaseUpdatedListener((purchase) => {
-        if (settled) return;
-        if (purchase.productId !== sku) return;
-        const token = extractPurchaseToken(purchase);
-        if (!token) return;
-        settled = true;
-        clearTimeout(timer);
-        cleanup();
-        resolve(purchase);
-      });
-      unsubError = RNIap.purchaseErrorListener((error) => {
-        if (settled) return;
-        settled = true;
-        clearTimeout(timer);
-        cleanup();
-        reject(error);
-      });
+      if (purchase.productId !== sku) return;
+      const token = extractPurchaseToken(purchase);
+      if (!token) return;
+      settled = true;
+      clearTimeout(timer);
+      cleanup();
+      resolve(purchase);
+    });
+    unsubError = RNIap.purchaseErrorListener((error) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      cleanup();
+      reject(error);
     });
   });
 }
@@ -237,7 +241,9 @@ export async function startPurchase(productId: ProductId): Promise<PurchaseResul
       throw new Error(`No se encontró un offerToken para «${productId}».`);
     }
 
-    const purchasePromise = waitForPurchase(productId);
+    // Attach listeners before opening the sheet so we never miss the token
+    // that arrives right after bank / 3DS authentication.
+    const purchasePromise = waitForPurchase(RNIap, productId);
     await RNIap.requestSubscription({
       subscriptionOffers: [{ sku: productId, offerToken: offer.offerToken }],
     });
