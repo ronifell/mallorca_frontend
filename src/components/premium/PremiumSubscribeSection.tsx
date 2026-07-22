@@ -64,7 +64,7 @@ export function PremiumSubscribeSection({
       <Pressable
         onPress={isBlocked ? undefined : onSubscribe}
         accessibilityRole="button"
-        accessibilityLabel={t('premium.continue')}
+        accessibilityLabel={t('premium.payButton')}
         className={`flex-row items-center justify-center bg-coral-500 active:bg-coral-600 rounded-full py-3.5 px-6 w-full ${
           disabled ? 'opacity-50' : !legalAccepted ? 'opacity-40' : ''
         } ${loading ? 'opacity-70' : ''}`}
@@ -75,7 +75,7 @@ export function PremiumSubscribeSection({
         ) : (
           <>
             <Ionicons name="ribbon" size={20} color={colors.white} style={{ marginRight: 8 }} />
-            <Text className="text-white font-bold text-base">{t('premium.continue')}</Text>
+            <Text className="text-white font-bold text-base">{t('premium.payButton')}</Text>
             <Ionicons
               name="arrow-forward"
               size={20}
@@ -129,7 +129,7 @@ export function PremiumSubscribeSection({
           )}
         </Pressable>
         <Pressable onPress={onManage} className="flex-row items-center py-1">
-          <Text className="text-coral-500 font-semibold text-sm">Google Play</Text>
+          <Text className="text-coral-500 font-semibold text-sm">{t('premium.manageGooglePlay')}</Text>
           <Ionicons name="open-outline" size={14} color={colors.coral[500]} style={{ marginLeft: 4 }} />
         </Pressable>
       </View>

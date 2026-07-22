@@ -20,6 +20,13 @@ import {
   toApiPayload,
 } from '../../services/billing';
 import { useAuthStore } from '../../store/auth';
+import { formatBillingError } from '../../utils/formatBillingError';
+
+const PREMIUM_DATE_LOCALE = 'es-ES';
+
+function formatPremiumDate(value: string): string {
+  return new Date(value).toLocaleDateString(PREMIUM_DATE_LOCALE);
+}
 
 export function PremiumScreen() {
   const { t } = useTranslation();
@@ -80,13 +87,12 @@ export function PremiumScreen() {
       await invalidatePremiumQueries();
       Alert.alert(
         t('premium.active'),
-        `${t('premium.until')}: ${new Date(result.expiryDate).toLocaleDateString()}`,
+        `${t('premium.until')}: ${formatPremiumDate(result.expiryDate)}`,
       );
       nav.goBack();
     } catch (e) {
-      const msg = extractErrorMessage(e);
-      // Don't yell at the user for cancelling the store sheet.
-      if (!/cancel/i.test(msg)) {
+      const msg = formatBillingError(e) || extractErrorMessage(e);
+      if (msg) {
         Alert.alert(t('premium.purchaseError'), msg);
       }
     } finally {
@@ -115,7 +121,7 @@ export function PremiumScreen() {
             latestExpiry = result.expiryDate;
           }
         } catch (err) {
-          lastError = extractErrorMessage(err);
+          lastError = formatBillingError(err) || extractErrorMessage(err);
         }
       }
 
@@ -125,14 +131,14 @@ export function PremiumScreen() {
         Alert.alert(
           t('premium.restoreSuccess'),
           latestExpiry
-            ? `${t('premium.until')}: ${new Date(latestExpiry).toLocaleDateString()}`
+            ? `${t('premium.until')}: ${formatPremiumDate(latestExpiry)}`
             : undefined,
         );
       } else {
         Alert.alert(t('premium.restore'), lastError ?? t('premium.restoreNone'));
       }
     } catch (e) {
-      Alert.alert(t('premium.restore'), extractErrorMessage(e));
+      Alert.alert(t('premium.restore'), formatBillingError(e) || extractErrorMessage(e));
     } finally {
       setRestoring(false);
     }

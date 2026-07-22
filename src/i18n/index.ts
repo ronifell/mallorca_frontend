@@ -12,8 +12,8 @@ export type AppLanguage = (typeof SUPPORTED_LANGUAGES)[number];
 
 function detectLanguage(): AppLanguage {
   const locales = Localization.getLocales();
-  const tag = locales[0]?.languageCode ?? 'en';
-  return SUPPORTED_LANGUAGES.includes(tag as AppLanguage) ? (tag as AppLanguage) : 'en';
+  const tag = locales[0]?.languageCode ?? 'es';
+  return SUPPORTED_LANGUAGES.includes(tag as AppLanguage) ? (tag as AppLanguage) : 'es';
 }
 
 export async function setLanguage(lang: AppLanguage): Promise<void> {
@@ -30,7 +30,7 @@ export async function initI18n(): Promise<void> {
     .init({
       resources: { en: { translation: en }, es: { translation: es } },
       lng: lang,
-      fallbackLng: 'en',
+      fallbackLng: 'es',
       interpolation: { escapeValue: false },
       compatibilityJSON: 'v3',
     });

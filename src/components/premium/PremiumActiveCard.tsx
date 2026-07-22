@@ -26,7 +26,7 @@ export function PremiumActiveCard({ expiryDate }: Props) {
         <Text className="text-coral-500 font-bold text-base">{t('premium.active')}</Text>
         {expiryDate ? (
           <Text className="text-ink-400 text-xs mt-0.5">
-            {t('premium.until')}: {new Date(expiryDate).toLocaleDateString()}
+            {t('premium.until')}: {new Date(expiryDate).toLocaleDateString('es-ES')}
           </Text>
         ) : null}
       </View>
