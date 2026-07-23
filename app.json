@@ -3,7 +3,7 @@
     "name": "Citas Mallorca",
     "slug": "citas-mallorca",
     "scheme": "citasmallorca",
-    "version": "1.0.16",
+    "version": "1.0.19",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -26,7 +26,7 @@
     },
     "android": {
       "package": "es.citasmallorca.app",
-      "versionCode": 17,
+      "versionCode": 20,
       "usesCleartextTraffic": true,
       "softwareKeyboardLayoutMode": "resize",
       "intentFilters": [
@@ -40,6 +40,26 @@
             {
               "scheme": "citasmallorca",
               "host": "verify-email"
+            }
+          ],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
+        },
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "https",
+              "host": "www.citasmallorca.es",
+              "pathPrefix": "/open-app"
+            },
+            {
+              "scheme": "https",
+              "host": "citasmallorca.es",
+              "pathPrefix": "/open-app"
             }
           ],
           "category": [

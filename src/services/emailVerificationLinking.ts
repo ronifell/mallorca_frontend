@@ -10,13 +10,39 @@ type ParsedVerificationLink =
 let pendingUrl: string | null = null;
 let listenerReady = false;
 
+function isMarketingOpenAppUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    const host = parsed.hostname.toLowerCase();
+    if (host !== 'www.citasmallorca.es' && host !== 'citasmallorca.es') return false;
+    return parsed.pathname.replace(/\/$/, '').endsWith('/open-app') ||
+      parsed.pathname.includes('open-app.html');
+  } catch {
+    return /citasmallorca\.es\/open-app/i.test(url);
+  }
+}
+
 export function parseVerificationDeepLink(url: string | null): ParsedVerificationLink | null {
   if (!url) return null;
 
   const normalized = url.trim();
   const lower = normalized.toLowerCase();
-  const schemePrefix = `${APP_DEEP_LINK_SCHEME}://`;
 
+  // HTTPS App Links from welcome emails (citasmallorca.es/open-app…)
+  if (lower.startsWith('https://') || lower.startsWith('http://')) {
+    if (isMarketingOpenAppUrl(normalized)) {
+      try {
+        const token = new URL(normalized).searchParams.get('token');
+        if (token) return { kind: 'token', token };
+      } catch {
+        // ignore
+      }
+      return { kind: 'verified' };
+    }
+    return null;
+  }
+
+  const schemePrefix = `${APP_DEEP_LINK_SCHEME}://`;
   if (!lower.startsWith(schemePrefix)) return null;
 
   const rest = normalized.slice(schemePrefix.length);
