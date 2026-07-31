@@ -49,6 +49,8 @@
     "email": "Correo electrónico",
     "password": "Contraseña",
     "passwordHint": "Mínimo 8 caracteres con mayúscula, minúscula y un número.",
+    "showPassword": "Mostrar contraseña",
+    "hidePassword": "Ocultar contraseña",
     "forgotPassword": "¿Olvidaste tu contraseña?",
     "noAccount": "¿No tienes cuenta?",
     "haveAccount": "¿Ya tienes cuenta?",

@@ -102,7 +102,7 @@ export function Input({
             onPress={() => setVisible((v) => !v)}
             hitSlop={8}
             accessibilityRole="button"
-            accessibilityLabel={visible ? 'Hide password' : 'Show password'}
+            accessibilityLabel={visible ? t('auth.hidePassword') : t('auth.showPassword')}
           >
             <Ionicons
               name={visible ? 'eye-off-outline' : 'eye-outline'}

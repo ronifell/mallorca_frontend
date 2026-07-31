@@ -142,6 +142,8 @@ export function ConversationScreen({ route, navigation }: Props) {
   const otherTypingTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const listRef = useRef<FlatList<ChatRow>>(null);
   const lastTailMessageId = useRef<string | null>(null);
+  /** Avoid loading older pages until the first scroll-to-latest has finished. */
+  const readyForPagination = useRef(false);
 
   const stopTyping = useCallback(() => {
     if (typingTimeout.current) {
@@ -219,6 +221,8 @@ export function ConversationScreen({ route, navigation }: Props) {
 
   useFocusEffect(
     useCallback(() => {
+      lastTailMessageId.current = null;
+      readyForPagination.current = false;
       void loadInitial();
     }, [loadInitial]),
   );
@@ -331,11 +335,26 @@ export function ConversationScreen({ route, navigation }: Props) {
   }, [clearOtherTyping, conversationId, loadInitial, myId, qc]);
 
   useEffect(() => {
+    lastTailMessageId.current = null;
+    readyForPagination.current = false;
+  }, [conversationId]);
+
+  useEffect(() => {
     const sorted = [...messages].sort((a, b) => a.createdAt.localeCompare(b.createdAt));
     const tail = sorted[sorted.length - 1];
     if (!tail || tail.id === lastTailMessageId.current) return;
+
+    const isInitialLoad = lastTailMessageId.current === null;
     lastTailMessageId.current = tail.id;
-    setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 50);
+
+    requestAnimationFrame(() => {
+      listRef.current?.scrollToEnd({ animated: !isInitialLoad });
+      if (isInitialLoad) {
+        setTimeout(() => {
+          readyForPagination.current = true;
+        }, 400);
+      }
+    });
   }, [messages]);
 
   // Track the soft keyboard height on Android as a fallback for unreliable
@@ -562,6 +581,7 @@ export function ConversationScreen({ route, navigation }: Props) {
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
           onScroll={(e) => {
+            if (!readyForPagination.current) return;
             if (e.nativeEvent.contentOffset.y <= 48) {
               void loadOlderMessages();
             }

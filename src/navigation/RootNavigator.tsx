@@ -168,7 +168,7 @@ export function RootNavigator() {
           )}
         </Stack.Navigator>
         {isFullyOnboarded ? <GlobalMatchModal /> : null}
-        <LanguageSwitcher />
+        {!isFullyOnboarded ? <LanguageSwitcher /> : null}
       </View>
     </NavigationContainer>
   );

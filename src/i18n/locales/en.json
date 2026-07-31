@@ -49,6 +49,8 @@
     "email": "Email",
     "password": "Password",
     "passwordHint": "At least 8 characters with one upper, one lower and a number.",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
     "forgotPassword": "Forgot your password?",
     "noAccount": "Don't have an account?",
     "haveAccount": "Already have an account?",
