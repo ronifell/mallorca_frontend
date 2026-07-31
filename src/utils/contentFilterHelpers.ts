@@ -4,6 +4,7 @@ import {
   FilterContext,
   categoryMessageKey,
   inspectContent,
+  stripSocialPrefixTokens,
 } from './contentFilter';
 
 type Translate = (key: string) => string;
@@ -49,6 +50,10 @@ export function createFilteredChangeHandler(
     const result = inspectContent(text, context);
     if (result.blocked && result.category && text.length > currentValue.length) {
       onBlocked?.(t(categoryMessageKey(result.category)));
+      const cleaned = stripSocialPrefixTokens(currentValue);
+      if (cleaned !== currentValue) {
+        onChangeText(cleaned);
+      }
       return;
     }
     onChangeText(text);

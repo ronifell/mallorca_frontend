@@ -29,10 +29,12 @@ export function DiscoveryActionButtons({
   const blocked = disabled || likeLoading || superLikeLoading;
 
   return (
-    <View className="flex-row items-center justify-center mt-5 mb-2">
+    <View className="flex-row items-center justify-center mt-5 mb-3">
       <Pressable
         onPress={blocked ? undefined : onPass}
         disabled={blocked}
+        accessibilityRole="button"
+        accessibilityLabel="Pass"
         className="w-14 h-14 rounded-full bg-white border border-cream-300 items-center justify-center"
         style={{
           shadowColor: '#3D2618',

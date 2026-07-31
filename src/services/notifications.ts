@@ -95,6 +95,15 @@ export function resetFcmTokenCache(): void {
   lastPersistedToken = null;
 }
 
+/** Detach this device's FCM token from the current account (call before logout). */
+export async function detachPushTokenFromServer(): Promise<void> {
+  try {
+    await usersApi.clearFcmToken();
+  } catch (err) {
+    logPushWarning('Failed to clear FCM token on logout', err);
+  }
+}
+
 export async function registerForPushNotificationsAsync(): Promise<string | null> {
   await ensureDefaultNotificationChannel();
 

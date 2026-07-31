@@ -1,7 +1,7 @@
 import { create } from 'zustand';
-import { usersApi } from '../api/endpoints';
+import { authApi, usersApi } from '../api/endpoints';
 import { AuthUser } from '../api/types';
-import { resetFcmTokenCache } from '../services/notifications';
+import { detachPushTokenFromServer, resetFcmTokenCache } from '../services/notifications';
 import { tokenStorage } from '../services/storage';
 
 interface AuthState {
@@ -50,6 +50,15 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   async logout() {
+    try {
+      await detachPushTokenFromServer();
+      const refresh = await tokenStorage.getRefresh();
+      if (refresh) {
+        await authApi.logout(refresh).catch(() => undefined);
+      }
+    } catch {
+      // Best-effort server cleanup; always clear local session below.
+    }
     await tokenStorage.clear();
     resetFcmTokenCache();
     set({ user: null, initialized: true });

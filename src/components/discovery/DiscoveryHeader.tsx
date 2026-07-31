@@ -1,11 +1,14 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React from 'react';
+import { useQuery } from '@tanstack/react-query';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, Pressable, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
+import { usersApi } from '../../api/endpoints';
 import { RootStackParamList } from '../../navigation/types';
 import { colors } from '../../theme/colors';
+import { DiscoveryFiltersSheet } from './DiscoveryFiltersSheet';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
@@ -37,28 +40,46 @@ function CircleIconButton({
   );
 }
 
-export function DiscoveryHeader() {
+interface Props {
+  onFiltersApplied?: () => void;
+}
+
+export function DiscoveryHeader({ onFiltersApplied }: Props) {
   const { t } = useTranslation();
   const nav = useNavigation<Nav>();
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const { data: me } = useQuery({ queryKey: ['me'], queryFn: () => usersApi.me() });
 
   return (
-    <View className="flex-row items-center justify-between px-5 pt-2 pb-2">
-      <CircleIconButton
-        icon="menu-outline"
-        accessibilityLabel={t('discovery.openMenu')}
-        onPress={() => nav.navigate('Settings')}
-      />
+    <>
+      <View className="flex-row items-center justify-between px-5 pt-2 pb-2">
+        <CircleIconButton
+          icon="menu-outline"
+          accessibilityLabel={t('discovery.openMenu')}
+          onPress={() => nav.navigate('Settings')}
+        />
 
-      <View className="flex-row items-baseline">
-        <Text className="text-ink-700 font-serif text-xl">{t('auth.appNameCitas')} </Text>
-        <Text className="text-coral-500 font-serif text-xl">{t('auth.appNameMallorca')}</Text>
+        <View className="flex-row items-baseline">
+          <Text className="text-ink-700 font-serif text-xl">{t('auth.appNameCitas')} </Text>
+          <Text className="text-coral-500 font-serif text-xl">{t('auth.appNameMallorca')}</Text>
+        </View>
+
+        <CircleIconButton
+          icon="options-outline"
+          accessibilityLabel={t('discovery.openFilters')}
+          onPress={() => setFiltersOpen(true)}
+        />
       </View>
 
-      <CircleIconButton
-        icon="options-outline"
-        accessibilityLabel={t('discovery.openFilters')}
-        onPress={() => Alert.alert(t('discovery.filters'), t('discovery.filterComingSoon'))}
+      <DiscoveryFiltersSheet
+        visible={filtersOpen}
+        profile={me}
+        onClose={() => setFiltersOpen(false)}
+        onApplied={() => {
+          onFiltersApplied?.();
+          setFiltersOpen(false);
+        }}
       />
-    </View>
+    </>
   );
 }

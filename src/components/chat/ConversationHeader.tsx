@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Pressable, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Avatar } from '../Avatar';
 import { colors } from '../../theme/colors';
 
@@ -19,6 +20,7 @@ export function ConversationHeader({
   onBack,
 }: Props) {
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
   const name = otherName ?? '—';
   const displayName = otherUserAge != null ? `${name}, ${otherUserAge}` : name;
 
@@ -29,7 +31,10 @@ export function ConversationHeader({
   };
 
   return (
-    <View className="flex-row items-center px-4 pt-2 pb-3 border-b border-cream-300 bg-cream-200">
+    <View
+      className="flex-row items-center px-4 pb-3 border-b border-cream-300 bg-cream-200"
+      style={{ paddingTop: Math.max(insets.top, 8) }}
+    >
       <Pressable
         onPress={onBack}
         className="w-10 h-10 rounded-full bg-white items-center justify-center border border-cream-300 mr-2"

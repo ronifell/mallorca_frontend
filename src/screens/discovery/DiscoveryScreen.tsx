@@ -212,7 +212,12 @@ export function DiscoveryScreen() {
 
   return (
     <Screen padded={false}>
-      <DiscoveryHeader />
+      <DiscoveryHeader
+        onFiltersApplied={() => {
+          setDeck([]);
+          void refetch();
+        }}
+      />
       <DiscoveryModeToggle mode={mode} onChange={setMode} />
 
       {mode === 'likedYou' ? (

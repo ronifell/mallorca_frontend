@@ -56,7 +56,7 @@ const OBFUSCATED_DOMAIN_RE = new RegExp(
 
 // --- Social handles / off-platform contact ----------------------------------
 const HANDLE_RE = /(?:^|[^\w@/])@[a-z0-9._]{2,30}\b/i;
-const SOCIAL_PLATFORM_RE = wordList([
+const SOCIAL_PLATFORM_TERMS = [
   'instagram',
   'insta',
   'whatsapp',
@@ -65,11 +65,14 @@ const SOCIAL_PLATFORM_RE = wordList([
   'wasap',
   'wsp',
   'telegram',
+  'telegra',
   'snapchat',
   'snap chat',
   'tiktok',
   'tik tok',
+  'tiktoc',
   'facebook',
+  'faceboo',
   'messenger',
   'onlyfans',
   'only fans',
@@ -85,12 +88,15 @@ const SOCIAL_PLATFORM_RE = wordList([
   'kik',
   'viber',
   'discord',
+  'discor',
   'threads',
   'pinterest',
   'reddit',
   'tumblr',
   'skype',
-]);
+];
+const SOCIAL_PLATFORM_RE = wordList(SOCIAL_PLATFORM_TERMS);
+const SOCIAL_PREFIX_MIN = 5;
 
 // --- Phone numbers ----------------------------------------------------------
 // Wide separator class to catch symbol-obfuscated numbers ("6*6*6_7-7-7").
@@ -314,7 +320,51 @@ function hasEmail(variants: string[]): boolean {
 function hasSocial(variants: string[], raw: string): boolean {
   if (HANDLE_RE.test(raw)) return true;
   if (testAny(variants, HANDLE_RE)) return true;
-  return testAny(variants, SOCIAL_PLATFORM_RE);
+  if (testAny(variants, SOCIAL_PLATFORM_RE)) return true;
+  return hasSocialPrefixToken(variants);
+}
+
+function compactAlphaNum(text: string): string {
+  return fold(text).replace(/[^a-z0-9]/g, '');
+}
+
+function tokenize(text: string): string[] {
+  return fold(text)
+    .split(/[^a-z0-9]+/)
+    .filter(Boolean);
+}
+
+function hasSocialPrefixToken(variants: string[]): boolean {
+  for (const v of variants) {
+    for (const token of tokenize(v)) {
+      if (token.length < SOCIAL_PREFIX_MIN) continue;
+      for (const term of SOCIAL_PLATFORM_TERMS) {
+        const foldedTerm = compactAlphaNum(term);
+        if (foldedTerm.length < SOCIAL_PREFIX_MIN) continue;
+        if (token === foldedTerm) continue;
+        if (foldedTerm.startsWith(token)) return true;
+      }
+    }
+  }
+  return false;
+}
+
+/** Remove tokens that are partial social-platform names (typing-bypass cleanup). */
+export function stripSocialPrefixTokens(text: string): string {
+  const parts = text.split(/(\s+)/);
+  const cleaned = parts.map((part) => {
+    if (/^\s+$/.test(part)) return part;
+    const token = compactAlphaNum(part);
+    if (token.length < SOCIAL_PREFIX_MIN) return part;
+    for (const term of SOCIAL_PLATFORM_TERMS) {
+      const foldedTerm = compactAlphaNum(term);
+      if (foldedTerm.length < SOCIAL_PREFIX_MIN) continue;
+      if (token === foldedTerm) continue;
+      if (foldedTerm.startsWith(token)) return '';
+    }
+    return part;
+  });
+  return cleaned.join('').replace(/\s{2,}/g, ' ').trimEnd();
 }
 
 function isCapsFlood(raw: string): boolean {

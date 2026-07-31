@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigationState } from '@react-navigation/native';
 import { useQueryClient } from '@tanstack/react-query';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Modal,
@@ -31,6 +32,26 @@ export function LanguageSwitcher() {
   const qc = useQueryClient();
   const user = useAuthStore((s) => s.user);
   const [open, setOpen] = useState(false);
+
+  const activeRouteName = useNavigationState((state) => {
+    if (!state) return null;
+    const route = state.routes[state.index];
+    if (route.state) {
+      const nested = route.state as { routes: { name: string }[]; index: number };
+      return nested.routes[nested.index]?.name ?? route.name;
+    }
+    return route.name;
+  });
+
+  const hidden = useMemo(
+    () =>
+      activeRouteName === 'Conversation' ||
+      activeRouteName === 'Discover' ||
+      activeRouteName === 'VerifyEmail',
+    [activeRouteName],
+  );
+
+  if (hidden) return null;
 
   const current = getCurrentLanguage(i18n.language);
   const active = LANGUAGE_OPTIONS.find((option) => option.id === current) ?? LANGUAGE_OPTIONS[0];

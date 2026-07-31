@@ -124,6 +124,8 @@ export function ConversationScreen({ route, navigation }: Props) {
   const isPremium = authIsPremium || (me?.isPremium ?? false);
 
   const [messages, setMessages] = useState<Message[]>([]);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [text, setText] = useState('');
   const [otherTyping, setOtherTyping] = useState(false);
   const [premiumBlocked, setPremiumBlocked] = useState(false);
@@ -139,6 +141,7 @@ export function ConversationScreen({ route, navigation }: Props) {
   const typingTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const otherTypingTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const listRef = useRef<FlatList<ChatRow>>(null);
+  const lastTailMessageId = useRef<string | null>(null);
 
   const stopTyping = useCallback(() => {
     if (typingTimeout.current) {
@@ -183,12 +186,36 @@ export function ConversationScreen({ route, navigation }: Props) {
     try {
       const msgs = await chatApi.list(conversationId);
       setMessages(msgs);
+      setHasMore(msgs.length >= 30);
       chatApi.markRead(conversationId).catch(() => undefined);
       qc.invalidateQueries({ queryKey: ['matches'] });
     } catch (e) {
       Alert.alert(t('common.error'), extractErrorMessage(e));
     }
   }, [conversationId, qc, t]);
+
+  const loadOlderMessages = useCallback(async () => {
+    if (loadingMore || !hasMore || messages.length === 0) return;
+    const oldest = [...messages].sort((a, b) => a.createdAt.localeCompare(b.createdAt))[0];
+    if (!oldest) return;
+
+    setLoadingMore(true);
+    try {
+      const older = await chatApi.list(conversationId, oldest.createdAt, 30);
+      if (older.length < 30) {
+        setHasMore(false);
+      }
+      setMessages((prev) => {
+        const ids = new Set(prev.map((m) => m.id));
+        const merged = [...older.filter((m) => !ids.has(m.id)), ...prev];
+        return merged.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+      });
+    } catch (e) {
+      Alert.alert(t('common.error'), extractErrorMessage(e));
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [conversationId, hasMore, loadingMore, messages, t]);
 
   useFocusEffect(
     useCallback(() => {
@@ -304,8 +331,12 @@ export function ConversationScreen({ route, navigation }: Props) {
   }, [clearOtherTyping, conversationId, loadInitial, myId, qc]);
 
   useEffect(() => {
+    const sorted = [...messages].sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+    const tail = sorted[sorted.length - 1];
+    if (!tail || tail.id === lastTailMessageId.current) return;
+    lastTailMessageId.current = tail.id;
     setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 50);
-  }, [messages.length]);
+  }, [messages]);
 
   // Track the soft keyboard height on Android as a fallback for unreliable
   // `adjustResize`. If the OS already shrank the window, we add no extra
@@ -530,7 +561,19 @@ export function ConversationScreen({ route, navigation }: Props) {
           contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 12, paddingBottom: 8 }}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
-          onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: false })}
+          onScroll={(e) => {
+            if (e.nativeEvent.contentOffset.y <= 48) {
+              void loadOlderMessages();
+            }
+          }}
+          scrollEventThrottle={200}
+          ListHeaderComponent={
+            loadingMore ? (
+              <View className="py-3 items-center">
+                <Text className="text-ink-400 text-sm">{t('chat.loadingHistory')}</Text>
+              </View>
+            ) : null
+          }
           renderItem={({ item }) => {
             if (item.kind === 'date') {
               return <ChatDateSeparator label={item.label} />;

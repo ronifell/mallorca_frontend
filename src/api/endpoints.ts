@@ -80,6 +80,7 @@ export const usersApi = {
     api.patch<void>('/users/me/photos/order', { order }).then((r) => r.data),
   updateFcmToken: (fcmToken: string) =>
     api.put<void>('/users/me/fcm-token', { fcmToken }).then((r) => r.data),
+  clearFcmToken: () => api.delete<void>('/users/me/fcm-token').then((r) => r.data),
   updateNotifications: (input: {
     matchesEnabled?: boolean;
     messagesEnabled?: boolean;
