@@ -141,9 +141,8 @@ export function ConversationScreen({ route, navigation }: Props) {
   const typingTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const otherTypingTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const listRef = useRef<FlatList<ChatRow>>(null);
-  const lastTailMessageId = useRef<string | null>(null);
-  /** Avoid loading older pages until the first scroll-to-latest has finished. */
-  const readyForPagination = useRef(false);
+  /** Prevents inverted `onEndReached` from firing during the first layout pass. */
+  const paginationEnabled = useRef(false);
 
   const stopTyping = useCallback(() => {
     if (typingTimeout.current) {
@@ -221,8 +220,7 @@ export function ConversationScreen({ route, navigation }: Props) {
 
   useFocusEffect(
     useCallback(() => {
-      lastTailMessageId.current = null;
-      readyForPagination.current = false;
+      paginationEnabled.current = false;
       void loadInitial();
     }, [loadInitial]),
   );
@@ -335,27 +333,18 @@ export function ConversationScreen({ route, navigation }: Props) {
   }, [clearOtherTyping, conversationId, loadInitial, myId, qc]);
 
   useEffect(() => {
-    lastTailMessageId.current = null;
-    readyForPagination.current = false;
-  }, [conversationId]);
+    paginationEnabled.current = false;
+    if (!messages.length) return;
+    const timer = setTimeout(() => {
+      paginationEnabled.current = true;
+    }, 600);
+    return () => clearTimeout(timer);
+  }, [conversationId, messages.length]);
 
-  useEffect(() => {
-    const sorted = [...messages].sort((a, b) => a.createdAt.localeCompare(b.createdAt));
-    const tail = sorted[sorted.length - 1];
-    if (!tail || tail.id === lastTailMessageId.current) return;
-
-    const isInitialLoad = lastTailMessageId.current === null;
-    lastTailMessageId.current = tail.id;
-
-    requestAnimationFrame(() => {
-      listRef.current?.scrollToEnd({ animated: !isInitialLoad });
-      if (isInitialLoad) {
-        setTimeout(() => {
-          readyForPagination.current = true;
-        }, 400);
-      }
-    });
-  }, [messages]);
+  const handleLoadOlder = useCallback(() => {
+    if (!paginationEnabled.current || loadingMore || !hasMore) return;
+    void loadOlderMessages();
+  }, [hasMore, loadOlderMessages, loadingMore]);
 
   // Track the soft keyboard height on Android as a fallback for unreliable
   // `adjustResize`. If the OS already shrank the window, we add no extra
@@ -373,7 +362,7 @@ export function ConversationScreen({ route, navigation }: Props) {
       // adjustResize is working — don't add manual padding on top.
       const needsManual = systemAdjustedBy < kb * 0.5;
       setAndroidKeyboardOffset(needsManual ? kb : 0);
-      setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 60);
+      setTimeout(() => listRef.current?.scrollToOffset({ offset: 0, animated: true }), 60);
     };
     const onHide = () => setAndroidKeyboardOffset(0);
 
@@ -550,6 +539,7 @@ export function ConversationScreen({ route, navigation }: Props) {
   );
 
   const chatRows = useMemo(() => buildChatRows(messages, t), [messages, t]);
+  const invertedRows = useMemo(() => [...chatRows].reverse(), [chatRows]);
   const inputDisabled = premiumBlocked;
   const topPadding = useTopScreenPadding();
 
@@ -573,21 +563,21 @@ export function ConversationScreen({ route, navigation }: Props) {
 
         <FlatList
           ref={listRef}
-          data={chatRows}
+          inverted
+          data={invertedRows}
           keyExtractor={(row) => row.id}
           className="flex-1"
           style={{ backgroundColor: 'transparent' }}
           contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 12, paddingBottom: 8 }}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
-          onScroll={(e) => {
-            if (!readyForPagination.current) return;
-            if (e.nativeEvent.contentOffset.y <= 48) {
-              void loadOlderMessages();
-            }
+          maintainVisibleContentPosition={{
+            minIndexForVisible: 0,
+            autoscrollToTopThreshold: 100,
           }}
-          scrollEventThrottle={200}
-          ListHeaderComponent={
+          onEndReached={handleLoadOlder}
+          onEndReachedThreshold={0.2}
+          ListFooterComponent={
             loadingMore ? (
               <View className="py-3 items-center">
                 <Text className="text-ink-400 text-sm">{t('chat.loadingHistory')}</Text>
@@ -612,7 +602,7 @@ export function ConversationScreen({ route, navigation }: Props) {
               />
             );
           }}
-          ListFooterComponent={
+          ListHeaderComponent={
             otherTyping ? (
               <View className="flex-row mb-3">
                 <View className="w-8 mr-2" />

@@ -127,7 +127,8 @@ export function DiscoveryFiltersSheet({ visible, profile, onClose, onApplied }: 
             <ProfileSectionLabel label={t('profile.ageRange')} icon="calendar-outline" />
             <AgeRangePicker min={ageRange.min} max={ageRange.max} onChange={setAgeRange} />
 
-            <ProfileSectionLabel label={t('profile.relationshipGoals')} icon="heart-outline" />
+            <ProfileSectionLabel label={t('profile.relationshipGoal')} icon="sparkles-outline" />
+            <Text className="text-ink-400 text-xs mb-2">{t('profile.relationshipGoalHelper')}</Text>
             <RelationshipGoalChips value={relationshipGoals} onChange={setRelationshipGoals} />
 
             {error ? <Text style={styles.error}>{error}</Text> : null}
