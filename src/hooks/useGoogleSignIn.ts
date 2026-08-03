@@ -4,10 +4,16 @@ import { extractErrorMessage } from '../api/client';
 import { authApi } from '../api/endpoints';
 import { hasGoogleClientId, isGoogleConfigured, signInWithGoogle } from '../services/googleAuth';
 import { useAuthStore } from '../store/auth';
+import { mapAuthServerError } from '../utils/mapAuthServerError';
 
 interface Options {
   /** When true (Register flow), the user must accept Terms + Privacy first. */
   requireConsent?: boolean;
+  /**
+   * When true (Login flow), the footer legal copy counts as consent for new
+   * Google sign-ups — always send acceptedTerms/acceptedPrivacy to the API.
+   */
+  implicitConsent?: boolean;
   acceptedTerms?: boolean;
   acceptedPrivacy?: boolean;
   onError?: (message: string) => void;
@@ -25,6 +31,7 @@ const ERROR_KEYS = {
 
 export function useGoogleSignIn({
   requireConsent = false,
+  implicitConsent = false,
   acceptedTerms = false,
   acceptedPrivacy = false,
   onError,
@@ -64,9 +71,10 @@ export function useGoogleSignIn({
         return;
       }
 
+      const hasConsent = implicitConsent || (acceptedTerms && acceptedPrivacy);
       const result = await authApi.loginWithGoogle({
         idToken: outcome.idToken,
-        ...(acceptedTerms && acceptedPrivacy
+        ...(hasConsent
           ? { acceptedTerms: true as const, acceptedPrivacy: true as const }
           : {}),
         language: (i18n.language as 'en' | 'es') ?? 'es',
@@ -77,7 +85,7 @@ export function useGoogleSignIn({
         refreshToken: result.refreshToken,
       });
     } catch (e) {
-      onError?.(extractErrorMessage(e));
+      onError?.(mapAuthServerError(extractErrorMessage(e), t));
     } finally {
       setGoogleLoading(false);
     }

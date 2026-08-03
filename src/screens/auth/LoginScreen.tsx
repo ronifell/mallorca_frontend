@@ -36,7 +36,10 @@ export function LoginScreen({ navigation }: Props) {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { onGooglePress, googleLoading, showGoogleButton } = useGoogleSignIn({ onError: setError });
+  const { onGooglePress, googleLoading, showGoogleButton } = useGoogleSignIn({
+    implicitConsent: true,
+    onError: setError,
+  });
 
   const onSubmit = async () => {
     setLoading(true);
