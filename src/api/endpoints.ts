@@ -34,7 +34,9 @@ export const authApi = {
     language?: 'en' | 'es';
   }) => api.post<AuthResult>('/auth/google', input).then((r) => r.data),
   logout: (refreshToken: string) =>
-    api.post<void>('/auth/logout', { refreshToken }).then((r) => r.data),
+    api
+      .post<void>('/auth/logout', { refreshToken }, { _sessionTeardown: true })
+      .then((r) => r.data),
   forgotPassword: (email: string) =>
     api.post<void>('/auth/forgot-password', { email }).then((r) => r.data),
   resetPassword: (email: string, code: string, password: string) =>
@@ -80,7 +82,8 @@ export const usersApi = {
     api.patch<void>('/users/me/photos/order', { order }).then((r) => r.data),
   updateFcmToken: (fcmToken: string) =>
     api.put<void>('/users/me/fcm-token', { fcmToken }).then((r) => r.data),
-  clearFcmToken: () => api.delete<void>('/users/me/fcm-token').then((r) => r.data),
+  clearFcmToken: () =>
+    api.delete<void>('/users/me/fcm-token', { _sessionTeardown: true }).then((r) => r.data),
   updateNotifications: (input: {
     matchesEnabled?: boolean;
     messagesEnabled?: boolean;

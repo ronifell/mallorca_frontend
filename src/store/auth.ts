@@ -2,7 +2,10 @@ import { create } from 'zustand';
 import { authApi, usersApi } from '../api/endpoints';
 import { AuthUser } from '../api/types';
 import { detachPushTokenFromServer, resetFcmTokenCache } from '../services/notifications';
+import { isLogoutInFlight, setLogoutInFlight, getLogoutInFlight } from '../services/sessionTeardown';
 import { tokenStorage } from '../services/storage';
+
+export { isLogoutInFlight } from '../services/sessionTeardown';
 
 interface AuthState {
   user: AuthUser | null;
@@ -50,18 +53,28 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   async logout() {
-    try {
-      await detachPushTokenFromServer();
-      const refresh = await tokenStorage.getRefresh();
-      if (refresh) {
-        await authApi.logout(refresh).catch(() => undefined);
+    const inFlight = getLogoutInFlight();
+    if (inFlight) return inFlight;
+
+    const promise = (async () => {
+      try {
+        await detachPushTokenFromServer();
+        const refresh = await tokenStorage.getRefresh();
+        if (refresh) {
+          await authApi.logout(refresh).catch(() => undefined);
+        }
+      } catch {
+        // Best-effort server cleanup; always clear local session below.
+      } finally {
+        await tokenStorage.clear();
+        resetFcmTokenCache();
+        set({ user: null, initialized: true });
+        setLogoutInFlight(null);
       }
-    } catch {
-      // Best-effort server cleanup; always clear local session below.
-    }
-    await tokenStorage.clear();
-    resetFcmTokenCache();
-    set({ user: null, initialized: true });
+    })();
+
+    setLogoutInFlight(promise);
+    return promise;
   },
 
   /**

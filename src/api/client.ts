@@ -1,6 +1,15 @@
 import axios, { AxiosError, AxiosRequestConfig, InternalAxiosRequestConfig } from 'axios';
 import { env } from '../config/env';
+import { isLogoutInFlight } from '../services/sessionTeardown';
 import { tokenStorage } from '../services/storage';
+
+declare module 'axios' {
+  export interface AxiosRequestConfig {
+    /** Set on logout / FCM-detach requests — skip refresh + unauthorized callback. */
+    _sessionTeardown?: boolean;
+    _retried?: boolean;
+  }
+}
 
 export const api = axios.create({
   baseURL: `${env.apiBaseUrl}/api`,
@@ -77,6 +86,9 @@ api.interceptors.response.use(
     const body = original?.data;
     const isMultipart = typeof FormData !== 'undefined' && body instanceof FormData;
     if (status === 401 && original && !original._retried && !isMultipart) {
+      if (original._sessionTeardown || isLogoutInFlight()) {
+        return Promise.reject(error);
+      }
       original._retried = true;
       const newAccess = await refreshAccessToken();
       if (newAccess) {
@@ -84,8 +96,10 @@ api.interceptors.response.use(
         (original.headers as Record<string, string>).Authorization = `Bearer ${newAccess}`;
         return api.request(original);
       }
-      await tokenStorage.clear();
-      onUnauthorized?.();
+      // Let logout() clear tokens while they are still available for teardown calls.
+      if (!isLogoutInFlight()) {
+        await onUnauthorized?.();
+      }
     }
     return Promise.reject(error);
   },
@@ -131,8 +145,9 @@ export async function postMultipartFile<T>(
     if (response.status === 401 && !authRetried) {
       const newAccess = await refreshAccessToken();
       if (newAccess) return send(newAccess, true, networkRetried);
-      await tokenStorage.clear();
-      onUnauthorized?.();
+      if (!isLogoutInFlight()) {
+        await onUnauthorized?.();
+      }
       throw new ApiRequestError('Sesión expirada. Inicia sesión de nuevo.', 401);
     }
 
