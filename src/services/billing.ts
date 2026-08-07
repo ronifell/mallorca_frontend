@@ -21,6 +21,7 @@
  * backend must have `BILLING_ALLOW_MOCK=true` for the mock token to be
  * accepted. Production builds via EAS have the native module linked.
  */
+import { LocalizedError } from '../utils/localizedError';
 import { NativeModules, Platform } from 'react-native';
 import type {
   Purchase,
@@ -179,7 +180,7 @@ function waitForPurchase(
       if (settled) return;
       settled = true;
       cleanup();
-      reject(new Error('La compra ha tardado demasiado. Inténtalo de nuevo.'));
+      reject(new LocalizedError('billing.purchaseTimeout'));
     }, timeoutMs);
 
     unsubUpdate = RNIap.purchaseUpdatedListener((purchase) => {
@@ -219,9 +220,7 @@ export async function startPurchase(productId: ProductId): Promise<PurchaseResul
   }
 
   if (!IAP_NATIVE_AVAILABLE) {
-    throw new Error(
-      'La facturación de Google Play no está disponible en Expo Go. Instala una compilación de preview o producción para probar compras reales.',
-    );
+    throw new LocalizedError('billing.expoGoUnavailable');
   }
 
   await initBillingConnection();
@@ -232,13 +231,11 @@ export async function startPurchase(productId: ProductId): Promise<PurchaseResul
     const subs = await RNIap.getSubscriptions({ skus: [productId] });
     const sub = subs.find((s) => s.productId === productId) as SubscriptionAndroid | undefined;
     if (!sub) {
-      throw new Error(
-        `La suscripción «${productId}» no está disponible en Google Play. Asegúrate de que el producto esté creado y activado en Play Console.`,
-      );
+      throw new LocalizedError('billing.subscriptionNotFound', { productId });
     }
     const offer = sub.subscriptionOfferDetails?.[0];
     if (!offer?.offerToken) {
-      throw new Error(`No se encontró un offerToken para «${productId}».`);
+      throw new LocalizedError('billing.offerTokenMissing', { productId });
     }
 
     // Attach listeners before opening the sheet so we never miss the token
@@ -250,7 +247,7 @@ export async function startPurchase(productId: ProductId): Promise<PurchaseResul
     const purchase = await purchasePromise;
     const purchaseToken = extractPurchaseToken(purchase);
     if (!purchaseToken) {
-      throw new Error('Google Play no ha devuelto un token de compra.');
+      throw new LocalizedError('billing.missingPurchaseToken');
     }
 
     return {
@@ -264,9 +261,7 @@ export async function startPurchase(productId: ProductId): Promise<PurchaseResul
   // iOS: the backend does not yet support App Store receipt validation.
   // Reject explicitly so the UI can show a clear message rather than the
   // generic "must be validated through Google Play" from the server.
-  throw new Error(
-    'Las suscripciones a través de App Store aún no están disponibles. Usa un dispositivo Android.',
-  );
+  throw new LocalizedError('billing.appStoreUnavailable');
 }
 
 /**

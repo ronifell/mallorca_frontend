@@ -28,7 +28,7 @@
       "package": "es.citasmallorca.app",
       "versionCode": 23,
       "usesCleartextTraffic": true,
-      "softwareKeyboardLayoutMode": "resize",
+      "softwareKeyboardLayoutMode": "pan",
       "intentFilters": [
         {
           "action": "VIEW",

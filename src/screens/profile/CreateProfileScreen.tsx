@@ -1,26 +1,13 @@
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
-import { extractErrorMessage } from '../../api/client';
 import { usersApi } from '../../api/endpoints';
 import { Gender, InterestSelection, RelationshipGoal } from '../../api/types';
-import { AgeRangePicker } from '../../components/profile/AgeRangePicker';
-import { BioTextArea } from '../../components/profile/BioTextArea';
-import { CityPicker } from '../../components/profile/CityPicker';
-import { GenderToggle } from '../../components/profile/GenderToggle';
-import { InterestPill, InterestPillRow } from '../../components/profile/InterestPill';
-import { LanguageFlagPill } from '../../components/profile/LanguageFlagPill';
 import { ProfileContinueButton } from '../../components/profile/ProfileContinueButton';
-import { ProfileSectionLabel } from '../../components/profile/ProfileSectionLabel';
+import { ProfileDetailsFields, ProfileIdentityFields } from '../../components/profile/ProfileFormFields';
 import { ProfileSetupShell } from '../../components/profile/ProfileSetupShell';
-import { RelationshipGoalChips } from '../../components/profile/RelationshipGoalChips';
-import { Input } from '../../components/Input';
-import {
-  GENDER_LABEL_KEYS,
-  INTEREST_OPTIONS,
-  LANGUAGE_OPTIONS,
-} from '../../config/profileOptions';
+import { GENDER_LABEL_KEYS } from '../../config/profileOptions';
 import { ProfileSetupStackParamList } from '../../navigation/types';
 import { useContentFilter } from '../../hooks/useContentFilter';
 import {
@@ -28,6 +15,7 @@ import {
   formatBirthDateInput,
 } from '../../utils/birthDateFormat';
 import { validateProfileFields, extractContentBlockedMessage } from '../../utils/contentFilterHelpers';
+import { formatUserError } from '../../utils/formatUserError';
 import { useAuthStore } from '../../store/auth';
 
 type Props = NativeStackScreenProps<ProfileSetupStackParamList, 'CreateProfile'>;
@@ -58,11 +46,11 @@ export function CreateProfileScreen({ navigation }: Props) {
         gender_fluid: t(GENDER_LABEL_KEYS.gender_fluid),
         other: t(GENDER_LABEL_KEYS.other),
         prefer_not_to_say: t(GENDER_LABEL_KEYS.prefer_not_to_say),
-      } as Record<Gender, string>),
+      }) as Record<Gender, string>,
     [t],
   );
 
-  const toggleInterest = (id: InterestSelection) =>
+  const toggleInterest = useCallback((id: InterestSelection) => {
     setInterests((prev) => {
       if (id === 'everyone') {
         return prev.includes('everyone') ? [] : ['everyone'];
@@ -70,9 +58,15 @@ export function CreateProfileScreen({ navigation }: Props) {
       const without = prev.filter((x) => x !== 'everyone');
       return without.includes(id) ? without.filter((x) => x !== id) : [...without, id];
     });
+  }, []);
 
-  const toggleLang = (id: string) =>
+  const toggleLang = useCallback((id: string) => {
     setLanguages((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  }, []);
+
+  const onBirthDateChange = useCallback((v: string) => {
+    setBirthDate(formatBirthDateInput(v));
+  }, []);
 
   const submit = async () => {
     setError(null);
@@ -117,7 +111,7 @@ export function CreateProfileScreen({ navigation }: Props) {
       });
       navigation.navigate('UploadPhotos');
     } catch (e) {
-      setError(extractContentBlockedMessage(e, t) ?? extractErrorMessage(e));
+      setError(extractContentBlockedMessage(e, t) ?? formatUserError(e, t));
     } finally {
       setLoading(false);
     }
@@ -135,85 +129,30 @@ export function CreateProfileScreen({ navigation }: Props) {
         <Text className="text-ink-400 text-sm mt-2 leading-5">{t('profile.incomplete')}</Text>
       </View>
 
-      <ProfileSectionLabel label={t('profile.firstName')} icon="person-outline" />
-      <Input
-        elevated
-        value={firstName}
-        onChangeText={setFirstName}
-        placeholder={t('profile.firstNamePlaceholder')}
-        leftIcon="person-outline"
-        autoCapitalize="words"
-        filterContext="profile"
+      <ProfileIdentityFields
+        firstName={firstName}
+        onFirstNameChange={setFirstName}
+        birthDate={birthDate}
+        onBirthDateChange={onBirthDateChange}
       />
 
-      <ProfileSectionLabel label={t('profile.birthDate')} icon="calendar-outline" />
-      <Input
-        elevated
-        placeholder={t('profile.birthDatePlaceholder')}
-        value={birthDate}
-        onChangeText={(v) => setBirthDate(formatBirthDateInput(v))}
-        keyboardType="number-pad"
-        maxLength={10}
-        rightIcon="calendar-outline"
+      <ProfileDetailsFields
+        gender={gender}
+        onGenderChange={setGender}
+        genderLabels={genderLabels}
+        interests={interests}
+        onToggleInterest={toggleInterest}
+        relationshipGoals={relationshipGoals}
+        onRelationshipGoalsChange={setRelationshipGoals}
+        ageRange={ageRange}
+        onAgeRangeChange={setAgeRange}
+        city={city}
+        onCityChange={setCity}
+        bio={bio}
+        onBioChange={setBio}
+        languages={languages}
+        onToggleLang={toggleLang}
       />
-
-      <ProfileSectionLabel label={t('profile.iAm')} icon="person-circle-outline" />
-      <GenderToggle value={gender} onChange={setGender} labels={genderLabels} />
-
-      <ProfileSectionLabel label={t('profile.lookingFor')} icon="heart-outline" />
-      <Text className="text-ink-400 text-xs mb-2">{t('profile.interestedHelper')}</Text>
-      <InterestPillRow>
-        {INTEREST_OPTIONS.map((opt) => (
-          <InterestPill
-            key={opt.id}
-            type={opt.id}
-            label={t(opt.labelKey)}
-            selected={interests.includes(opt.id)}
-            onPress={() => toggleInterest(opt.id)}
-          />
-        ))}
-      </InterestPillRow>
-      <View className="mb-2" />
-
-      <ProfileSectionLabel label={t('profile.relationshipGoal')} icon="sparkles-outline" />
-      <Text className="text-ink-400 text-xs mb-2">{t('profile.relationshipGoalHelper')}</Text>
-      <RelationshipGoalChips value={relationshipGoals} onChange={setRelationshipGoals} />
-
-      <ProfileSectionLabel label={t('profile.ageRange')} icon="calendar-number-outline" />
-      <Text className="text-ink-400 text-xs mb-2">{t('profile.ageRangeHelper')}</Text>
-      <AgeRangePicker
-        min={ageRange.min}
-        max={ageRange.max}
-        onChange={setAgeRange}
-      />
-
-      <ProfileSectionLabel label={t('profile.city')} icon="location-outline" />
-      <CityPicker
-        value={city}
-        onChange={setCity}
-        placeholder={t('profile.cityPlaceholder')}
-      />
-
-      <ProfileSectionLabel label={t('profile.bio')} icon="chatbubble-outline" />
-      <BioTextArea
-        value={bio}
-        onChangeText={setBio}
-        placeholder={t('profile.bioPlaceholder')}
-      />
-
-      <ProfileSectionLabel label={t('profile.languages')} icon="globe-outline" />
-      <Text className="text-ink-400 text-xs mb-2">{t('profile.languagesHelper')}</Text>
-      <View className="flex-row flex-wrap mb-4">
-        {LANGUAGE_OPTIONS.map((lang) => (
-          <LanguageFlagPill
-            key={lang.id}
-            flag={lang.flag}
-            label={t(lang.labelKey)}
-            selected={languages.includes(lang.id)}
-            onPress={() => toggleLang(lang.id)}
-          />
-        ))}
-      </View>
 
       {error ? (
         <View className="bg-coral-50 rounded-2xl p-3 mb-4">

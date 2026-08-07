@@ -4,7 +4,6 @@ import { extractErrorMessage } from '../api/client';
 import { authApi } from '../api/endpoints';
 import { hasGoogleClientId, isGoogleConfigured, signInWithGoogle } from '../services/googleAuth';
 import { useAuthStore } from '../store/auth';
-import { mapAuthServerError } from '../utils/mapAuthServerError';
 
 interface Options {
   /** When true (Register flow), the user must accept Terms + Privacy first. */
@@ -85,7 +84,7 @@ export function useGoogleSignIn({
         refreshToken: result.refreshToken,
       });
     } catch (e) {
-      onError?.(mapAuthServerError(extractErrorMessage(e), t));
+      onError?.(extractErrorMessage(e));
     } finally {
       setGoogleLoading(false);
     }

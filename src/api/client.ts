@@ -2,6 +2,8 @@ import axios, { AxiosError, AxiosRequestConfig, InternalAxiosRequestConfig } fro
 import { env } from '../config/env';
 import { isLogoutInFlight } from '../services/sessionTeardown';
 import { tokenStorage } from '../services/storage';
+import { formatUserError } from '../utils/formatUserError';
+import { LocalizedError } from '../utils/localizedError';
 
 declare module 'axios' {
   export interface AxiosRequestConfig {
@@ -148,14 +150,16 @@ export async function postMultipartFile<T>(
       if (!isLogoutInFlight()) {
         await onUnauthorized?.();
       }
-      throw new ApiRequestError('Sesión expirada. Inicia sesión de nuevo.', 401);
+      throw new ApiRequestError(formatUserError(new LocalizedError('errors.sessionExpired')), 401);
     }
 
     if (!response.ok) {
-      let message = `La solicitud ha fallado (${response.status}).`;
+      let message = formatUserError(new LocalizedError('errors.requestFailed'));
       try {
         const data = (await response.json()) as { error?: { message?: string } };
-        message = data?.error?.message ?? message;
+        if (data?.error?.message) {
+          message = formatUserError(new Error(data.error.message));
+        }
       } catch {
         // Non-JSON error body.
       }
@@ -171,24 +175,5 @@ export async function postMultipartFile<T>(
 }
 
 export function extractErrorMessage(err: unknown): string {
-  if (axios.isAxiosError(err)) {
-    const data = err.response?.data as { error?: { message?: string } } | undefined;
-    if (data?.error?.message) return data.error.message;
-    if (!err.response) {
-      const msg = err.message?.toLowerCase() ?? '';
-      const code = err.code?.toLowerCase() ?? '';
-      if (
-        msg.includes('network error') ||
-        msg.includes('network request failed') ||
-        code === 'econnaborted' ||
-        msg.includes('timeout')
-      ) {
-        return 'No se puede conectar con el servidor. Comprueba tu conexión a internet.';
-      }
-    }
-    return err.message ?? 'La solicitud ha fallado.';
-  }
-  if (err instanceof ApiRequestError) return err.message;
-  if (err instanceof Error) return err.message;
-  return 'Error desconocido.';
+  return formatUserError(err);
 }

@@ -3,8 +3,9 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, ScrollView, Text, View } from 'react-native';
-import { extractErrorMessage } from '../../api/client';
 import { subscriptionsApi } from '../../api/endpoints';
+import { formatUserError } from '../../utils/formatUserError';
+import { formatAppDate } from '../../utils/localeFormat';
 import { PremiumActiveCard } from '../../components/premium/PremiumActiveCard';
 import { PremiumBenefitsCard } from '../../components/premium/PremiumBenefitsCard';
 import { PremiumHero } from '../../components/premium/PremiumHero';
@@ -20,13 +21,6 @@ import {
   toApiPayload,
 } from '../../services/billing';
 import { useAuthStore } from '../../store/auth';
-import { formatBillingError } from '../../utils/formatBillingError';
-
-const PREMIUM_DATE_LOCALE = 'es-ES';
-
-function formatPremiumDate(value: string): string {
-  return new Date(value).toLocaleDateString(PREMIUM_DATE_LOCALE);
-}
 
 export function PremiumScreen() {
   const { t } = useTranslation();
@@ -99,11 +93,11 @@ export function PremiumScreen() {
       await invalidatePremiumQueries();
       Alert.alert(
         t('premium.active'),
-        `${t('premium.until')}: ${formatPremiumDate(result.expiryDate)}`,
+                `${t('premium.until')}: ${formatAppDate(result.expiryDate)}`,
       );
       nav.goBack();
     } catch (e) {
-      const msg = formatBillingError(e);
+      const msg = formatUserError(e);
       if (msg) {
         Alert.alert(t('premium.purchaseError'), msg);
       }
@@ -133,7 +127,7 @@ export function PremiumScreen() {
             latestExpiry = result.expiryDate;
           }
         } catch (err) {
-          lastError = formatBillingError(err) || extractErrorMessage(err);
+          lastError = formatUserError(err);
         }
       }
 
@@ -143,14 +137,14 @@ export function PremiumScreen() {
         Alert.alert(
           t('premium.restoreSuccess'),
           latestExpiry
-            ? `${t('premium.until')}: ${formatPremiumDate(latestExpiry)}`
+            ? `${t('premium.until')}: ${formatAppDate(latestExpiry)}`
             : undefined,
         );
       } else {
         Alert.alert(t('premium.restore'), lastError ?? t('premium.restoreNone'));
       }
     } catch (e) {
-      Alert.alert(t('premium.restore'), formatBillingError(e) || extractErrorMessage(e));
+      Alert.alert(t('premium.restore'), formatUserError(e));
     } finally {
       setRestoring(false);
     }
