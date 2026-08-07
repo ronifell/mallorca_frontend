@@ -317,15 +317,32 @@ export async function restorePurchases(): Promise<PurchaseResult[]> {
 export async function openManageSubscriptions(sku?: ProductId): Promise<void> {
   if (shouldUseMock()) return;
 
-  const url = sku
-    ? `https://play.google.com/store/account/subscriptions?package=${ANDROID_PACKAGE}&sku=${sku}`
-    : `https://play.google.com/store/account/subscriptions?package=${ANDROID_PACKAGE}`;
-
-  if (Platform.OS === 'android' && sku) {
+  let resolvedSku = sku;
+  if (!resolvedSku && IAP_NATIVE_AVAILABLE) {
     try {
       await initBillingConnection();
       const RNIap = await import('react-native-iap');
-      await RNIap.deepLinkToSubscriptions({ sku });
+      const purchases = await RNIap.getAvailablePurchases();
+      const active = purchases.find(
+        (p) => p.productId === 'monthly_premium' || p.productId === 'annual_premium',
+      );
+      if (active?.productId === 'monthly_premium' || active?.productId === 'annual_premium') {
+        resolvedSku = active.productId;
+      }
+    } catch {
+      // Fall through to the package-wide subscription list.
+    }
+  }
+
+  const url = resolvedSku
+    ? `https://play.google.com/store/account/subscriptions?package=${ANDROID_PACKAGE}&sku=${resolvedSku}`
+    : `https://play.google.com/store/account/subscriptions?package=${ANDROID_PACKAGE}`;
+
+  if (Platform.OS === 'android' && resolvedSku) {
+    try {
+      await initBillingConnection();
+      const RNIap = await import('react-native-iap');
+      await RNIap.deepLinkToSubscriptions({ sku: resolvedSku });
       return;
     } catch {
       // Fall through to the Play Store URL.

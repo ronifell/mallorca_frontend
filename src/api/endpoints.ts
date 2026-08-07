@@ -180,7 +180,11 @@ export const subscriptionsApi = {
     api.get<{ plans: SubscriptionPlan[] }>('/subscriptions/plans').then((r) => r.data.plans),
   status: () =>
     api
-      .get<{ isPremium: boolean; expiryDate: string | null }>('/subscriptions/status')
+      .get<{
+        isPremium: boolean;
+        expiryDate: string | null;
+        productId: 'monthly_premium' | 'annual_premium' | null;
+      }>('/subscriptions/status')
       .then((r) => r.data),
   validate: (input: {
     platform: 'google_play' | 'app_store';

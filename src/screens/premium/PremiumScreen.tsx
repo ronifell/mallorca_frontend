@@ -68,6 +68,12 @@ export function PremiumScreen() {
     }
   }, [status?.isPremium, patchUser]);
 
+  useEffect(() => {
+    if (status?.productId === 'monthly_premium' || status?.productId === 'annual_premium') {
+      setSelected(status.productId);
+    }
+  }, [status?.productId]);
+
   const invalidatePremiumQueries = async () => {
     await qc.invalidateQueries({ queryKey: ['me'] });
     await qc.invalidateQueries({ queryKey: ['subscription-status'] });
@@ -157,6 +163,7 @@ export function PremiumScreen() {
   };
 
   const isPremium = status?.isPremium ?? false;
+  const manageSku = status?.productId ?? undefined;
 
   return (
     <PremiumShell>
@@ -188,7 +195,7 @@ export function PremiumScreen() {
           <PremiumSubscribeSection
             onSubscribe={subscribe}
             onRestore={restore}
-            manageSku={selected}
+            manageSku={manageSku}
             loading={loading}
             restoring={restoring}
             disabled={isPremium}
