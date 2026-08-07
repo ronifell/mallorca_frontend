@@ -1,25 +1,25 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Linking, Pressable, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import { LEGAL_LINKS } from '../../config/legal';
-import { openManageSubscriptions } from '../../services/billing';
+import { openManageSubscriptions, type ProductId } from '../../services/billing';
 import { LegalCheckbox } from '../auth/LegalCheckbox';
 import { colors } from '../../theme/colors';
 
 interface Props {
   onSubscribe: () => void;
   onRestore?: () => void;
+  manageSku?: ProductId;
   loading?: boolean;
   restoring?: boolean;
   disabled?: boolean;
 }
 
-const GOOGLE_PLAY_SUBS_URL = 'https://play.google.com/store/account/subscriptions';
-
 export function PremiumSubscribeSection({
   onSubscribe,
   onRestore,
+  manageSku,
   loading,
   restoring,
   disabled,
@@ -32,11 +32,7 @@ export function PremiumSubscribeSection({
   const isBlocked = loading || disabled || !legalAccepted;
 
   const onManage = () => {
-    // Deep link into the native subscription-management screen when possible;
-    // fall back to the web URL if the native module isn't linked (Expo Go).
-    openManageSubscriptions().catch(() => {
-      Linking.openURL(GOOGLE_PLAY_SUBS_URL).catch(() => undefined);
-    });
+    openManageSubscriptions(manageSku).catch(() => undefined);
   };
 
   return (

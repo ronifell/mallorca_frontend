@@ -22,7 +22,8 @@
  * accepted. Production builds via EAS have the native module linked.
  */
 import { LocalizedError } from '../utils/localizedError';
-import { NativeModules, Platform } from 'react-native';
+import { Linking, NativeModules, Platform } from 'react-native';
+import { ANDROID_PACKAGE } from '../config/linking';
 import type {
   Purchase,
   Subscription,
@@ -309,11 +310,29 @@ export async function restorePurchases(): Promise<PurchaseResult[]> {
  * Deep-link into the platform subscription management screen so the user can
  * cancel / change plan. Google Play requires this affordance for auto-renewing
  * subscriptions.
+ *
+ * On Android, `react-native-iap` requires a SKU for `deepLinkToSubscriptions`.
+ * We fall back to a package-scoped Play Store URL when the native deep link fails.
  */
 export async function openManageSubscriptions(sku?: ProductId): Promise<void> {
   if (shouldUseMock()) return;
-  const RNIap = await import('react-native-iap');
-  await RNIap.deepLinkToSubscriptions({ sku });
+
+  const url = sku
+    ? `https://play.google.com/store/account/subscriptions?package=${ANDROID_PACKAGE}&sku=${sku}`
+    : `https://play.google.com/store/account/subscriptions?package=${ANDROID_PACKAGE}`;
+
+  if (Platform.OS === 'android' && sku) {
+    try {
+      await initBillingConnection();
+      const RNIap = await import('react-native-iap');
+      await RNIap.deepLinkToSubscriptions({ sku });
+      return;
+    } catch {
+      // Fall through to the Play Store URL.
+    }
+  }
+
+  await Linking.openURL(url);
 }
 
 /**

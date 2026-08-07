@@ -15,6 +15,10 @@ interface Props {
 export function PremiumPlanCard({ plan, selected, onSelect }: Props) {
   const { t } = useTranslation();
   const periodLabel = plan.period === 'year' ? t('premium.perYear') : t('premium.perMonth');
+  const nameKey =
+    plan.id === 'annual_premium' ? 'premium.planAnnualName' : 'premium.planMonthlyName';
+  const descKey =
+    plan.id === 'annual_premium' ? 'premium.planAnnualDesc' : 'premium.planMonthlyDesc';
 
   return (
     <Pressable
@@ -25,9 +29,9 @@ export function PremiumPlanCard({ plan, selected, onSelect }: Props) {
       style={{ backgroundColor: selected ? colors.coral[50] : colors.white }}
     >
       <View className="flex-1 pr-2">
-        <Text className="text-ink-700 font-bold text-base">{plan.name}</Text>
+        <Text className="text-ink-700 font-bold text-base">{t(nameKey)}</Text>
         <Text className="text-ink-400 text-xs mt-1 leading-4" numberOfLines={2}>
-          {plan.description}
+          {t(descKey)}
         </Text>
         {plan.id === 'annual_premium' ? (
           <View className="self-start bg-coral-500 mt-1.5 px-2.5 py-0.5 rounded-md">

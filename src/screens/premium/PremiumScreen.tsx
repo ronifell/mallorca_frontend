@@ -62,6 +62,12 @@ export function PremiumScreen() {
     initBillingConnection().catch(() => undefined);
   }, [billingConfig?.mockEnabled]);
 
+  useEffect(() => {
+    if (status && !status.isPremium) {
+      patchUser({ isPremium: false });
+    }
+  }, [status?.isPremium, patchUser]);
+
   const invalidatePremiumQueries = async () => {
     await qc.invalidateQueries({ queryKey: ['me'] });
     await qc.invalidateQueries({ queryKey: ['subscription-status'] });
@@ -182,6 +188,7 @@ export function PremiumScreen() {
           <PremiumSubscribeSection
             onSubscribe={subscribe}
             onRestore={restore}
+            manageSku={selected}
             loading={loading}
             restoring={restoring}
             disabled={isPremium}
