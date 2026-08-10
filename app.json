@@ -27,7 +27,7 @@
     "android": {
       "package": "es.citasmallorca.app",
       "versionCode": 29,
-      "usesCleartextTraffic": true,
+      "usesCleartextTraffic": false,
       "softwareKeyboardLayoutMode": "pan",
       "intentFilters": [
         {

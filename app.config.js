@@ -312,6 +312,9 @@ const socketUrl =
   process.env.EXPO_PUBLIC_API_BASE_URL ??
   appJson.expo.extra?.socketUrl;
 
+/** Production builds talk HTTPS only; allow cleartext for preview/dev LAN HTTP. */
+const allowCleartext = process.env.EAS_BUILD_PROFILE !== 'production';
+
 module.exports = {
   expo: {
     ...appJson.expo,
@@ -326,7 +329,7 @@ module.exports = {
           android: {
             compileSdkVersion: 35,
             targetSdkVersion: 35,
-            usesCleartextTraffic: true,
+            usesCleartextTraffic: allowCleartext,
             extraMavenRepos: ['https://www.jitpack.io'],
           },
         },
@@ -371,6 +374,7 @@ module.exports = {
     },
     android: {
       ...appJson.expo.android,
+      usesCleartextTraffic: allowCleartext,
       googleServicesFile: resolveGoogleServicesFile(),
     },
     ios: {
