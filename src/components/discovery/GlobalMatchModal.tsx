@@ -49,6 +49,7 @@ export function GlobalMatchModal() {
         otherUserId: popup.otherUser.id,
         otherUserAge: null,
         otherUserPhoto: popup.otherUser.photo,
+        matchId: popup.matchId,
       });
       hide();
     } catch (e) {

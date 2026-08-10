@@ -15,5 +15,6 @@ export async function buildConversationParams(
     otherUserId: match.otherUser.id,
     otherUserAge: match.otherUser.age,
     otherUserPhoto: match.otherUser.coverPhoto,
+    matchId: match.matchId,
   };
 }

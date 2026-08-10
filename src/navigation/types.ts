@@ -36,6 +36,7 @@ export type RootStackParamList = {
     otherUserId: string;
     otherUserAge?: number | null;
     otherUserPhoto?: string | null;
+    matchId?: string;
   };
   MatchProfile: { matchId: string };
   CandidateProfile: { candidate: FeedCandidate; distanceKm?: number };

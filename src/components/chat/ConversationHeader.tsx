@@ -11,6 +11,9 @@ interface Props {
   otherUserAge?: number | null;
   otherUserPhoto?: string | null;
   onBack: () => void;
+  onReport: () => void;
+  onBlock: () => void;
+  onUnmatch: () => void;
 }
 
 export function ConversationHeader({
@@ -18,14 +21,20 @@ export function ConversationHeader({
   otherUserAge,
   otherUserPhoto,
   onBack,
+  onReport,
+  onBlock,
+  onUnmatch,
 }: Props) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const name = otherName ?? '—';
   const displayName = otherUserAge != null ? `${name}, ${otherUserAge}` : name;
 
-  const openMenu = () => {
-    Alert.alert(otherName ?? t('chat.title'), undefined, [
+  const openSafetyMenu = () => {
+    Alert.alert(t('chat.safety'), otherName ?? undefined, [
+      { text: t('profile.reportUser'), onPress: onReport },
+      { text: t('profile.blockUser'), style: 'destructive', onPress: onBlock },
+      { text: t('matches.unmatch'), style: 'destructive', onPress: onUnmatch },
       { text: t('common.cancel'), style: 'cancel' },
     ]);
   };
@@ -62,7 +71,7 @@ export function ConversationHeader({
       </View>
 
       <Pressable
-        onPress={() => Alert.alert(t('chat.safety'), t('chat.safetyComingSoon'))}
+        onPress={openSafetyMenu}
         className="w-9 h-9 items-center justify-center mr-1"
         accessibilityRole="button"
         accessibilityLabel={t('chat.safety')}
@@ -71,7 +80,7 @@ export function ConversationHeader({
       </Pressable>
 
       <Pressable
-        onPress={openMenu}
+        onPress={openSafetyMenu}
         className="w-9 h-9 items-center justify-center"
         accessibilityRole="button"
         accessibilityLabel={t('chat.openMenu')}

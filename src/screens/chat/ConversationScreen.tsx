@@ -18,13 +18,14 @@ import {
 } from 'react-native';
 import { Socket } from 'socket.io-client';
 import { extractErrorMessage } from '../../api/client';
-import { chatApi, usersApi } from '../../api/endpoints';
+import { chatApi, matchesApi, moderationApi, usersApi } from '../../api/endpoints';
 import { Message } from '../../api/types';
 import { ChatDateSeparator } from '../../components/chat/ChatDateSeparator';
 import { ConversationHeader } from '../../components/chat/ConversationHeader';
 import { ConversationInputBar } from '../../components/chat/ConversationInputBar';
 import { MessageBubble } from '../../components/chat/MessageBubble';
 import { PremiumConversationBanner } from '../../components/chat/PremiumConversationBanner';
+import { ReportUserSheet } from '../../components/moderation/ReportUserSheet';
 import { Screen } from '../../components/Screen';
 import { useTopScreenPadding } from '../../hooks/useTopScreenPadding';
 import { RootStackParamList } from '../../navigation/types';
@@ -112,7 +113,8 @@ export function ConversationScreen({ route, navigation }: Props) {
   const { t } = useTranslation();
   const { check: checkContent } = useContentFilter();
   const qc = useQueryClient();
-  const { conversationId, otherName, otherUserAge, otherUserPhoto } = route.params;
+  const { conversationId, otherName, otherUserId, otherUserAge, otherUserPhoto, matchId } =
+    route.params;
 
   const { data: me } = useQuery({ queryKey: ['me'], queryFn: () => usersApi.me() });
   const myId = me?.id;
@@ -129,6 +131,7 @@ export function ConversationScreen({ route, navigation }: Props) {
   const [text, setText] = useState('');
   const [otherTyping, setOtherTyping] = useState(false);
   const [premiumBlocked, setPremiumBlocked] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
   // Manual keyboard-height fallback for Android. The Stack.Navigator sets
   // `statusBarTranslucent: true`, which causes the activity to extend
   // behind the system bars and makes `windowSoftInputMode=adjustResize`
@@ -160,15 +163,14 @@ export function ConversationScreen({ route, navigation }: Props) {
     setOtherTyping(false);
   }, []);
 
-  // As soon as the user actually has Premium (e.g. just returned from the
-  // Premium screen after purchasing), drop the gating banner immediately so
-  // they don't have to leave and re-enter the conversation to send their
-  // first message.
+  // Drop the Premium gate banner when:
+  // - the viewer upgrades to Premium, or
+  // - the conversation already has messages (Premium initiated; Free may reply).
   useEffect(() => {
-    if (isPremium && premiumBlocked) {
+    if (premiumBlocked && (isPremium || messages.length > 0)) {
       setPremiumBlocked(false);
     }
-  }, [isPremium, premiumBlocked]);
+  }, [isPremium, messages.length, premiumBlocked]);
 
   useFocusEffect(
     useCallback(() => {
@@ -538,6 +540,66 @@ export function ConversationScreen({ route, navigation }: Props) {
     [conversationId, t, text],
   );
 
+  const resolveMatchId = useCallback(async (): Promise<string | null> => {
+    if (matchId) return matchId;
+    try {
+      const matches = await matchesApi.list();
+      const hit = matches.find(
+        (m) => m.conversationId === conversationId || m.otherUser.id === otherUserId,
+      );
+      return hit?.matchId ?? null;
+    } catch {
+      return null;
+    }
+  }, [conversationId, matchId, otherUserId]);
+
+  const handleUnmatch = useCallback(() => {
+    Alert.alert(t('matches.unmatch'), t('matches.unmatchConfirm'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      {
+        text: t('matches.unmatch'),
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            const id = await resolveMatchId();
+            if (!id) {
+              Alert.alert(t('common.error'), t('errors.generic'));
+              return;
+            }
+            await matchesApi.unmatch(id);
+            await qc.invalidateQueries({ queryKey: ['matches'] });
+            navigation.goBack();
+          } catch (e) {
+            Alert.alert(t('common.error'), extractErrorMessage(e));
+          }
+        },
+      },
+    ]);
+  }, [navigation, qc, resolveMatchId, t]);
+
+  const handleBlock = useCallback(() => {
+    Alert.alert(t('profile.block'), t('profile.blockConfirm'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      {
+        text: t('profile.block'),
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await moderationApi.block(otherUserId);
+            const id = await resolveMatchId();
+            if (id) await matchesApi.unmatch(id).catch(() => undefined);
+            await qc.invalidateQueries({ queryKey: ['matches'] });
+            await qc.invalidateQueries({ queryKey: ['feed'] });
+            Alert.alert(t('moderation.block'), t('moderation.blocked'));
+            navigation.goBack();
+          } catch (e) {
+            Alert.alert(t('common.error'), extractErrorMessage(e));
+          }
+        },
+      },
+    ]);
+  }, [navigation, otherUserId, qc, resolveMatchId, t]);
+
   const chatRows = useMemo(() => buildChatRows(messages, t), [messages, t]);
   const invertedRows = useMemo(() => [...chatRows].reverse(), [chatRows]);
   const inputDisabled = premiumBlocked;
@@ -555,6 +617,9 @@ export function ConversationScreen({ route, navigation }: Props) {
           otherUserAge={otherUserAge}
           otherUserPhoto={otherUserPhoto}
           onBack={() => navigation.goBack()}
+          onReport={() => setReportOpen(true)}
+          onBlock={handleBlock}
+          onUnmatch={handleUnmatch}
         />
 
         {isPremium && !premiumBlocked ? (
@@ -648,6 +713,12 @@ export function ConversationScreen({ route, navigation }: Props) {
         {Platform.OS === 'android' && androidKeyboardOffset > 0 ? (
           <View style={{ height: androidKeyboardOffset }} />
         ) : null}
+
+        <ReportUserSheet
+          visible={reportOpen}
+          userId={otherUserId}
+          onClose={() => setReportOpen(false)}
+        />
       </KeyboardAvoidingView>
     </Screen>
   );

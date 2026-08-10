@@ -184,6 +184,21 @@ const AGGRESSIVE_RE = wordList([
   'retard',
   'faggot',
   'nigger',
+  // English insults / harassment
+  'idiot',
+  'idiots',
+  'moron',
+  'morons',
+  'imbecile',
+  'dumbass',
+  'dumb ass',
+  'asshole',
+  'arsehole',
+  'dickhead',
+  'piece of shit',
+  'you suck',
+  'stupid bitch',
+  'stupid idiot',
   'te voy a matar',
   'te voy a encontrar',
   'te voy a hacer dano',
@@ -195,7 +210,11 @@ const AGGRESSIVE_RE = wordList([
   'vete a la mierda',
   'cabron',
   'imbecil',
+  'idiota',
   'idiota de mierda',
+  'gilipollas',
+  'estupido',
+  'pendejo',
 ]);
 
 // --- Illegal ----------------------------------------------------------------

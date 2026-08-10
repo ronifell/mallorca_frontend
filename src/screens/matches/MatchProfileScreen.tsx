@@ -72,6 +72,7 @@ export function MatchProfileScreen({ route, navigation }: Props) {
         otherUserId: profile.id,
         otherUserAge: profile.age,
         otherUserPhoto: profile.photos[0]?.url ?? null,
+        matchId: data.matchId,
       });
     } catch (e) {
       Alert.alert(t('common.error'), extractErrorMessage(e));

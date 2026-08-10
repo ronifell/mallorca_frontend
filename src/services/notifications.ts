@@ -239,6 +239,7 @@ async function handleNotificationResponse(
       let otherUserId = '';
       let otherUserPhoto: string | null = null;
       let otherUserAge: number | null = null;
+      let matchId: string | undefined;
       try {
         const matches = await matchesApi.list();
         const match = matches.find((m) => m.conversationId === conversationId);
@@ -247,6 +248,7 @@ async function handleNotificationResponse(
           otherUserId = match.otherUser.id;
           otherUserPhoto = match.otherUser.coverPhoto;
           otherUserAge = match.otherUser.age;
+          matchId = match.matchId;
         }
       } catch (err) {
         logPushWarning('Failed to enrich conversation from notification data', err);
@@ -257,6 +259,7 @@ async function handleNotificationResponse(
         otherUserId,
         otherUserPhoto,
         otherUserAge,
+        ...(matchId ? { matchId } : {}),
       });
       return;
     }
