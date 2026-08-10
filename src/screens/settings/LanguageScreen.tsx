@@ -33,8 +33,13 @@ export function LanguageScreen() {
 
   const choose = async (lang: 'en' | 'es') => {
     await setLanguage(lang);
-    usersApi.update({ appLanguage: lang }).catch(() => undefined);
-    qc.invalidateQueries({ queryKey: ['me'] });
+    // Await server sync — push copy is chosen from users.language on the backend.
+    try {
+      await usersApi.update({ appLanguage: lang });
+      qc.invalidateQueries({ queryKey: ['me'] });
+    } catch {
+      // Local UI already switched; next bootstrap will retry the sync.
+    }
     nav.goBack();
   };
 

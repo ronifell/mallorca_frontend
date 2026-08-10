@@ -272,7 +272,10 @@ async function handleNotificationResponse(
     }
 
     if (type === 'new_like' || type === 'super_like') {
-      nav.navigate('Main', { screen: 'Discover' } as never);
+      nav.navigate('Main', {
+        screen: 'Discover',
+        params: { mode: 'likedYou', likesTab: 'received' },
+      } as never);
       return;
     }
   } catch (err) {

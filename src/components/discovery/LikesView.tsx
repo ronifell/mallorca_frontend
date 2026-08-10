@@ -3,7 +3,7 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import * as Haptics from 'expo-haptics';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,
@@ -191,13 +191,17 @@ function SegmentButton({
  * the reciprocal like already exists). From a Sent row the X button cancels
  * the like (after confirmation).
  */
-export function LikesView() {
+export function LikesView({ initialTab = 'received' }: { initialTab?: Tab } = {}) {
   const { t } = useTranslation();
   const nav = useNavigation<Nav>();
   const qc = useQueryClient();
   const showMatchPopup = useMatchPopup((s) => s.show);
-  const [tab, setTab] = useState<Tab>('received');
+  const [tab, setTab] = useState<Tab>(initialTab);
   const [busyId, setBusyId] = useState<string | null>(null);
+
+  useEffect(() => {
+    setTab(initialTab);
+  }, [initialTab]);
 
   const received = useQuery({
     queryKey: ['likes', 'received'],

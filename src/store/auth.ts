@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { authApi, usersApi } from '../api/endpoints';
 import { AuthUser } from '../api/types';
+import i18n, { resolveAppLanguage } from '../i18n';
 import { detachPushTokenFromServer, resetFcmTokenCache } from '../services/notifications';
 import { isLogoutInFlight, setLogoutInFlight, getLogoutInFlight } from '../services/sessionTeardown';
 import { tokenStorage } from '../services/storage';
@@ -25,6 +26,9 @@ export const useAuthStore = create<AuthState>((set) => ({
   async setSession({ user, accessToken, refreshToken }) {
     await tokenStorage.setTokens(accessToken, refreshToken);
     set({ user, initialized: true });
+    // Align push language with the UI language as soon as a session starts.
+    const localLang = resolveAppLanguage(i18n.language);
+    await usersApi.update({ appLanguage: localLang }).catch(() => undefined);
   },
 
   patchUser(patch) {
@@ -98,6 +102,13 @@ export const useAuthStore = create<AuthState>((set) => ({
         !!me.city &&
         !!me.interestedIn &&
         me.photos.length > 0;
+      // Keep users.language in sync with the device UI language so FCM pushes
+      // (chosen server-side) match Settings → Language.
+      const localLang = resolveAppLanguage(i18n.language);
+      const serverLang = resolveAppLanguage(me.appLanguage);
+      if (serverLang !== localLang) {
+        await usersApi.update({ appLanguage: localLang }).catch(() => undefined);
+      }
       set({
         user: {
           id: me.id,

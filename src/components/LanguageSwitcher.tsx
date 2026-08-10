@@ -64,8 +64,13 @@ export function LanguageSwitcher() {
 
     await setLanguage(lang);
     if (user) {
-      usersApi.update({ appLanguage: lang }).catch(() => undefined);
-      qc.invalidateQueries({ queryKey: ['me'] });
+      // Await server sync — push notifications use users.language, not local i18n.
+      try {
+        await usersApi.update({ appLanguage: lang });
+        qc.invalidateQueries({ queryKey: ['me'] });
+      } catch {
+        // Local UI already switched; bootstrap will retry.
+      }
     }
     setOpen(false);
   };

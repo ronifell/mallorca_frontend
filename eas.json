@@ -35,8 +35,8 @@
         "resourceClass": "m-medium"
       },
       "env": {
-        "EXPO_PUBLIC_API_BASE_URL": "http://100.48.93.44:4000",
-        "EXPO_PUBLIC_SOCKET_URL": "http://100.48.93.44:4000",
+        "EXPO_PUBLIC_API_BASE_URL": "https://100-48-93-44.nip.io",
+        "EXPO_PUBLIC_SOCKET_URL": "https://100-48-93-44.nip.io",
         "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "528899539521-sk200iq6bf4pa3rga03bnr03sqo8k6be.apps.googleusercontent.com",
         "EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID": "528899539521-uqicjas911s0c6a1oqsom665bksdd594.apps.googleusercontent.com"
       }

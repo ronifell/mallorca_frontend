@@ -13,7 +13,12 @@ export type ProfileSetupStackParamList = {
 };
 
 export type MainTabParamList = {
-  Discover: undefined;
+  Discover:
+    | {
+        mode?: 'discover' | 'likedYou';
+        likesTab?: 'received' | 'sent';
+      }
+    | undefined;
   Matches: undefined;
   Chat: undefined;
   Premium: undefined;

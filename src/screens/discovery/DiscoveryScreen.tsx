@@ -1,4 +1,4 @@
-import { useNavigation } from '@react-navigation/native';
+import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import * as Haptics from 'expo-haptics';
@@ -17,7 +17,7 @@ import {
 import { LikesView } from '../../components/discovery/LikesView';
 import { Screen } from '../../components/Screen';
 import { SwipeCard } from '../../components/SwipeCard';
-import { RootStackParamList } from '../../navigation/types';
+import { MainTabParamList, RootStackParamList } from '../../navigation/types';
 import { useMatchPopup } from '../../store/matchPopup';
 import { useSuperLikeAccess } from '../../hooks/useSuperLikeAccess';
 import {
@@ -30,10 +30,23 @@ type Nav = NativeStackNavigationProp<RootStackParamList>;
 export function DiscoveryScreen() {
   const { t } = useTranslation();
   const nav = useNavigation<Nav>();
+  const route = useRoute<RouteProp<MainTabParamList, 'Discover'>>();
   const qc = useQueryClient();
   const showMatchPopup = useMatchPopup((s) => s.show);
   const matchOpen = useMatchPopup((s) => s.current != null);
-  const [mode, setMode] = useState<DiscoveryMode>('discover');
+  const [mode, setMode] = useState<DiscoveryMode>(route.params?.mode ?? 'discover');
+  const [likesTab, setLikesTab] = useState<'received' | 'sent'>(
+    route.params?.likesTab ?? 'received',
+  );
+
+  useEffect(() => {
+    if (route.params?.mode === 'likedYou' || route.params?.mode === 'discover') {
+      setMode(route.params.mode);
+    }
+    if (route.params?.likesTab === 'received' || route.params?.likesTab === 'sent') {
+      setLikesTab(route.params.likesTab);
+    }
+  }, [route.params?.mode, route.params?.likesTab]);
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['feed'],
     queryFn: () => discoveryApi.feed(20),
@@ -234,7 +247,7 @@ export function DiscoveryScreen() {
       <DiscoveryModeToggle mode={mode} onChange={setMode} />
 
       {mode === 'likedYou' ? (
-        <LikesView />
+        <LikesView initialTab={likesTab} />
       ) : (
         <View className="flex-1 px-5">
           {isLoading ? (
