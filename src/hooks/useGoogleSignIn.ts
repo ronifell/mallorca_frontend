@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { extractErrorMessage } from '../api/client';
 import { authApi } from '../api/endpoints';
+import { resolveAppLanguage } from '../i18n';
 import { hasGoogleClientId, isGoogleConfigured, signInWithGoogle } from '../services/googleAuth';
 import { useAuthStore } from '../store/auth';
 
@@ -76,7 +77,7 @@ export function useGoogleSignIn({
         ...(hasConsent
           ? { acceptedTerms: true as const, acceptedPrivacy: true as const }
           : {}),
-        language: (i18n.language as 'en' | 'es') ?? 'es',
+        language: resolveAppLanguage(i18n.language),
       });
       await setSession({
         user: result.user,

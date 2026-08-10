@@ -18,7 +18,9 @@ import { resolveMediaUrl } from '../utils/mediaUrl';
 
 interface Props {
   candidate: FeedCandidate;
-  onSwipe: (dir: 'left' | 'right') => void;
+  onSwipe: (dir: 'left' | 'right', candidateId: string) => void;
+  /** Fired when the fly-out animation starts (before onSwipe). */
+  onFlyStart?: () => void;
   onInfoPress?: () => void;
   onCardPress?: () => void;
   swipeable?: boolean;
@@ -27,18 +29,30 @@ interface Props {
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.25;
 
-export function SwipeCard({ candidate, onSwipe, onInfoPress, onCardPress, swipeable = true }: Props) {
+export function SwipeCard({
+  candidate,
+  onSwipe,
+  onFlyStart,
+  onInfoPress,
+  onCardPress,
+  swipeable = true,
+}: Props) {
   const { t } = useTranslation();
   const x = useSharedValue(0);
   const y = useSharedValue(0);
   const rotate = useSharedValue(0);
   const [photoIdx, setPhotoIdx] = useState(0);
+  const flyTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const candidateId = candidate.id;
 
   useEffect(() => {
     setPhotoIdx(0);
     x.value = 0;
     y.value = 0;
     rotate.value = 0;
+    return () => {
+      if (flyTimerRef.current) clearTimeout(flyTimerRef.current);
+    };
   }, [candidate.id]);
 
   const fly = (dir: 'left' | 'right') => {
@@ -46,11 +60,13 @@ export function SwipeCard({ candidate, onSwipe, onInfoPress, onCardPress, swipea
     // right when the card leaves the visible viewport so the next profile
     // fades into place without any perceptible wait.
     const duration = 180;
+    onFlyStart?.();
     x.value = withTiming(dir === 'right' ? SCREEN_WIDTH * 1.5 : -SCREEN_WIDTH * 1.5, {
       duration,
     });
     rotate.value = withTiming(dir === 'right' ? 0.3 : -0.3, { duration });
-    setTimeout(() => onSwipe(dir), duration);
+    if (flyTimerRef.current) clearTimeout(flyTimerRef.current);
+    flyTimerRef.current = setTimeout(() => onSwipe(dir, candidateId), duration);
   };
 
   const pan = Gesture.Pan()

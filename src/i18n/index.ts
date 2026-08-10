@@ -10,6 +10,12 @@ const LANGUAGE_KEY = '@app/language';
 export const SUPPORTED_LANGUAGES = ['en', 'es'] as const;
 export type AppLanguage = (typeof SUPPORTED_LANGUAGES)[number];
 
+/** Normalize i18n / device tags (`en-US`, `es-ES`) to API `en` | `es`. */
+export function resolveAppLanguage(language?: string | null): AppLanguage {
+  if (language && language.toLowerCase().startsWith('en')) return 'en';
+  return 'es';
+}
+
 function detectLanguage(): AppLanguage {
   const locales = Localization.getLocales();
   const tag = locales[0]?.languageCode ?? 'es';

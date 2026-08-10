@@ -26,6 +26,7 @@ import { AuthStackParamList } from '../../navigation/types';
 import { useAuthStore } from '../../store/auth';
 import { colors } from '../../theme/colors';
 import { LEGAL_LINKS } from '../../config/legal';
+import { resolveAppLanguage } from '../../i18n';
 import { authHeroImage, authScreenStyles as styles } from './authScreenStyles';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Register'>;
@@ -64,7 +65,7 @@ export function RegisterScreen({ navigation }: Props) {
         password,
         acceptedTerms: true,
         acceptedPrivacy: true,
-        language: (i18n.language as 'en' | 'es') ?? 'es',
+        language: resolveAppLanguage(i18n.language),
       });
       await setSession({
         user: result.user,

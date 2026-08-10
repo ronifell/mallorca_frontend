@@ -92,7 +92,7 @@ export function formatUserError(error: unknown, t: TFunction = i18n.t.bind(i18n)
   if (raw) {
     const mapped = mapServerMessage(raw, t);
     if (mapped) return mapped;
-    if (looksLikeSpanish(raw) && i18n.language === 'en') return t('errors.generic');
+    if (looksLikeSpanish(raw) && i18n.language.startsWith('en')) return t('errors.generic');
     return raw;
   }
 

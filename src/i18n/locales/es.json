@@ -197,6 +197,7 @@
     "ageMax": "Edad máxima",
     "complete": "Completa tu perfil",
     "incomplete": "Para empezar a hacer matches necesitas: nombre, fecha de nacimiento, género, preferencia y al menos una foto.",
+    "fillRequired": "Completa nombre, fecha de nacimiento, género, a quién buscas y ciudad.",
     "firstNamePlaceholder": "Introduce tu nombre",
     "birthDatePlaceholder": "DD/MM/AAAA",
     "birthDateFormat": "Usa el formato DD/MM/AAAA",

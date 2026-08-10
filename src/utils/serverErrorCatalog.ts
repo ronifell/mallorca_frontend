@@ -80,7 +80,7 @@ export function mapServerMessage(message: string, t: TFunction): string | null {
   }
 
   // English UI: never show unmapped Spanish backend text.
-  if (i18n.language === 'en' && looksLikeSpanish(trimmed)) {
+  if (i18n.language.startsWith('en') && looksLikeSpanish(trimmed)) {
     return t('errors.generic');
   }
 

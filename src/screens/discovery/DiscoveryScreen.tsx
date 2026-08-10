@@ -2,7 +2,7 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import * as Haptics from 'expo-haptics';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Text, View } from 'react-native';
 import { discoveryApi } from '../../api/endpoints';
@@ -47,12 +47,17 @@ export function DiscoveryScreen() {
   // response to update the quota badge. Regular like / pass are optimistic
   // (see below) so we no longer track a "likeLoading" state.
   const [superLikeLoading, setSuperLikeLoading] = useState(false);
+  // True while the top card is mid fly-out — blocks action buttons so Super
+  // Like cannot target deck[0] while the under-card is already visible.
+  const [cardAnimating, setCardAnimating] = useState(false);
   // Count of in-flight optimistic like/pass calls. When the deck becomes
   // empty because we advanced ahead of the server, we keep showing the
   // "loading" placeholder instead of the empty state until the network
   // resolves and we can decide whether to replenish or truly show empty.
   const [pendingCount, setPendingCount] = useState(0);
   const pendingAction = pendingCount > 0;
+  /** Stable id of the visible top card for swipe / button race guards. */
+  const topIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     // Only seed the deck from the server response when we don't have any
@@ -64,6 +69,7 @@ export function DiscoveryScreen() {
 
   const top = deck[0];
   const next = deck[1];
+  topIdRef.current = top?.id ?? null;
 
   const replenishIfNeeded = async (remainingCount: number) => {
     if (remainingCount > 3) return;
@@ -134,22 +140,27 @@ export function DiscoveryScreen() {
     })();
   };
 
-  const handleSwipe = (dir: 'left' | 'right') => {
-    if (!top) return;
+  const handleSwipe = (dir: 'left' | 'right', candidateId: string) => {
+    setCardAnimating(false);
+    // Ignore stale swipe callbacks from a card that is no longer on top
+    // (e.g. Super Like advanced the deck during the fly-out timeout).
+    if (topIdRef.current !== candidateId) return;
+    const candidate = deck.find((c) => c.id === candidateId) ?? top;
+    if (!candidate || candidate.id !== candidateId) return;
     if (dir === 'right') {
-      runLike(top);
+      runLike(candidate);
     } else {
-      runPass(top);
+      runPass(candidate);
     }
   };
 
   const handleLikePress = () => {
-    if (!top) return;
+    if (!top || cardAnimating || superLikeLoading) return;
     runLike(top);
   };
 
   const handlePassPress = () => {
-    if (!top) return;
+    if (!top || cardAnimating || superLikeLoading) return;
     runPass(top);
   };
 
@@ -158,18 +169,20 @@ export function DiscoveryScreen() {
   };
 
   const handleSuperLike = async () => {
-    if (!top || superLikeLoading) return;
+    if (!top || superLikeLoading || cardAnimating) return;
     if (!ensureSuperLikeAllowed(superLikeQuota, nav, t, authIsPremium)) return;
 
+    // Bind to the visible top card for the whole request. Do NOT advance the
+    // deck before the confirmation — advancing first made the next profile
+    // appear while the Alert still named the previous person (QA: Carlos
+    // visible, Alert said "Kamal").
     const candidate = top;
     setSuperLikeLoading(true);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => undefined);
-    // Advance the deck optimistically for a snappy feel; if the API rejects
-    // the super-like we still show the error but keep the queue moving.
-    const remaining = advanceDeck();
     setPendingCount((n) => n + 1);
     try {
       const res = await discoveryApi.superLike(candidate.id);
+      const remaining = advanceDeck();
       if (res.matched && res.matchId) {
         showMatchPopup({
           matchId: res.matchId,
@@ -237,14 +250,22 @@ export function DiscoveryScreen() {
                     style={{ transform: [{ scale: 0.96 }] }}
                     pointerEvents="none"
                   >
-                    <SwipeCard candidate={next} onSwipe={() => undefined} swipeable={false} />
+                    <SwipeCard
+                      key={`under-${next.id}`}
+                      candidate={next}
+                      onSwipe={() => undefined}
+                      swipeable={false}
+                    />
                   </View>
                 ) : null}
                 <SwipeCard
+                  key={`top-${top.id}`}
                   candidate={top}
                   onSwipe={handleSwipe}
+                  onFlyStart={() => setCardAnimating(true)}
                   onInfoPress={() => openCandidateProfile(top)}
                   onCardPress={() => openCandidateProfile(top)}
+                  swipeable={!superLikeLoading && !cardAnimating}
                 />
               </View>
 
@@ -255,7 +276,7 @@ export function DiscoveryScreen() {
                 superLikeEnabled={superLikeUnlocked}
                 superLikeRemaining={superLikeRemaining}
                 superLikeLoading={superLikeLoading}
-                disabled={superLikeLoading}
+                disabled={superLikeLoading || cardAnimating}
               />
             </View>
           ) : pendingAction || matchOpen ? (

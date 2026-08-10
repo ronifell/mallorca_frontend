@@ -71,7 +71,7 @@ export function CreateProfileScreen({ navigation }: Props) {
   const submit = async () => {
     setError(null);
     if (!firstName || !birthDate || !gender || !interests.length || !city) {
-      setError(t('common.error'));
+      setError(t('profile.fillRequired'));
       return;
     }
     if (!relationshipGoals.length) {
