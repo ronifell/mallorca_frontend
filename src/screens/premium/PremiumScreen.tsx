@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, ScrollView, Text, View } from 'react-native';
 import { subscriptionsApi } from '../../api/endpoints';
+import { SubscriptionPlan } from '../../api/types';
 import { formatUserError } from '../../utils/formatUserError';
 import { formatAppDate } from '../../utils/localeFormat';
 import { PremiumActiveCard } from '../../components/premium/PremiumActiveCard';
@@ -31,7 +32,7 @@ export function PremiumScreen() {
   const [loading, setLoading] = useState(false);
   const [restoring, setRestoring] = useState(false);
 
-  const { data: plans } = useQuery({
+  const { data: plans } = useQuery<SubscriptionPlan[]>({
     queryKey: ['plans'],
     queryFn: () => subscriptionsApi.plans(),
   });
@@ -182,7 +183,7 @@ export function PremiumScreen() {
             ) : null}
             <PremiumBenefitsCard />
             {isPremium ? <PremiumActiveCard expiryDate={status?.expiryDate} /> : null}
-            {(plans ?? []).map((plan) => (
+            {(plans ?? []).map((plan: SubscriptionPlan) => (
               <PremiumPlanCard
                 key={plan.id}
                 plan={plan}

@@ -24,6 +24,7 @@ export function AuthStack({ initialRoute = 'Login' }: Props) {
         headerShadowVisible: false,
         headerTintColor: colors.ink[700],
         headerTitle: '',
+        // @ts-expect-error native-stack supports this; RN types lag behind
         headerStatusBarHeight: 0,
         statusBarTranslucent: true,
         contentStyle: { backgroundColor: 'transparent' },

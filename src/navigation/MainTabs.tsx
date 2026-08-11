@@ -35,6 +35,7 @@ export function MainTabs() {
         headerStyle: { backgroundColor: colors.cream[200] },
         headerTitleStyle: { fontWeight: '700', color: colors.ink[700] },
         headerShadowVisible: false,
+        // @ts-expect-error bottom-tabs supports this; community types lag behind
         sceneContainerStyle: { backgroundColor: 'transparent' },
         safeAreaInsets: { bottom: 0 },
         tabBarActiveTintColor: colors.coral[500],

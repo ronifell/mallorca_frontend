@@ -85,7 +85,7 @@ export function UploadPhotosScreen({ navigation }: Props) {
   };
 
   return (
-    <ProfileSetupShell currentStep={2} onBack={() => navigation.goBack()}>
+    <ProfileSetupShell currentStep={2} totalSteps={2} onBack={() => navigation.goBack()}>
       <ProfilePhotosHeader />
 
       <PhotoUploadGrid photos={photos} maxPhotos={MAX_PHOTOS} onPick={pick} onRemove={remove} />

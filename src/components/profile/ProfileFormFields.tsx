@@ -11,11 +11,7 @@ import { LanguageFlagPill } from '../../components/profile/LanguageFlagPill';
 import { ProfileSectionLabel } from '../../components/profile/ProfileSectionLabel';
 import { RelationshipGoalChips } from '../../components/profile/RelationshipGoalChips';
 import { Input } from '../../components/Input';
-import {
-  GENDER_LABEL_KEYS,
-  INTEREST_OPTIONS,
-  LANGUAGE_OPTIONS,
-} from '../../config/profileOptions';
+import { INTEREST_OPTIONS, LANGUAGE_OPTIONS } from '../../config/profileOptions';
 
 type GenderLabels = Record<Gender, string>;
 

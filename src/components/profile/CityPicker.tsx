@@ -168,7 +168,7 @@ export function CityPicker({ value, onChange, placeholder }: Props) {
               autoCorrect={false}
               autoCapitalize="none"
               underlineColorAndroid="transparent"
-              includeFontPadding={false}
+              {...({ includeFontPadding: false } as object)}
             />
             {query.length > 0 ? (
               <Pressable

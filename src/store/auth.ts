@@ -3,7 +3,7 @@ import { authApi, usersApi } from '../api/endpoints';
 import { AuthUser } from '../api/types';
 import i18n, { resolveAppLanguage } from '../i18n';
 import { detachPushTokenFromServer, resetFcmTokenCache } from '../services/notifications';
-import { isLogoutInFlight, setLogoutInFlight, getLogoutInFlight } from '../services/sessionTeardown';
+import { setLogoutInFlight, getLogoutInFlight } from '../services/sessionTeardown';
 import { tokenStorage } from '../services/storage';
 
 export { isLogoutInFlight } from '../services/sessionTeardown';

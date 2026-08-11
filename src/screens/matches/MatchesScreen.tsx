@@ -34,22 +34,22 @@ export function MatchesScreen() {
   const [search, setSearch] = useState('');
 
   const { data: me } = useQuery({ queryKey: ['me'], queryFn: () => usersApi.me() });
-  const { data, isLoading, refetch, isFetching } = useQuery({
+  const { data, isLoading, refetch, isFetching } = useQuery<Match[]>({
     queryKey: ['matches'],
     queryFn: () => matchesApi.list(),
   });
 
   const matches = data ?? [];
-  const newMatches = matches.filter((m) => !m.hasConversation);
+  const newMatches = matches.filter((m: Match) => !m.hasConversation);
   const allMatches = useMemo(() => {
     const query = search.trim().toLowerCase();
     const filtered = query
-      ? matches.filter((m) => (m.otherUser.firstName ?? '').toLowerCase().includes(query))
+      ? matches.filter((m: Match) => (m.otherUser.firstName ?? '').toLowerCase().includes(query))
       : matches;
     return sortMatches(filtered);
   }, [matches, search]);
 
-  const totalUnread = matches.reduce((sum, m) => sum + m.unreadCount, 0);
+  const totalUnread = matches.reduce((sum: number, m: Match) => sum + m.unreadCount, 0);
 
   const openProfile = (match: Match) => {
     nav.navigate('MatchProfile', { matchId: match.matchId });

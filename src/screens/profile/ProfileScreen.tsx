@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { usersApi } from '../../api/endpoints';
+import { MyProfile, Photo } from '../../api/types';
 import { Button } from '../../components/Button';
 import { CandidateIdentityRow } from '../../components/discovery/CandidateIdentityRow';
 import { CandidateInfoCard } from '../../components/discovery/CandidateInfoCard';
@@ -30,7 +31,7 @@ export function ProfileScreen() {
   const topPadding = useTopScreenPadding();
   const [photoIndex, setPhotoIndex] = useState(0);
 
-  const { data: me, isLoading } = useQuery({
+  const { data: me, isLoading } = useQuery<MyProfile>({
     queryKey: ['me'],
     queryFn: () => usersApi.me(),
   });
@@ -38,8 +39,8 @@ export function ProfileScreen() {
   const photoUris = useMemo(
     () =>
       (me?.photos ?? [])
-        .map((p) => resolveMediaUrl(p.url))
-        .filter((url): url is string => Boolean(url)),
+        .map((p: Photo) => resolveMediaUrl(p.url))
+        .filter((url: string | null): url is string => Boolean(url)),
     [me?.photos],
   );
 

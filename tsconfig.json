@@ -4,6 +4,7 @@
     "strict": true,
     "noImplicitAny": true,
     "strictNullChecks": true,
+    "module": "esnext",
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"]

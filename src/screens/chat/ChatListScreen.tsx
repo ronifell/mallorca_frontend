@@ -34,21 +34,23 @@ export function ChatListScreen() {
   const [search, setSearch] = useState('');
 
   const { data: me } = useQuery({ queryKey: ['me'], queryFn: () => usersApi.me() });
-  const { data, isLoading, refetch, isFetching } = useQuery({
+  const { data, isLoading, refetch, isFetching } = useQuery<Match[]>({
     queryKey: ['matches'],
     queryFn: () => matchesApi.list(),
   });
 
   const conversations = useMemo(() => {
-    const withMessages = (data ?? []).filter((m) => m.hasConversation);
+    const withMessages = (data ?? []).filter((m: Match) => m.hasConversation);
     const query = search.trim().toLowerCase();
     const filtered = query
-      ? withMessages.filter((m) => (m.otherUser.firstName ?? '').toLowerCase().includes(query))
+      ? withMessages.filter((m: Match) =>
+          (m.otherUser.firstName ?? '').toLowerCase().includes(query),
+        )
       : withMessages;
     return sortMatches(filtered);
   }, [data, search]);
 
-  const totalUnread = conversations.reduce((sum, m) => sum + m.unreadCount, 0);
+  const totalUnread = conversations.reduce((sum: number, m: Match) => sum + m.unreadCount, 0);
 
   const open = async (match: Match) => {
     const params = await buildConversationParams(match);

@@ -87,6 +87,7 @@ export function RootNavigator() {
             headerTintColor: colors.ink[700],
             headerTitleStyle: { fontWeight: '700' },
             headerShadowVisible: false,
+            // @ts-expect-error native-stack supports this; RN types lag behind
             headerStatusBarHeight: 0,
             statusBarTranslucent: true,
             // Faster, snappier transitions between screens. Native-stack lets

@@ -118,7 +118,7 @@ export function CreateProfileScreen({ navigation }: Props) {
   };
 
   return (
-    <ProfileSetupShell currentStep={1} onBack={() => logout()}>
+    <ProfileSetupShell currentStep={1} totalSteps={2} onBack={() => logout()}>
       <View className="mb-6">
         <View className="flex-row items-center flex-wrap">
           <Text className="text-ink-700 font-serif text-3xl">{t('profile.title')}</Text>

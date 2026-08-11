@@ -7,7 +7,7 @@ interface Props {
   totalSteps?: number;
 }
 
-export function ProfileStepIndicator({ currentStep, totalSteps = 4 }: Props) {
+export function ProfileStepIndicator({ currentStep, totalSteps = 2 }: Props) {
   return (
     <View className="flex-row items-center">
       {Array.from({ length: totalSteps }, (_, i) => {

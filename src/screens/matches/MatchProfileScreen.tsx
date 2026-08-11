@@ -7,6 +7,7 @@ import { Alert, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { extractErrorMessage } from '../../api/client';
 import { chatApi, matchesApi, moderationApi } from '../../api/endpoints';
+import { Photo } from '../../api/types';
 import { Button } from '../../components/Button';
 import { CandidateIdentityRow } from '../../components/discovery/CandidateIdentityRow';
 import { CandidateInfoCard } from '../../components/discovery/CandidateInfoCard';
@@ -41,8 +42,8 @@ export function MatchProfileScreen({ route, navigation }: Props) {
   const photoUris = useMemo(
     () =>
       (profile?.photos ?? [])
-        .map((p) => resolveMediaUrl(p.url))
-        .filter((url): url is string => Boolean(url)),
+        .map((p: Photo) => resolveMediaUrl(p.url))
+        .filter((url: string | null): url is string => Boolean(url)),
     [profile?.photos],
   );
 

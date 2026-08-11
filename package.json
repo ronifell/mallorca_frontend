@@ -1,6 +1,6 @@
 {
   "name": "mallorca-dating-app",
-  "version": "1.0.34",
+  "version": "1.0.35",
   "description": "Mallorca Dating & Networking mobile app (React Native + Expo)",
   "main": "index.js",
   "scripts": {
@@ -61,8 +61,8 @@
   "devDependencies": {
     "@babel/core": "^7.24.7",
     "@types/react": "~18.2.79",
-    "@typescript-eslint/eslint-plugin": "^7.16.0",
-    "@typescript-eslint/parser": "^7.16.0",
+    "@typescript-eslint/eslint-plugin": "^7.18.0",
+    "@typescript-eslint/parser": "^7.18.0",
     "eas-cli": "^20.0.0",
     "eslint": "^8.57.0",
     "lightningcss": "^1.32.0",

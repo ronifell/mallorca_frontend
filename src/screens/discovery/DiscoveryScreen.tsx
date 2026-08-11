@@ -47,7 +47,7 @@ export function DiscoveryScreen() {
       setLikesTab(route.params.likesTab);
     }
   }, [route.params?.mode, route.params?.likesTab]);
-  const { data, isLoading, refetch } = useQuery({
+  const { data, isLoading, refetch } = useQuery<FeedCandidate[]>({
     queryKey: ['feed'],
     queryFn: () => discoveryApi.feed(20),
   });
@@ -90,7 +90,7 @@ export function DiscoveryScreen() {
     if (!fresh?.length) return;
     setDeck((prev) => {
       const ids = new Set(prev.map((c) => c.id));
-      const append = fresh.filter((c) => !ids.has(c.id));
+      const append = fresh.filter((c: FeedCandidate) => !ids.has(c.id));
       return append.length ? [...prev, ...append] : prev;
     });
   };

@@ -201,7 +201,7 @@ export function ConversationInputBar({
             cursorColor={colors.coral[500]}
             autoCorrect
             textAlignVertical="top"
-            includeFontPadding={false}
+            {...({ includeFontPadding: false } as object)}
           />
           {!hasText ? (
             <Pressable

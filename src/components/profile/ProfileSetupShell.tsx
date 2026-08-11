@@ -22,7 +22,7 @@ interface Props {
 
 export function ProfileSetupShell({
   currentStep = 1,
-  totalSteps = 4,
+  totalSteps = 2,
   showStepIndicator = true,
   onBack,
   children,

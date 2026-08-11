@@ -68,10 +68,16 @@ function MonochromeOverlay({ variant }: { variant: 'rear' | 'mid' }) {
   return (
     <>
       <View
-        style={[styles.monoBlendLayer, { backgroundColor: palette.tint, mixBlendMode: 'saturation' }]}
+        style={[
+          styles.monoBlendLayer,
+          { backgroundColor: palette.tint, mixBlendMode: 'saturation' } as object,
+        ]}
       />
       <View
-        style={[styles.monoBlendLayer, { backgroundColor: palette.shade, mixBlendMode: 'multiply' }]}
+        style={[
+          styles.monoBlendLayer,
+          { backgroundColor: palette.shade, mixBlendMode: 'multiply' } as object,
+        ]}
       />
     </>
   );
