@@ -52,7 +52,8 @@
     "subscriptionInactive": "This subscription is no longer active.",
     "notConfigured": "Google Play billing isn't configured on the server. Please contact support.",
     "credentialsInvalid": "Google Play billing credentials are misconfigured on the server. Please contact support.",
-    "credentialsIncomplete": "Google Play billing credentials are incomplete on the server. Please contact support."
+    "credentialsIncomplete": "Google Play billing credentials are incomplete on the server. Please contact support.",
+    "purchaseTokenOwnedByOther": "This purchase is already linked to another account. Sign in with that account, or contact support."
   },
   "auth": {
     "appNameCitas": "Citas",

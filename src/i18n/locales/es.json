@@ -52,7 +52,8 @@
     "subscriptionInactive": "Esta suscripción ya no está activa.",
     "notConfigured": "La facturación de Google Play no está configurada en el servidor. Contacta con soporte.",
     "credentialsInvalid": "Las credenciales de facturación de Google Play están mal configuradas en el servidor. Contacta con soporte.",
-    "credentialsIncomplete": "Las credenciales de facturación de Google Play están incompletas en el servidor. Contacta con soporte."
+    "credentialsIncomplete": "Las credenciales de facturación de Google Play están incompletas en el servidor. Contacta con soporte.",
+    "purchaseTokenOwnedByOther": "Esta compra ya está vinculada a otra cuenta. Inicia sesión con esa cuenta o contacta con soporte."
   },
   "auth": {
     "appNameCitas": "Citas",
