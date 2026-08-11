@@ -3,8 +3,13 @@ node_modules/
 .expo/
 .expo-shared/
 
-# Generated native projects — must NOT be uploaded; EAS prebuilds from app.config.js
-android/
+# Keep ios out of the Android build archive.
+# android is intentionally uploaded: EAS "Prepare credentials" writes
+# android/app/eas-build-inject-android-credentials.gradle and fails with ENOENT
+# if only an empty/missing android tree is present (CNG + Windows easignore quirk).
+# Run: EAS_BUILD_PROFILE=production npx expo prebuild --clean --platform android
+# before production EAS builds so cleartext/plugins match app.config.js.
+ios
 ios/
 
 # Local secrets and logs
@@ -23,3 +28,6 @@ assets/onboarding1.png
 
 # Stray backup files
 package.json.*
+
+# Do not ship Firebase admin SDK key in the build archive
+*firebase-adminsdk*.json
