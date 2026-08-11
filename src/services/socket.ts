@@ -47,7 +47,8 @@ export async function connectSocket(): Promise<Socket | null> {
     try {
       if (!socket) {
         socket = io(env.socketUrl, {
-          transports: ['websocket'],
+          // Production nginx may fail WSS upgrade; polling handshake works (see patch-nginx-socketio.sh).
+          transports: ['polling', 'websocket'],
           auth: { token },
           reconnection: true,
           reconnectionAttempts: Infinity,
