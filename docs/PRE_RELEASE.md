@@ -24,11 +24,27 @@ Remaining highs are mostly Expo SDK 51 / React Native / Metro / CLI tooling (`xm
 2. Do **not** `npm audit fix --force` without a full regression (Expo SDK jump).
 3. Schedule an Expo SDK upgrade cycle for the remaining tooling advisories.
 
-## Release tag
+## Release tags
+
+| Tag | Commit | Meaning |
+|-----|--------|---------|
+| `app-1.0.30-code31` | `2a7b1e6` | Smoke-tested AAB before runtime Socket.IO pins |
+| `app-1.0.31-code32` | `d60e6ac` | Includes Socket.IO runtime pins (`d72da8b`) + version bump |
 
 ```bash
-git tag -a app-1.0.30-code31 -m "Play AAB 1.0.30 (versionCode 31)"
-git push origin app-1.0.30-code31
+git tag -a app-1.0.31-code32 d60e6ac -m "Play AAB 1.0.31 (versionCode 32)"
+git push origin app-1.0.31-code32
 ```
 
-Pair with backend security commit `b92cc5b` and confirm `GET /health` → `gitCommit` matches the deployed API SHA.
+EAS build for this cut: `70e06f14-26fd-45d5-a385-dd0abbb666b8`  
+AAB: https://expo.dev/artifacts/eas/DbeClY1Ya9exAi_M5MBqSzUyR34267NTNaqy7b0Ii2E.aab
+
+Submit to Play Internal Testing (`eas.json` → `track: internal`) needs a **Google Play Console service account JSON** (not Firebase `google-services.json` / Firebase Admin SDK). Once that key is available:
+
+```bash
+npx eas submit --platform android --id 70e06f14-26fd-45d5-a385-dd0abbb666b8 --profile production
+```
+
+Or upload the AAB manually in Play Console → Testing → Internal testing.
+
+Pair with backend `b92cc5b` / tag `api-b92cc5b` and confirm `GET /health` → `gitCommit` matches.

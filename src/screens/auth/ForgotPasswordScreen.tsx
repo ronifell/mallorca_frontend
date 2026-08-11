@@ -82,7 +82,7 @@ export function ForgotPasswordScreen() {
         {t('auth.forgotPassword')}
       </Text>
       <Text className="text-ink-400 mb-6">
-        {step === 'email' ? t('auth.subtitle') : t('auth.resetSent')}
+        {step === 'email' ? t('auth.forgotPasswordSubtitle') : t('auth.resetSent')}
       </Text>
 
       <Input

@@ -23,7 +23,13 @@
     "sessionExpired": "Your session has expired. Please sign in again.",
     "sessionInvalid": "Your session is no longer valid. Sign out and sign in again.",
     "accountNotFound": "Your account no longer exists.",
-    "unknownProduct": "Unknown product: {{productId}}"
+    "unknownProduct": "Unknown product: {{productId}}",
+    "invalidEmail": "Enter a valid email address.",
+    "passwordTooShort": "Password must be at least 8 characters.",
+    "passwordRequired": "Enter your password.",
+    "fieldRequired": "This field is required.",
+    "fieldTooShort": "This value is too short.",
+    "validationFailed": "Please check the form and try again."
   },
   "billing": {
     "purchaseFailed": "We couldn't complete the purchase. Please try again.",
@@ -86,6 +92,7 @@
     "showPassword": "Show password",
     "hidePassword": "Hide password",
     "forgotPassword": "Forgot your password?",
+    "forgotPasswordSubtitle": "Enter your email and we'll send you a verification code to reset your password.",
     "noAccount": "Don't have an account?",
     "haveAccount": "Already have an account?",
     "signUp": "Sign up",

@@ -23,7 +23,13 @@
     "sessionExpired": "Tu sesión ha caducado. Inicia sesión de nuevo.",
     "sessionInvalid": "Tu sesión ya no es válida. Cierra sesión y vuelve a iniciarla.",
     "accountNotFound": "Tu cuenta ya no existe.",
-    "unknownProduct": "Producto desconocido: {{productId}}"
+    "unknownProduct": "Producto desconocido: {{productId}}",
+    "invalidEmail": "Introduce un correo electrónico válido.",
+    "passwordTooShort": "La contraseña debe tener al menos 8 caracteres.",
+    "passwordRequired": "Introduce tu contraseña.",
+    "fieldRequired": "Este campo es obligatorio.",
+    "fieldTooShort": "Este valor es demasiado corto.",
+    "validationFailed": "Revisa el formulario e inténtalo de nuevo."
   },
   "billing": {
     "purchaseFailed": "No se pudo completar la compra. Inténtalo de nuevo.",
@@ -86,6 +92,7 @@
     "showPassword": "Mostrar contraseña",
     "hidePassword": "Ocultar contraseña",
     "forgotPassword": "¿Olvidaste tu contraseña?",
+    "forgotPasswordSubtitle": "Introduce tu correo y te enviaremos un código de verificación para restablecer tu contraseña.",
     "noAccount": "¿No tienes cuenta?",
     "haveAccount": "¿Ya tienes cuenta?",
     "signUp": "Regístrate",
