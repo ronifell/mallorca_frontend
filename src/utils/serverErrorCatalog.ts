@@ -55,6 +55,8 @@ const SERVER_MESSAGE_KEYS: Record<string, string> = {
     'billing.credentialsInvalid',
   'Las credenciales de facturación de Google Play están incompletas en el servidor. Contacta con soporte.':
     'billing.credentialsIncomplete',
+  'Este token de compra ya está vinculado a otra cuenta.': 'billing.purchaseTokenOwnedByOther',
+  'This purchase token is already linked to another account.': 'billing.purchaseTokenOwnedByOther',
 };
 
 /** Client-side extractErrorMessage fallbacks (legacy Spanish strings). */
