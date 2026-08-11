@@ -10,20 +10,25 @@ Companion to `Backend/docs/PRE_RELEASE.md`.
 
 ## npm audit
 
-Latest snapshot (~1 critical / ~27 high) is dominated by Expo / React Native / Metro / `eas-cli` tooling. Many “fixes” require **major** Expo/RN upgrades and are **not** drop-in for this release.
+Direct / runtime-facing items for 1.0.30:
+
+- `axios` ≥ 1.18 (lockfile 1.19.0)
+- `tar` override → 7.5.22 (clears critical Expo CLI / cacache chain)
+- Runtime chat stack (`socket.io-client`): overrides pin `engine.io-client` ≥ 6.6.6, `socket.io-parser` ≥ 4.2.7, and that client’s `ws` ≥ 8.21.3
+
+Remaining highs are mostly Expo SDK 51 / React Native / Metro / CLI tooling (`xmldom`, PostCSS, `image-size`, Metro `ws@6`/`ws@7`, etc.). Those older `ws` copies are **not** on the production Socket.IO path — they belong to Metro / RN CLI / Expo CLI used at build/dev time. Clearing them needs a major Expo/RN upgrade tracked separately.
 
 **For this production cut:**
 
-1. Run `npm audit` / `npm audit fix` (non-force) before each EAS build.
+1. Run `npm audit --omit=dev --package-lock-only` before each EAS build.
 2. Do **not** `npm audit fix --force` without a full regression (Expo SDK jump).
-3. Schedule an Expo SDK upgrade cycle for the remaining high/critical tooling advisories.
-4. Critical `tar` appears via `eas-cli` / install tooling — keep CLI updated globally (`npm i -g eas-cli`) separately from the app lockfile when possible.
+3. Schedule an Expo SDK upgrade cycle for the remaining tooling advisories.
 
 ## Release tag
 
 ```bash
-git tag -a app-1.0.28-code29 -m "Play AAB 1.0.28 (versionCode 29)"
-git push origin app-1.0.28-code29
+git tag -a app-1.0.30-code31 -m "Play AAB 1.0.30 (versionCode 31)"
+git push origin app-1.0.30-code31
 ```
 
-Pair with backend tag `api-code29` and confirm `GET /health` → `gitCommit` matches the deployed API SHA.
+Pair with backend security commit `b92cc5b` and confirm `GET /health` → `gitCommit` matches the deployed API SHA.

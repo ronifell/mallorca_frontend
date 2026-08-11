@@ -73,6 +73,13 @@
   "private": true,
   "overrides": {
     "lightningcss": "^1.32.0",
-    "tar": "^7.5.22"
+    "tar": "^7.5.22",
+    "socket.io-client": {
+      "engine.io-client": "^6.6.6",
+      "socket.io-parser": "^4.2.7"
+    },
+    "engine.io-client": {
+      "ws": "^8.21.3"
+    }
   }
 }
