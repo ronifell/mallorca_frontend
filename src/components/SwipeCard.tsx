@@ -59,7 +59,7 @@ export function SwipeCard({
     // Short fly-out animation. We schedule the deck-advance callback for
     // right when the card leaves the visible viewport so the next profile
     // fades into place without any perceptible wait.
-    const duration = 180;
+    const duration = 120;
     onFlyStart?.();
     x.value = withTiming(dir === 'right' ? SCREEN_WIDTH * 1.5 : -SCREEN_WIDTH * 1.5, {
       duration,

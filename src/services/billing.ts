@@ -315,10 +315,8 @@ export async function restorePurchases(): Promise<PurchaseResult[]> {
  * We fall back to a package-scoped Play Store URL when the native deep link fails.
  */
 export async function openManageSubscriptions(sku?: ProductId): Promise<void> {
-  if (shouldUseMock()) return;
-
   let resolvedSku = sku;
-  if (!resolvedSku && IAP_NATIVE_AVAILABLE) {
+  if (!resolvedSku && IAP_NATIVE_AVAILABLE && !shouldUseMock()) {
     try {
       await initBillingConnection();
       const RNIap = await import('react-native-iap');
@@ -338,7 +336,7 @@ export async function openManageSubscriptions(sku?: ProductId): Promise<void> {
     ? `https://play.google.com/store/account/subscriptions?package=${ANDROID_PACKAGE}&sku=${resolvedSku}`
     : `https://play.google.com/store/account/subscriptions?package=${ANDROID_PACKAGE}`;
 
-  if (Platform.OS === 'android' && resolvedSku) {
+  if (Platform.OS === 'android' && resolvedSku && IAP_NATIVE_AVAILABLE && !shouldUseMock()) {
     try {
       await initBillingConnection();
       const RNIap = await import('react-native-iap');
@@ -349,6 +347,10 @@ export async function openManageSubscriptions(sku?: ProductId): Promise<void> {
     }
   }
 
+  const canOpen = await Linking.canOpenURL(url);
+  if (!canOpen) {
+    throw new LocalizedError('premium.manageGooglePlayFailed');
+  }
   await Linking.openURL(url);
 }
 

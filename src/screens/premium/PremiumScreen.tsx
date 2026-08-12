@@ -64,9 +64,8 @@ export function PremiumScreen() {
   }, [billingConfig?.mockEnabled]);
 
   useEffect(() => {
-    if (status && !status.isPremium) {
-      patchUser({ isPremium: false });
-    }
+    if (status == null) return;
+    patchUser({ isPremium: status.isPremium });
   }, [status?.isPremium, patchUser]);
 
   useEffect(() => {

@@ -6,6 +6,7 @@ import {
   ActivityIndicator,
   ImageBackground,
   KeyboardAvoidingView,
+  Linking,
   Platform,
   Pressable,
   ScrollView,
@@ -20,6 +21,7 @@ import { LoginBrandHeader } from '../../components/auth/LoginBrandHeader';
 import { OrDivider } from '../../components/auth/OrDivider';
 import { SocialAuthButton } from '../../components/auth/SocialAuthButton';
 import { Input } from '../../components/Input';
+import { LEGAL_LINKS } from '../../config/legal';
 import { useGoogleSignIn } from '../../hooks/useGoogleSignIn';
 import { AuthStackParamList } from '../../navigation/types';
 import { useAuthStore } from '../../store/auth';
@@ -40,6 +42,10 @@ export function LoginScreen({ navigation }: Props) {
     implicitConsent: true,
     onError: setError,
   });
+
+  const openLegalLink = (url: string) => {
+    Linking.openURL(url).catch(() => undefined);
+  };
 
   const onSubmit = async () => {
     setLoading(true);
@@ -185,9 +191,21 @@ export function LoginScreen({ navigation }: Props) {
 
                 <Text className="text-ink-400 text-xs text-center mt-5 leading-5 px-2">
                   {t('auth.legalPrefix')}
-                  <Text className="text-coral-500">{t('auth.termsOfService')}</Text>
+                  <Text
+                    onPress={() => openLegalLink(LEGAL_LINKS.terms)}
+                    className="text-coral-500 font-semibold"
+                    style={{ textDecorationLine: 'underline' }}
+                  >
+                    {t('auth.termsOfService')}
+                  </Text>
                   {t('auth.legalJoiner')}
-                  <Text className="text-coral-500">{t('auth.privacyPolicy')}</Text>
+                  <Text
+                    onPress={() => openLegalLink(LEGAL_LINKS.privacy)}
+                    className="text-coral-500 font-semibold"
+                    style={{ textDecorationLine: 'underline' }}
+                  >
+                    {t('auth.privacyPolicy')}
+                  </Text>
                   {t('auth.legalSuffix')}
                 </Text>
               </View>

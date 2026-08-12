@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Pressable, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, Text, View } from 'react-native';
 import { LEGAL_LINKS } from '../../config/legal';
 import { openManageSubscriptions, type ProductId } from '../../services/billing';
 import { LegalCheckbox } from '../auth/LegalCheckbox';
@@ -31,8 +31,12 @@ export function PremiumSubscribeSection({
   const legalAccepted = termsAccepted && privacyAccepted;
   const isBlocked = loading || disabled || !legalAccepted;
 
-  const onManage = () => {
-    openManageSubscriptions(manageSku).catch(() => undefined);
+  const onManage = async () => {
+    try {
+      await openManageSubscriptions(manageSku);
+    } catch {
+      Alert.alert(t('common.error'), t('premium.manageGooglePlayFailed'));
+    }
   };
 
   return (

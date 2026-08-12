@@ -43,7 +43,11 @@ export function LegalCheckbox({ checked, onToggle, intro, linkLabel, linkUrl, te
         <Text className="text-ink-700 text-sm leading-5">
           <Text>{intro}</Text>
           <Text
-            onPress={open}
+            onPress={(event) => {
+              event.stopPropagation?.();
+              open();
+            }}
+            suppressHighlighting
             className="text-coral-500 font-semibold"
             style={{ textDecorationLine: 'underline', textDecorationColor: colors.coral[500] }}
           >

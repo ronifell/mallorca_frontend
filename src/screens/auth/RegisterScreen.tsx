@@ -49,12 +49,8 @@ export function RegisterScreen({ navigation }: Props) {
   });
 
   const onSubmit = async () => {
-    if (!acceptedTerms) {
-      setError(t('auth.termsRequired'));
-      return;
-    }
-    if (!acceptedPrivacy) {
-      setError(t('auth.privacyRequired'));
+    if (!acceptedTerms || !acceptedPrivacy) {
+      setError(t('auth.consentRequiredBoth'));
       return;
     }
     setLoading(true);

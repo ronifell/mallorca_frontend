@@ -71,6 +71,8 @@ export function DiscoveryScreen() {
   const pendingAction = pendingCount > 0;
   /** Stable id of the visible top card for swipe / button race guards. */
   const topIdRef = useRef<string | null>(null);
+  /** In-flight like requests keyed by candidate id (started on fly-out for snappier matches). */
+  const inflightLikesRef = useRef<Map<string, ReturnType<typeof discoveryApi.like>>>(new Map());
 
   useEffect(() => {
     // Only seed the deck from the server response when we don't have any
@@ -105,6 +107,15 @@ export function DiscoveryScreen() {
     return remaining;
   };
 
+  const beginLikeRequest = (candidateId: string) => {
+    let pending = inflightLikesRef.current.get(candidateId);
+    if (!pending) {
+      pending = discoveryApi.like(candidateId);
+      inflightLikesRef.current.set(candidateId, pending);
+    }
+    return pending;
+  };
+
   /**
    * Optimistic like: we advance the deck synchronously so the next profile
    * appears immediately, and fire the API call in the background. If the
@@ -114,9 +125,10 @@ export function DiscoveryScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => undefined);
     const remaining = advanceDeck();
     setPendingCount((n) => n + 1);
+    const likePromise = beginLikeRequest(candidate.id);
     void (async () => {
       try {
-        const res = await discoveryApi.like(candidate.id);
+        const res = await likePromise;
         if (res.matched && res.matchId) {
           showMatchPopup({
             matchId: res.matchId,
@@ -132,6 +144,7 @@ export function DiscoveryScreen() {
       } catch {
         // Non-fatal: the feed will resync on the next interaction.
       } finally {
+        inflightLikesRef.current.delete(candidate.id);
         setPendingCount((n) => Math.max(0, n - 1));
       }
     })();
@@ -257,25 +270,21 @@ export function DiscoveryScreen() {
           ) : top ? (
             <View className="flex-1 items-center justify-center">
               <View className="w-full max-w-md relative">
-                {next ? (
+                {next && !cardAnimating ? (
                   <View
-                    className="absolute inset-0 opacity-50"
+                    className="absolute inset-0 rounded-3xl bg-cream-200"
                     style={{ transform: [{ scale: 0.96 }] }}
                     pointerEvents="none"
-                  >
-                    <SwipeCard
-                      key={`under-${next.id}`}
-                      candidate={next}
-                      onSwipe={() => undefined}
-                      swipeable={false}
-                    />
-                  </View>
+                  />
                 ) : null}
                 <SwipeCard
                   key={`top-${top.id}`}
                   candidate={top}
                   onSwipe={handleSwipe}
-                  onFlyStart={() => setCardAnimating(true)}
+                  onFlyStart={() => {
+                    setCardAnimating(true);
+                    beginLikeRequest(top.id);
+                  }}
                   onInfoPress={() => openCandidateProfile(top)}
                   onCardPress={() => openCandidateProfile(top)}
                   swipeable={!superLikeLoading && !cardAnimating}

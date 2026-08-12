@@ -45,15 +45,9 @@ export function useGoogleSignIn({
       onError?.(t('auth.googleNotConfigured'));
       return;
     }
-    if (requireConsent) {
-      if (!acceptedTerms) {
-        onError?.(t('auth.termsRequired'));
-        return;
-      }
-      if (!acceptedPrivacy) {
-        onError?.(t('auth.privacyRequired'));
-        return;
-      }
+    if (requireConsent && (!acceptedTerms || !acceptedPrivacy)) {
+      onError?.(t('auth.consentRequiredBoth'));
+      return;
     }
 
     setGoogleLoading(true);

@@ -7,6 +7,7 @@ import i18n from '../i18n';
  */
 const SERVER_MESSAGE_KEYS: Record<string, string> = {
   // Auth — Spanish
+  'Debes aceptar tanto los Términos de Servicio como la Política de Privacidad.': 'auth.consentRequiredBoth',
   'Debes aceptar los Términos y la Política de Privacidad.': 'auth.consentRequiredBoth',
   'Debes aceptar los Términos y Condiciones.': 'auth.termsRequired',
   'Debes aceptar la Política de Privacidad.': 'auth.privacyRequired',
@@ -26,6 +27,7 @@ const SERVER_MESSAGE_KEYS: Record<string, string> = {
   'El código no es válido o ha caducado.': 'auth.resetCodeInvalid',
 
   // Auth — English (backend may return these when language=en)
+  'You must agree to both the Terms of Service and the Privacy Policy.': 'auth.consentRequiredBoth',
   'You must accept the Terms and Conditions and Privacy Policy.': 'auth.consentRequiredBoth',
   'You must accept the Terms and Conditions.': 'auth.termsRequired',
   'You must accept the Privacy Policy.': 'auth.privacyRequired',
