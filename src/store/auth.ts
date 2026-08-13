@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { authApi, usersApi } from '../api/endpoints';
 import { AuthUser } from '../api/types';
-import i18n, { resolveAppLanguage } from '../i18n';
+import i18n, { getStoredLanguage, resolveAppLanguage, setLanguage } from '../i18n';
 import { detachPushTokenFromServer, resetFcmTokenCache } from '../services/notifications';
 import { setLogoutInFlight, getLogoutInFlight } from '../services/sessionTeardown';
 import { tokenStorage } from '../services/storage';
@@ -25,10 +25,19 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   async setSession({ user, accessToken, refreshToken }) {
     await tokenStorage.setTokens(accessToken, refreshToken);
+    const storedLang = await getStoredLanguage();
+    if (!storedLang) {
+      try {
+        const me = await usersApi.me();
+        await setLanguage(resolveAppLanguage(me.appLanguage));
+      } catch {
+        // Keep init/device language if profile fetch fails.
+      }
+    } else {
+      const localLang = resolveAppLanguage(i18n.language);
+      await usersApi.update({ appLanguage: localLang }).catch(() => undefined);
+    }
     set({ user, initialized: true });
-    // Align push language with the UI language as soon as a session starts.
-    const localLang = resolveAppLanguage(i18n.language);
-    await usersApi.update({ appLanguage: localLang }).catch(() => undefined);
   },
 
   patchUser(patch) {
@@ -102,11 +111,15 @@ export const useAuthStore = create<AuthState>((set) => ({
         !!me.city &&
         !!me.interestedIn &&
         me.photos.length > 0;
-      // Keep users.language in sync with the device UI language so FCM pushes
-      // (chosen server-side) match Settings → Language.
+      // When the user has not chosen a UI language locally, follow their account preference.
+      const storedLang = await getStoredLanguage();
       const localLang = resolveAppLanguage(i18n.language);
       const serverLang = resolveAppLanguage(me.appLanguage);
-      if (serverLang !== localLang) {
+      if (!storedLang) {
+        if (serverLang !== localLang) {
+          await setLanguage(serverLang);
+        }
+      } else if (serverLang !== localLang) {
         await usersApi.update({ appLanguage: localLang }).catch(() => undefined);
       }
       set({

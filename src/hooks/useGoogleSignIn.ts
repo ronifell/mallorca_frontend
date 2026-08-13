@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { extractErrorMessage } from '../api/client';
 import { authApi } from '../api/endpoints';
 import { resolveAppLanguage } from '../i18n';
 import { hasGoogleClientId, isGoogleConfigured, signInWithGoogle } from '../services/googleAuth';
 import { useAuthStore } from '../store/auth';
+
+export type AuthFormError = { i18nKey?: string; detail?: string; raw?: unknown };
 
 interface Options {
   /** When true (Register flow), the user must accept Terms + Privacy first. */
@@ -16,7 +17,7 @@ interface Options {
   implicitConsent?: boolean;
   acceptedTerms?: boolean;
   acceptedPrivacy?: boolean;
-  onError?: (message: string) => void;
+  onError?: (error: AuthFormError) => void;
 }
 
 const ERROR_KEYS = {
@@ -42,11 +43,11 @@ export function useGoogleSignIn({
 
   const onGooglePress = async () => {
     if (!hasGoogleClientId) {
-      onError?.(t('auth.googleNotConfigured'));
+      onError?.({ i18nKey: 'auth.googleNotConfigured' });
       return;
     }
     if (requireConsent && (!acceptedTerms || !acceptedPrivacy)) {
-      onError?.(t('auth.consentRequiredBoth'));
+      onError?.({ i18nKey: 'auth.consentRequiredBoth' });
       return;
     }
 
@@ -55,13 +56,12 @@ export function useGoogleSignIn({
       const outcome = await signInWithGoogle();
       if (outcome.type === 'cancelled') return;
       if (outcome.type === 'error') {
-        const base = t(ERROR_KEYS[outcome.code]);
-        // Surface native/Google detail so SHA / OAuth misconfig is diagnosable in the field.
-        onError?.(
-          outcome.message && outcome.code !== 'developer_error'
-            ? `${base} (${outcome.message})`
-            : base,
-        );
+        const baseKey = ERROR_KEYS[outcome.code];
+        onError?.({
+          i18nKey: baseKey,
+          detail:
+            outcome.message && outcome.code !== 'developer_error' ? outcome.message : undefined,
+        });
         return;
       }
 
@@ -79,7 +79,7 @@ export function useGoogleSignIn({
         refreshToken: result.refreshToken,
       });
     } catch (e) {
-      onError?.(extractErrorMessage(e));
+      onError?.({ raw: e });
     } finally {
       setGoogleLoading(false);
     }

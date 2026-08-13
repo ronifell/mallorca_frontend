@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,
@@ -14,14 +14,14 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { extractErrorMessage } from '../../api/client';
+import { resolveAuthFormError } from '../../utils/authFormError';
 import { authApi } from '../../api/endpoints';
 import { LegalCheckbox } from '../../components/auth/LegalCheckbox';
 import { LoginBrandHeader } from '../../components/auth/LoginBrandHeader';
 import { OrDivider } from '../../components/auth/OrDivider';
 import { SocialAuthButton } from '../../components/auth/SocialAuthButton';
 import { Input } from '../../components/Input';
-import { useGoogleSignIn } from '../../hooks/useGoogleSignIn';
+import { useGoogleSignIn, type AuthFormError } from '../../hooks/useGoogleSignIn';
 import { AuthStackParamList } from '../../navigation/types';
 import { useAuthStore } from '../../store/auth';
 import { colors } from '../../theme/colors';
@@ -40,21 +40,25 @@ export function RegisterScreen({ navigation }: Props) {
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [acceptedPrivacy, setAcceptedPrivacy] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [formError, setFormError] = useState<AuthFormError | null>(null);
+  const errorMessage = useMemo(
+    () => resolveAuthFormError(formError, t),
+    [formError, t, i18n.language],
+  );
   const { onGooglePress, googleLoading, showGoogleButton } = useGoogleSignIn({
     requireConsent: true,
     acceptedTerms,
     acceptedPrivacy,
-    onError: setError,
+    onError: setFormError,
   });
 
   const onSubmit = async () => {
     if (!acceptedTerms || !acceptedPrivacy) {
-      setError(t('auth.consentRequiredBoth'));
+      setFormError({ i18nKey: 'auth.consentRequiredBoth' });
       return;
     }
     setLoading(true);
-    setError(null);
+    setFormError(null);
     try {
       const result = await authApi.register({
         email: email.trim(),
@@ -69,7 +73,7 @@ export function RegisterScreen({ navigation }: Props) {
         refreshToken: result.refreshToken,
       });
     } catch (e) {
-      setError(extractErrorMessage(e));
+      setFormError({ raw: e });
     } finally {
       setLoading(false);
     }
@@ -158,9 +162,9 @@ export function RegisterScreen({ navigation }: Props) {
                   />
                 </View>
 
-                {error ? (
+                {errorMessage ? (
                   <View className="bg-coral-50 rounded-2xl p-3 mb-3">
-                    <Text className="text-coral-600 text-center">{error}</Text>
+                    <Text className="text-coral-600 text-center">{errorMessage}</Text>
                   </View>
                 ) : null}
 
@@ -195,7 +199,7 @@ export function RegisterScreen({ navigation }: Props) {
                       provider="google"
                       label={t('auth.continueWithGoogle')}
                       onPress={() => {
-                        setError(null);
+                        setFormError(null);
                         onGooglePress();
                       }}
                       loading={googleLoading}

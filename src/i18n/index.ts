@@ -27,6 +27,12 @@ export async function setLanguage(lang: AppLanguage): Promise<void> {
   await i18n.changeLanguage(lang);
 }
 
+/** Returns a stored UI language choice, or null when the user has not picked one yet. */
+export async function getStoredLanguage(): Promise<AppLanguage | null> {
+  const stored = (await AsyncStorage.getItem(LANGUAGE_KEY)) as AppLanguage | null;
+  return stored === 'en' || stored === 'es' ? stored : null;
+}
+
 export async function initI18n(): Promise<void> {
   const stored = (await AsyncStorage.getItem(LANGUAGE_KEY)) as AppLanguage | null;
   const lang = stored ?? detectLanguage();

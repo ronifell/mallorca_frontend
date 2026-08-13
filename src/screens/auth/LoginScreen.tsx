@@ -40,7 +40,13 @@ export function LoginScreen({ navigation }: Props) {
   const [error, setError] = useState<string | null>(null);
   const { onGooglePress, googleLoading, showGoogleButton } = useGoogleSignIn({
     implicitConsent: true,
-    onError: setError,
+    onError: (err) => {
+      if (err.i18nKey) {
+        setError(err.detail ? `${t(err.i18nKey)} (${err.detail})` : t(err.i18nKey));
+      } else if (err.raw !== undefined) {
+        setError(extractErrorMessage(err.raw));
+      }
+    },
   });
 
   const openLegalLink = (url: string) => {
