@@ -21,6 +21,7 @@ export const authApi = {
   register: (input: {
     email: string;
     password: string;
+    firstName: string;
     acceptedTerms: true;
     acceptedPrivacy: true;
     language?: 'en' | 'es';

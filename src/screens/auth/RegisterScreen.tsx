@@ -35,6 +35,7 @@ export function RegisterScreen({ navigation }: Props) {
   const { t, i18n } = useTranslation();
   const setSession = useAuthStore((s) => s.setSession);
 
+  const [firstName, setFirstName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [acceptedTerms, setAcceptedTerms] = useState(false);
@@ -53,6 +54,10 @@ export function RegisterScreen({ navigation }: Props) {
   });
 
   const onSubmit = async () => {
+    if (!firstName.trim()) {
+      setFormError({ i18nKey: 'profile.fillRequired' });
+      return;
+    }
     if (!acceptedTerms || !acceptedPrivacy) {
       setFormError({ i18nKey: 'auth.consentRequiredBoth' });
       return;
@@ -63,6 +68,7 @@ export function RegisterScreen({ navigation }: Props) {
       const result = await authApi.register({
         email: email.trim(),
         password,
+        firstName: firstName.trim(),
         acceptedTerms: true,
         acceptedPrivacy: true,
         language: resolveAppLanguage(i18n.language),
@@ -118,6 +124,17 @@ export function RegisterScreen({ navigation }: Props) {
 
             <View style={styles.formCard}>
               <View style={styles.formContent}>
+                <Input
+                  label={t('profile.firstName')}
+                  autoCapitalize="words"
+                  autoComplete="given-name"
+                  value={firstName}
+                  onChangeText={setFirstName}
+                  placeholder={t('profile.firstNamePlaceholder')}
+                  leftIcon="person-outline"
+                  elevated
+                  accentIcon
+                />
                 <Input
                   label={t('auth.email')}
                   autoCapitalize="none"
