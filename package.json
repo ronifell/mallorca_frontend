@@ -1,6 +1,6 @@
 {
   "name": "mallorca-dating-app",
-  "version": "1.0.36",
+  "version": "1.0.37",
   "description": "Mallorca Dating & Networking mobile app (React Native + Expo)",
   "main": "index.js",
   "scripts": {
@@ -11,6 +11,7 @@
     "lint": "eslint \"src/**/*.{ts,tsx}\"",
     "typecheck": "tsc --noEmit",
     "build:android": "eas build --platform android --profile production",
+    "build:android:production": "npx expo prebuild --platform android && eas build --platform android --profile production",
     "build:android:preview": "eas build --platform android --profile preview",
     "build:ios": "eas build --platform ios --profile production",
     "build:icons": "node scripts/build-icons.js",
