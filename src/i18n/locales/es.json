@@ -18,6 +18,7 @@
     "unknown": "Error desconocido.",
     "generic": "Algo ha ido mal. Inténtalo de nuevo.",
     "network": "No se puede conectar con el servidor. Comprueba tu conexión a internet.",
+    "uploadFailed": "No se pudo subir la imagen. Inténtalo de nuevo o elige otra foto.",
     "requestFailed": "La solicitud ha fallado.",
     "requestFailedStatus": "La solicitud ha fallado ({{status}}).",
     "sessionExpired": "Tu sesión ha caducado. Inicia sesión de nuevo.",

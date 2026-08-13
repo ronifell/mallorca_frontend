@@ -125,7 +125,15 @@ export async function postMultipartFile<T>(
     networkRetried: boolean,
   ): Promise<T> => {
     const formData = new FormData();
-    formData.append(fieldName, file as unknown as Blob);
+    // React Native expects { uri, name, type } — not a web Blob.
+    formData.append(
+      fieldName,
+      {
+        uri: file.uri,
+        name: file.name,
+        type: file.type,
+      } as unknown as Blob,
+    );
 
     const headers: Record<string, string> = {};
     if (accessToken) headers.Authorization = `Bearer ${accessToken}`;

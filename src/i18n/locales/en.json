@@ -18,6 +18,7 @@
     "unknown": "Unknown error.",
     "generic": "Something went wrong. Please try again.",
     "network": "Can't reach the server. Check your internet connection.",
+    "uploadFailed": "We couldn't upload that image. Please try again or choose a different photo.",
     "requestFailed": "The request failed.",
     "requestFailedStatus": "The request failed ({{status}}).",
     "sessionExpired": "Your session has expired. Please sign in again.",

@@ -33,6 +33,22 @@ function rawApiMessage(err: unknown): string | null {
   return null;
 }
 
+function isLikelyBillingError(error: unknown): boolean {
+  if (isLocalizedError(error) && error.i18nKey.startsWith('billing.')) return true;
+  const message =
+    error instanceof Error
+      ? error.message
+      : typeof error === 'object' &&
+          error !== null &&
+          'message' in error &&
+          typeof (error as PurchaseErrorLike).message === 'string'
+        ? (error as PurchaseErrorLike).message!
+        : '';
+  return /google play|subscription|purchase token|billing|sku|offer token|already subscribed/i.test(
+    message,
+  );
+}
+
 function mapBillingNativeError(error: unknown, t: TFunction): string | null {
   const code =
     typeof error === 'object' && error !== null && 'code' in error
@@ -82,8 +98,10 @@ export function formatUserError(error: unknown, t: TFunction = i18n.t.bind(i18n)
     return t(error.i18nKey, error.i18nParams);
   }
 
-  const billingNative = mapBillingNativeError(error, t);
-  if (billingNative !== null) return billingNative;
+  if (isLikelyBillingError(error)) {
+    const billingNative = mapBillingNativeError(error, t);
+    if (billingNative !== null) return billingNative;
+  }
 
   const raw = rawApiMessage(error);
   if (raw === '__network__') return t('errors.network');
