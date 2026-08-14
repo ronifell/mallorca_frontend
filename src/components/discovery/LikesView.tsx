@@ -216,7 +216,11 @@ export function LikesView({ initialTab = 'received' }: { initialTab?: Tab } = {}
   const items = active.data ?? [];
 
   const openProfile = (user: LikedUser) => {
-    nav.navigate('CandidateProfile', { candidate: user });
+    nav.navigate({
+      name: 'CandidateProfile',
+      params: { candidate: { ...user } },
+      key: `candidate-${user.id}`,
+    });
   };
 
   const invalidateLikes = () => {

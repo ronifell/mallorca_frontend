@@ -9,6 +9,7 @@ import { discoveryApi } from '../../api/endpoints';
 import { FeedCandidate } from '../../api/types';
 import { Button } from '../../components/Button';
 import { DiscoveryActionButtons } from '../../components/discovery/DiscoveryActionButtons';
+import { DiscoveryCardPhotoPreview } from '../../components/discovery/DiscoveryCardPhotoPreview';
 import { DiscoveryHeader } from '../../components/discovery/DiscoveryHeader';
 import {
   DiscoveryMode,
@@ -76,6 +77,8 @@ export function DiscoveryScreen() {
   const pendingAction = pendingCount > 0;
   /** Stable id of the visible top card for swipe / button race guards. */
   const topIdRef = useRef<string | null>(null);
+  const deckRef = useRef(deck);
+  deckRef.current = deck;
   /** In-flight like requests keyed by candidate id (started on fly-out for snappier matches). */
   const inflightLikesRef = useRef<Map<string, ReturnType<typeof discoveryApi.like>>>(new Map());
 
@@ -209,8 +212,14 @@ export function DiscoveryScreen() {
     runPass(top);
   };
 
-  const openCandidateProfile = (candidate: FeedCandidate) => {
-    nav.navigate('CandidateProfile', { candidate });
+  const openCandidateProfile = (candidateId: string) => {
+    const candidate = deckRef.current.find((c) => c.id === candidateId);
+    if (!candidate) return;
+    nav.navigate({
+      name: 'CandidateProfile',
+      params: { candidate: { ...candidate } },
+      key: `candidate-${candidateId}`,
+    });
   };
 
   const handleSuperLike = async () => {
@@ -297,26 +306,28 @@ export function DiscoveryScreen() {
                 {next && !cardAnimating ? (
                   <View
                     className="absolute inset-0"
-                    style={{ transform: [{ scale: 0.96 }] }}
+                    style={{ zIndex: 1, elevation: 1, transform: [{ scale: 0.96 }] }}
                     pointerEvents="none"
                   >
-                    <SwipeCard candidate={next} swipeable={false} />
+                    <DiscoveryCardPhotoPreview candidate={next} />
                   </View>
                 ) : null}
-                <SwipeCard
-                  key={`top-${visibleCard.id}`}
-                  candidate={visibleCard}
-                  onSwipe={handleSwipe}
-                  onFlyStart={(dir) => {
-                    setCardAnimating(true);
-                    if (dir === 'right') {
-                      beginLikeRequest(visibleCard.id);
-                    }
-                  }}
-                  onInfoPress={() => openCandidateProfile(visibleCard)}
-                  onCardPress={() => openCandidateProfile(visibleCard)}
-                  swipeable={!superLikeLoading && !cardAnimating}
-                />
+                <View style={{ zIndex: 2, elevation: 2 }}>
+                  <SwipeCard
+                    key={`top-${visibleCard.id}`}
+                    candidate={visibleCard}
+                    onSwipe={handleSwipe}
+                    onFlyStart={(dir) => {
+                      setCardAnimating(true);
+                      if (dir === 'right') {
+                        beginLikeRequest(visibleCard.id);
+                      }
+                    }}
+                    onInfoPress={() => openCandidateProfile(visibleCard.id)}
+                    onCardPress={() => openCandidateProfile(visibleCard.id)}
+                    swipeable={!superLikeLoading && !cardAnimating}
+                  />
+                </View>
               </View>
 
               <DiscoveryActionButtons

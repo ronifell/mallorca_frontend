@@ -8,6 +8,8 @@ interface Props {
   photoUri: string | null;
   photoIndex: number;
   photoCount: number;
+  /** Forces Image remount when the candidate or photo changes (avoids stale cache). */
+  photoKey?: string;
   online?: boolean;
   isPremium?: boolean;
   onPrev?: () => void;
@@ -29,6 +31,7 @@ export function CandidatePhotoHero({
   photoUri,
   photoIndex,
   photoCount,
+  photoKey,
   online = true,
   isPremium = false,
   onPrev,
@@ -51,6 +54,7 @@ export function CandidatePhotoHero({
     >
       {photoUri ? (
         <Image
+          key={photoKey ?? photoUri}
           source={{ uri: photoUri }}
           className="w-full h-full"
           resizeMode="cover"

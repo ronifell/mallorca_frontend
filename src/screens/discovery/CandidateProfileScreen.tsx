@@ -73,6 +73,10 @@ export function CandidateProfileScreen({ route, navigation }: Props) {
   };
 
   useEffect(() => {
+    setPhotoIndex(0);
+  }, [candidate.id]);
+
+  useEffect(() => {
     if (hadMatchRef.current && !matchOpen) {
       hadMatchRef.current = false;
       navigation.goBack();
@@ -192,9 +196,11 @@ export function CandidateProfileScreen({ route, navigation }: Props) {
           contentContainerStyle={{ paddingBottom: ACTION_BAR_HEIGHT + 24 }}
         >
           <CandidatePhotoHero
+            key={candidate.id}
             photoUri={activePhoto}
             photoIndex={safeIndex}
             photoCount={photoCount}
+            photoKey={`${candidate.id}-${safeIndex}`}
             online
             isPremium={candidate.isPremium}
             onPrev={photoCount > 1 ? goPrev : undefined}
