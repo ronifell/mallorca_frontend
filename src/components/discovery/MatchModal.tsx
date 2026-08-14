@@ -402,7 +402,12 @@ export function MatchModal({
               ]}
             >
               <View style={styles.avatarRing}>
-                <Avatar uri={myPhoto} name={myName} size={AVATAR_SIZE - 12} />
+                <Avatar
+                  key={`match-my-${myPhoto ?? 'none'}`}
+                  uri={myPhoto}
+                  name={myName}
+                  size={AVATAR_SIZE - 12}
+                />
               </View>
             </Animated.View>
 
@@ -420,7 +425,12 @@ export function MatchModal({
               ]}
             >
               <View style={styles.avatarRing}>
-                <Avatar uri={otherPhoto} name={name} size={AVATAR_SIZE - 12} />
+                <Avatar
+                  key={`match-other-${otherPhoto ?? 'none'}`}
+                  uri={otherPhoto}
+                  name={name}
+                  size={AVATAR_SIZE - 12}
+                />
               </View>
             </Animated.View>
 

@@ -14,6 +14,7 @@ export function Avatar({ uri, name, size = 56 }: Props) {
   if (resolved) {
     return (
       <Image
+        key={resolved}
         source={{ uri: resolved }}
         style={{ width: size, height: size, borderRadius: size / 2 }}
         className="bg-cream-300"

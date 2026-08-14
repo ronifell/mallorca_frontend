@@ -1,10 +1,10 @@
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useQuery } from '@tanstack/react-query';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Alert } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { chatApi, usersApi } from '../../api/endpoints';
+import { chatApi, matchesApi, usersApi } from '../../api/endpoints';
 import { extractErrorMessage } from '../../api/client';
 import { RootStackParamList } from '../../navigation/types';
 import { useMatchPopup } from '../../store/matchPopup';
@@ -31,7 +31,24 @@ export function GlobalMatchModal() {
     queryFn: () => usersApi.me(),
     staleTime: 5 * 60 * 1000,
   });
+  const { data: matches } = useQuery({
+    queryKey: ['matches'],
+    queryFn: () => matchesApi.list(),
+    enabled: current != null,
+    staleTime: 30_000,
+  });
   const [sending, setSending] = useState(false);
+
+  const { myPhoto, otherPhoto } = useMemo(() => {
+    if (!current) {
+      return { myPhoto: null as string | null, otherPhoto: null as string | null };
+    }
+    const match = matches?.find((m) => m.matchId === current.matchId);
+    return {
+      myPhoto: me?.photos?.[0]?.url ?? null,
+      otherPhoto: match?.otherUser.coverPhoto ?? current.otherUser.photo,
+    };
+  }, [current, matches, me?.photos]);
 
   const onSendMessage = async () => {
     if (!current || sending) return;
@@ -63,8 +80,8 @@ export function GlobalMatchModal() {
     <MatchModal
       visible={current != null}
       name={current?.otherUser.firstName ?? null}
-      otherPhoto={current?.otherUser.photo ?? null}
-      myPhoto={me?.photos?.[0]?.url ?? null}
+      otherPhoto={otherPhoto}
+      myPhoto={myPhoto}
       myName={me?.firstName ?? null}
       onSendMessage={onSendMessage}
       onClose={hide}

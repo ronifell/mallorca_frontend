@@ -85,10 +85,10 @@ export function DiscoveryFiltersSheet({ visible, profile, onClose, onApplied }: 
         minAge: ageRange.min,
         maxAge: ageRange.max,
       });
-      await qc.invalidateQueries({ queryKey: ['me'] });
-      await qc.invalidateQueries({ queryKey: ['feed'] });
       onApplied?.();
       onClose();
+      void qc.invalidateQueries({ queryKey: ['me'] });
+      void qc.invalidateQueries({ queryKey: ['feed'] });
     } catch (e) {
       setError(extractErrorMessage(e));
     } finally {
