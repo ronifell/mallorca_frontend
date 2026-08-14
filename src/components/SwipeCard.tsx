@@ -18,9 +18,9 @@ import { resolveMediaUrl } from '../utils/mediaUrl';
 
 interface Props {
   candidate: FeedCandidate;
-  onSwipe: (dir: 'left' | 'right', candidateId: string) => void;
+  onSwipe?: (dir: 'left' | 'right', candidateId: string) => void;
   /** Fired when the fly-out animation starts (before onSwipe). */
-  onFlyStart?: () => void;
+  onFlyStart?: (dir: 'left' | 'right') => void;
   onInfoPress?: () => void;
   onCardPress?: () => void;
   swipeable?: boolean;
@@ -60,17 +60,19 @@ export function SwipeCard({
     // right when the card leaves the visible viewport so the next profile
     // fades into place without any perceptible wait.
     const duration = 120;
-    onFlyStart?.();
+    onFlyStart?.(dir);
     x.value = withTiming(dir === 'right' ? SCREEN_WIDTH * 1.5 : -SCREEN_WIDTH * 1.5, {
       duration,
     });
     rotate.value = withTiming(dir === 'right' ? 0.3 : -0.3, { duration });
     if (flyTimerRef.current) clearTimeout(flyTimerRef.current);
-    flyTimerRef.current = setTimeout(() => onSwipe(dir, candidateId), duration);
+    if (onSwipe) {
+      flyTimerRef.current = setTimeout(() => onSwipe(dir, candidateId), duration);
+    }
   };
 
   const pan = Gesture.Pan()
-    .enabled(swipeable)
+    .enabled(swipeable && !!onSwipe)
     .onUpdate((e) => {
       x.value = e.translationX;
       y.value = e.translationY;
@@ -122,7 +124,12 @@ export function SwipeCard({
             disabled={!onCardPress}
             style={{ width: '100%', height: '100%' }}
           >
-            <Image source={{ uri: photo }} className="w-full h-full" resizeMode="cover" />
+            <Image
+              key={candidate.id}
+              source={{ uri: photo }}
+              className="w-full h-full"
+              resizeMode="cover"
+            />
           </Pressable>
         ) : (
           <Pressable

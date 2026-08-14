@@ -4,6 +4,7 @@ import { AuthUser } from '../api/types';
 import i18n, { getStoredLanguage, resolveAppLanguage, setLanguage } from '../i18n';
 import { detachPushTokenFromServer, resetFcmTokenCache } from '../services/notifications';
 import { setLogoutInFlight, getLogoutInFlight } from '../services/sessionTeardown';
+import { clearAppQueryCache } from '../services/queryClient';
 import { tokenStorage } from '../services/storage';
 
 export { isLogoutInFlight } from '../services/sessionTeardown';
@@ -24,6 +25,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   initialized: false,
 
   async setSession({ user, accessToken, refreshToken }) {
+    clearAppQueryCache();
     await tokenStorage.setTokens(accessToken, refreshToken);
     const storedLang = await getStoredLanguage();
     if (!storedLang) {
@@ -79,6 +81,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       } catch {
         // Best-effort server cleanup; always clear local session below.
       } finally {
+        clearAppQueryCache();
         await tokenStorage.clear();
         resetFcmTokenCache();
         set({ user: null, initialized: true });

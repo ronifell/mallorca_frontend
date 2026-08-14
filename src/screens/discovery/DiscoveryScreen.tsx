@@ -19,6 +19,7 @@ import { Screen } from '../../components/Screen';
 import { SwipeCard } from '../../components/SwipeCard';
 import { MainTabParamList, RootStackParamList } from '../../navigation/types';
 import { useMatchPopup } from '../../store/matchPopup';
+import { useAuthStore } from '../../store/auth';
 import { useSuperLikeAccess } from '../../hooks/useSuperLikeAccess';
 import {
   ensureSuperLikeAllowed,
@@ -32,6 +33,7 @@ export function DiscoveryScreen() {
   const nav = useNavigation<Nav>();
   const route = useRoute<RouteProp<MainTabParamList, 'Discover'>>();
   const qc = useQueryClient();
+  const userId = useAuthStore((s) => s.user?.id);
   const showMatchPopup = useMatchPopup((s) => s.show);
   const matchOpen = useMatchPopup((s) => s.current != null);
   const [mode, setMode] = useState<DiscoveryMode>(route.params?.mode ?? 'discover');
@@ -48,13 +50,16 @@ export function DiscoveryScreen() {
     }
   }, [route.params?.mode, route.params?.likesTab]);
   const { data, isLoading, refetch } = useQuery<FeedCandidate[]>({
-    queryKey: ['feed'],
+    queryKey: ['feed', userId],
     queryFn: () => discoveryApi.feed(20),
+    enabled: !!userId,
   });
   const { quota: superLikeQuota, unlocked: superLikeUnlocked, remaining: superLikeRemaining, refetch: refetchQuota, authIsPremium } =
     useSuperLikeAccess();
 
   const [deck, setDeck] = useState<FeedCandidate[]>([]);
+  /** Card bound to SwipeCard — stays pinned while the fly-out animation runs. */
+  const [renderCard, setRenderCard] = useState<FeedCandidate | null>(null);
   const [isRetrying, setIsRetrying] = useState(false);
   // Track in-flight super-like — the star button still waits for its API
   // response to update the quota badge. Regular like / pass are optimistic
@@ -75,6 +80,14 @@ export function DiscoveryScreen() {
   const inflightLikesRef = useRef<Map<string, ReturnType<typeof discoveryApi.like>>>(new Map());
 
   useEffect(() => {
+    setDeck([]);
+    setRenderCard(null);
+    setPendingCount(0);
+    setCardAnimating(false);
+    inflightLikesRef.current.clear();
+  }, [userId]);
+
+  useEffect(() => {
     // Only seed the deck from the server response when we don't have any
     // cards locally. If the user has been swiping, we don't want the query
     // refetching to reset their queue.
@@ -84,7 +97,14 @@ export function DiscoveryScreen() {
 
   const top = deck[0];
   const next = deck[1];
-  topIdRef.current = top?.id ?? null;
+  const visibleCard = cardAnimating ? renderCard : top;
+  topIdRef.current = visibleCard?.id ?? null;
+
+  useEffect(() => {
+    if (!cardAnimating && top) {
+      setRenderCard(top);
+    }
+  }, [top, cardAnimating]);
 
   const replenishIfNeeded = async (remainingCount: number) => {
     if (remainingCount > 3) return;
@@ -140,6 +160,7 @@ export function DiscoveryScreen() {
           });
           qc.invalidateQueries({ queryKey: ['matches'] });
         }
+        qc.invalidateQueries({ queryKey: ['likes'] });
         await replenishIfNeeded(remaining);
       } catch {
         // Non-fatal: the feed will resync on the next interaction.
@@ -168,10 +189,8 @@ export function DiscoveryScreen() {
 
   const handleSwipe = (dir: 'left' | 'right', candidateId: string) => {
     setCardAnimating(false);
-    // Ignore stale swipe callbacks from a card that is no longer on top
-    // (e.g. Super Like advanced the deck during the fly-out timeout).
     if (topIdRef.current !== candidateId) return;
-    const candidate = deck.find((c) => c.id === candidateId) ?? top;
+    const candidate = renderCard ?? deck.find((c) => c.id === candidateId) ?? top;
     if (!candidate || candidate.id !== candidateId) return;
     if (dir === 'right') {
       runLike(candidate);
@@ -240,8 +259,12 @@ export function DiscoveryScreen() {
     try {
       await discoveryApi.resetFeed();
       setDeck([]);
+      setRenderCard(null);
       const { data: users } = await refetch();
-      if (users) setDeck(users);
+      if (users) {
+        setDeck(users);
+        setRenderCard(users[0] ?? null);
+      }
     } catch {
       Alert.alert(t('common.error'), t('discovery.retryFailed'));
     } finally {
@@ -254,6 +277,7 @@ export function DiscoveryScreen() {
       <DiscoveryHeader
         onFiltersApplied={() => {
           setDeck([]);
+          setRenderCard(null);
           void refetch();
         }}
       />
@@ -267,26 +291,30 @@ export function DiscoveryScreen() {
             <View className="flex-1 items-center justify-center">
               <Text className="text-ink-400">{t('discovery.loading')}</Text>
             </View>
-          ) : top ? (
+          ) : visibleCard ? (
             <View className="flex-1 items-center justify-center">
               <View className="w-full max-w-md relative">
                 {next && !cardAnimating ? (
                   <View
-                    className="absolute inset-0 rounded-3xl bg-cream-200"
+                    className="absolute inset-0"
                     style={{ transform: [{ scale: 0.96 }] }}
                     pointerEvents="none"
-                  />
+                  >
+                    <SwipeCard candidate={next} swipeable={false} />
+                  </View>
                 ) : null}
                 <SwipeCard
-                  key={`top-${top.id}`}
-                  candidate={top}
+                  key={`top-${visibleCard.id}`}
+                  candidate={visibleCard}
                   onSwipe={handleSwipe}
-                  onFlyStart={() => {
+                  onFlyStart={(dir) => {
                     setCardAnimating(true);
-                    beginLikeRequest(top.id);
+                    if (dir === 'right') {
+                      beginLikeRequest(visibleCard.id);
+                    }
                   }}
-                  onInfoPress={() => openCandidateProfile(top)}
-                  onCardPress={() => openCandidateProfile(top)}
+                  onInfoPress={() => openCandidateProfile(visibleCard)}
+                  onCardPress={() => openCandidateProfile(visibleCard)}
                   swipeable={!superLikeLoading && !cardAnimating}
                 />
               </View>

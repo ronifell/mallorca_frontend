@@ -45,7 +45,7 @@ export function MatchesScreen() {
     const query = search.trim().toLowerCase();
     const filtered = query
       ? matches.filter((m: Match) => (m.otherUser.firstName ?? '').toLowerCase().includes(query))
-      : matches;
+      : matches.filter((m: Match) => m.hasConversation);
     return sortMatches(filtered);
   }, [matches, search]);
 

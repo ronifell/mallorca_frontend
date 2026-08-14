@@ -7,7 +7,8 @@ import {
   PlayfairDisplay_500Medium_Italic,
   PlayfairDisplay_700Bold_Italic,
 } from '@expo-google-fonts/playfair-display';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { queryClient } from './src/services/queryClient';
 import { useFonts } from 'expo-font';
 import * as ExpoSplash from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
@@ -29,15 +30,6 @@ import { useAuthStore } from './src/store/auth';
 import { colors } from './src/theme/colors';
 
 ExpoSplash.preventAutoHideAsync().catch(() => undefined);
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: 1,
-      staleTime: 30_000,
-    },
-  },
-});
 
 export default function App() {
   const [i18nReady, setI18nReady] = React.useState(false);
