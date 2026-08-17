@@ -53,7 +53,7 @@ export function CandidateIdentityRow({
     : t('discovery.nearby');
 
   return (
-    <View className="flex-row items-center justify-between px-5 mb-5">
+    <View className="flex-row items-center justify-between mb-5">
       <View className="flex-1 pr-3">
         <View className="flex-row items-center flex-wrap">
           <Text className="text-ink-700 text-2xl font-bold">

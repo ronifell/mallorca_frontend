@@ -25,6 +25,7 @@ import {
   handleSuperLikeApiError,
 } from '../../utils/superLikeActions';
 import { resolveMediaUrl } from '../../utils/mediaUrl';
+import { profileScrollContentStyle } from '../../constants/profileLayout';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'CandidateProfile'>;
 
@@ -193,7 +194,8 @@ export function CandidateProfileScreen({ route, navigation }: Props) {
 
         <ScrollView
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: ACTION_BAR_HEIGHT + 24 }}
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={profileScrollContentStyle(ACTION_BAR_HEIGHT + 24)}
         >
           <CandidatePhotoHero
             key={candidate.id}
@@ -236,7 +238,7 @@ export function CandidateProfileScreen({ route, navigation }: Props) {
 
           {candidate.bio ? (
             <View
-              className="mx-5 mb-6 rounded-2xl bg-white px-4 py-4"
+              className="mb-6 rounded-2xl bg-white px-4 py-4"
               style={{
                 shadowColor: '#3D2618',
                 shadowOffset: { width: 0, height: 3 },
@@ -255,7 +257,7 @@ export function CandidateProfileScreen({ route, navigation }: Props) {
           ) : null}
 
           {candidate.isPremium ? (
-            <View className="mx-5 mb-6 bg-coral-50 rounded-2xl py-3 items-center border border-coral-100">
+            <View className="mb-6 bg-coral-50 rounded-2xl py-3 items-center border border-coral-100">
               <Text className="text-coral-600 font-semibold">
                 {t('profile.premiumUserNotice')}
               </Text>

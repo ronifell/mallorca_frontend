@@ -138,7 +138,7 @@ export function CandidateInfoCard({
 
   return (
     <View
-      className="mx-5 mb-5 rounded-2xl bg-white px-4 py-1"
+      className="mb-5 rounded-2xl bg-white px-4 py-1"
       style={{
         shadowColor: '#3D2618',
         shadowOffset: { width: 0, height: 3 },

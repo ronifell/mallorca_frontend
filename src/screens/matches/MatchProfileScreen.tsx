@@ -20,6 +20,7 @@ import { useTopScreenPadding } from '../../hooks/useTopScreenPadding';
 import { RootStackParamList } from '../../navigation/types';
 import { colors } from '../../theme/colors';
 import { resolveMediaUrl } from '../../utils/mediaUrl';
+import { profileScrollContentStyle } from '../../constants/profileLayout';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'MatchProfile'>;
 
@@ -169,7 +170,8 @@ export function MatchProfileScreen({ route, navigation }: Props) {
 
         <ScrollView
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: 32 }}
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={profileScrollContentStyle(32)}
         >
           <CandidatePhotoHero
             photoUri={activePhoto}
@@ -209,7 +211,7 @@ export function MatchProfileScreen({ route, navigation }: Props) {
 
           {profile.bio ? (
             <View
-              className="mx-5 mb-5 rounded-2xl bg-white px-4 py-4"
+              className="mb-5 rounded-2xl bg-white px-4 py-4"
               style={{
                 shadowColor: '#3D2618',
                 shadowOffset: { width: 0, height: 3 },
@@ -227,7 +229,7 @@ export function MatchProfileScreen({ route, navigation }: Props) {
             </View>
           ) : null}
 
-          <View className="px-5 mt-1">
+          <View className="mt-1">
             <Button
               label={t('profile.sendMessage')}
               onPress={openChat}

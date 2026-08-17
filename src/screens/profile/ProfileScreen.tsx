@@ -18,6 +18,7 @@ import { CandidateProfileHeader } from '../../components/discovery/CandidateProf
 import { useTopScreenPadding } from '../../hooks/useTopScreenPadding';
 import { MainTabParamList, RootStackParamList } from '../../navigation/types';
 import { colors } from '../../theme/colors';
+import { profileScrollContentStyle } from '../../constants/profileLayout';
 import { resolveMediaUrl } from '../../utils/mediaUrl';
 
 type Nav = CompositeNavigationProp<
@@ -89,7 +90,8 @@ export function ProfileScreen() {
 
         <ScrollView
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: 32 }}
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={profileScrollContentStyle(32)}
         >
           <CandidatePhotoHero
             photoUri={activePhoto}
@@ -129,7 +131,7 @@ export function ProfileScreen() {
 
           {me.bio ? (
             <View
-              className="mx-5 mb-5 rounded-2xl bg-white px-4 py-4"
+              className="mb-5 rounded-2xl bg-white px-4 py-4"
               style={{
                 shadowColor: '#3D2618',
                 shadowOffset: { width: 0, height: 3 },
@@ -145,7 +147,7 @@ export function ProfileScreen() {
             </View>
           ) : null}
 
-          <View className="px-5 mt-1">
+          <View className="mt-1">
             <Pressable
               onPress={goEdit}
               className="w-full border-2 rounded-2xl py-3.5 items-center bg-white active:bg-coral-50"

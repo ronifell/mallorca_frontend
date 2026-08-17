@@ -53,7 +53,6 @@ function QuietButton({ label, onPress }: { label: string; onPress: () => void })
 
 const styles = StyleSheet.create({
   wrap: {
-    marginHorizontal: 20,
     marginTop: 8,
     marginBottom: 28,
     alignItems: 'center',

@@ -1,6 +1,7 @@
 import React from 'react';
-import { Dimensions, Image, Pressable, View } from 'react-native';
+import { Image, Pressable, View } from 'react-native';
 import { colors } from '../../theme/colors';
+import { profileContentWidth } from '../../constants/profileLayout';
 
 interface Props {
   photoUris: string[];
@@ -8,11 +9,10 @@ interface Props {
   onSelect: (index: number) => void;
 }
 
-const SCREEN_WIDTH = Dimensions.get('window').width;
-const HORIZONTAL_PADDING = 20;
 const GAP = 8;
 const MAX_VISIBLE = 6;
 const MAX_THUMB_SIZE = 44;
+const USABLE_WIDTH = profileContentWidth();
 
 /**
  * Horizontal strip of small photo thumbnails. The strip is centred and each
@@ -26,16 +26,13 @@ export function CandidatePhotoThumbnails({
 }: Props) {
   if (photoUris.length === 0) return null;
 
-  const usable = SCREEN_WIDTH - HORIZONTAL_PADDING * 2;
+  const usable = USABLE_WIDTH;
   const visible = Math.min(photoUris.length, MAX_VISIBLE);
   const computed = Math.floor((usable - GAP * (visible - 1)) / visible);
   const size = Math.min(computed, MAX_THUMB_SIZE);
 
   return (
-    <View
-      className="flex-row justify-center mb-4"
-      style={{ paddingHorizontal: HORIZONTAL_PADDING }}
-    >
+    <View className="flex-row justify-center mb-4">
       {photoUris.map((uri, index) => {
         const isActive = index === activeIndex;
         return (
