@@ -303,15 +303,15 @@
     "tapToView": "Toca para ver el perfil completo"
   },
   "matches": {
-    "title": "Tus matches",
-    "pageTitle": "Matches",
-    "searchPlaceholder": "Buscar matches",
+    "title": "Tus coincidencias",
+    "pageTitle": "Coincidencias",
+    "searchPlaceholder": "Buscar coincidencias",
     "filters": "Filtros",
-    "filterComingSoon": "Los filtros de matches llegarán pronto.",
+    "filterComingSoon": "Los filtros de coincidencias llegarán pronto.",
     "openFilters": "Abrir filtros",
     "openMessages": "Abrir mensajes",
-    "empty": "Aún no tienes matches. ¡Sigue deslizando!",
-    "newMatch": "Nuevo match",
+    "empty": "Aún no tienes coincidencias. ¡Sigue deslizando!",
+    "newMatch": "Nueva coincidencia",
     "unmatch": "Deshacer match",
     "unmatchConfirm": "Este match se eliminará. ¿Continuar?"
   },
