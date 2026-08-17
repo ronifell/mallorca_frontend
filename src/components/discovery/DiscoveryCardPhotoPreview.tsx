@@ -11,7 +11,6 @@ export function DiscoveryCardPhotoPreview({ candidate }: { candidate: FeedCandid
     <View className="w-full aspect-[3/4] rounded-3xl overflow-hidden bg-cream-300">
       {photo ? (
         <Image
-          key={candidate.id}
           source={{ uri: photo }}
           className="w-full h-full"
           resizeMode="cover"

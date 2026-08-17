@@ -1,5 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useEffect, useState } from 'react';
+import React, {
+  forwardRef,
+  useEffect,
+  useImperativeHandle,
+  useLayoutEffect,
+  useState,
+} from 'react';
 import { Dimensions, Image, Pressable, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
@@ -16,11 +22,19 @@ import { FeedCandidate } from '../api/types';
 import { colors } from '../theme/colors';
 import { resolveMediaUrl } from '../utils/mediaUrl';
 
+export type SwipeCardHandle = {
+  flyOut: (dir: 'left' | 'right') => void;
+};
+
 interface Props {
   candidate: FeedCandidate;
   onSwipe?: (dir: 'left' | 'right', candidateId: string) => void;
   /** Fired when the fly-out animation starts (before onSwipe). */
   onFlyStart?: (dir: 'left' | 'right') => void;
+  /** 0–1 progress while the card is dragged horizontally. */
+  onDragProgress?: (progress: number) => void;
+  /** Fired once the hero photo has decoded (or immediately when there is no photo). */
+  onPhotoLoad?: () => void;
   onInfoPress?: () => void;
   onCardPress?: () => void;
   swipeable?: boolean;
@@ -28,15 +42,21 @@ interface Props {
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.25;
+const FLY_DURATION = 120;
 
-export function SwipeCard({
-  candidate,
-  onSwipe,
-  onFlyStart,
-  onInfoPress,
-  onCardPress,
-  swipeable = true,
-}: Props) {
+export const SwipeCard = forwardRef<SwipeCardHandle, Props>(function SwipeCard(
+  {
+    candidate,
+    onSwipe,
+    onFlyStart,
+    onDragProgress,
+    onPhotoLoad,
+    onInfoPress,
+    onCardPress,
+    swipeable = true,
+  },
+  ref,
+) {
   const { t } = useTranslation();
   const x = useSharedValue(0);
   const y = useSharedValue(0);
@@ -45,31 +65,41 @@ export function SwipeCard({
   const flyTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const candidateId = candidate.id;
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     setPhotoIdx(0);
     x.value = 0;
     y.value = 0;
     rotate.value = 0;
+  }, [candidate.id]);
+
+  useEffect(() => {
     return () => {
       if (flyTimerRef.current) clearTimeout(flyTimerRef.current);
     };
-  }, [candidate.id]);
+  }, []);
+
+  const notifyDragProgress = (translationX: number) => {
+    onDragProgress?.(Math.min(Math.abs(translationX) / SWIPE_THRESHOLD, 1));
+  };
 
   const fly = (dir: 'left' | 'right') => {
-    // Short fly-out animation. We schedule the deck-advance callback for
-    // right when the card leaves the visible viewport so the next profile
-    // fades into place without any perceptible wait.
-    const duration = 120;
     onFlyStart?.(dir);
     x.value = withTiming(dir === 'right' ? SCREEN_WIDTH * 1.5 : -SCREEN_WIDTH * 1.5, {
-      duration,
+      duration: FLY_DURATION,
     });
-    rotate.value = withTiming(dir === 'right' ? 0.3 : -0.3, { duration });
+    rotate.value = withTiming(dir === 'right' ? 0.3 : -0.3, { duration: FLY_DURATION });
     if (flyTimerRef.current) clearTimeout(flyTimerRef.current);
     if (onSwipe) {
-      flyTimerRef.current = setTimeout(() => onSwipe(dir, candidateId), duration);
+      flyTimerRef.current = setTimeout(() => onSwipe(dir, candidateId), FLY_DURATION);
     }
   };
+
+  useImperativeHandle(ref, () => ({
+    flyOut: (dir: 'left' | 'right') => {
+      if (!swipeable || !onSwipe) return;
+      fly(dir);
+    },
+  }));
 
   const pan = Gesture.Pan()
     .enabled(swipeable && !!onSwipe)
@@ -77,6 +107,9 @@ export function SwipeCard({
       x.value = e.translationX;
       y.value = e.translationY;
       rotate.value = e.translationX / SCREEN_WIDTH;
+      if (onDragProgress) {
+        runOnJS(notifyDragProgress)(e.translationX);
+      }
     })
     .onEnd(() => {
       if (x.value > SWIPE_THRESHOLD) {
@@ -87,6 +120,9 @@ export function SwipeCard({
         x.value = withSpring(0);
         y.value = withSpring(0);
         rotate.value = withSpring(0);
+        if (onDragProgress) {
+          runOnJS(onDragProgress)(0);
+        }
       }
     });
 
@@ -108,6 +144,12 @@ export function SwipeCard({
   const photo = resolveMediaUrl(candidate.photos[photoIdx]?.url);
   const photoCount = candidate.photos.length;
 
+  useEffect(() => {
+    if (!photo) {
+      onPhotoLoad?.();
+    }
+  }, [candidate.id, photo, onPhotoLoad]);
+
   const locationLine = candidate.city
     ? `${candidate.city}${candidate.city.toLowerCase().includes('mallorca') ? '' : ', Mallorca'}`
     : null;
@@ -125,10 +167,10 @@ export function SwipeCard({
             style={{ width: '100%', height: '100%' }}
           >
             <Image
-              key={candidate.id}
               source={{ uri: photo }}
               className="w-full h-full"
               resizeMode="cover"
+              onLoad={onPhotoLoad}
             />
           </Pressable>
         ) : (
@@ -190,9 +232,6 @@ export function SwipeCard({
           </>
         ) : null}
 
-        {/* Minimal identity overlay: only name/age + city, no dark full-width
-            background so the photo stays the protagonist. A soft gradient
-            keeps the text readable without hiding the picture. */}
         <LinearGradient
           colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.55)']}
           pointerEvents="none"
@@ -280,4 +319,4 @@ export function SwipeCard({
       </Animated.View>
     </GestureDetector>
   );
-}
+});

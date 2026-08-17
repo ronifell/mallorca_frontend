@@ -2,14 +2,15 @@ import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import * as Haptics from 'expo-haptics';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Text, View } from 'react-native';
+import { useSharedValue, withTiming } from 'react-native-reanimated';
 import { discoveryApi } from '../../api/endpoints';
 import { FeedCandidate } from '../../api/types';
 import { Button } from '../../components/Button';
 import { DiscoveryActionButtons } from '../../components/discovery/DiscoveryActionButtons';
-import { DiscoveryCardPhotoPreview } from '../../components/discovery/DiscoveryCardPhotoPreview';
+import { BACK_SCALE_MIN, DiscoveryCardStack } from '../../components/discovery/DiscoveryCardStack';
 import { DiscoveryHeader } from '../../components/discovery/DiscoveryHeader';
 import {
   DiscoveryMode,
@@ -17,7 +18,7 @@ import {
 } from '../../components/discovery/DiscoveryModeToggle';
 import { LikesView } from '../../components/discovery/LikesView';
 import { Screen } from '../../components/Screen';
-import { SwipeCard } from '../../components/SwipeCard';
+import { SwipeCardHandle } from '../../components/SwipeCard';
 import { MainTabParamList, RootStackParamList } from '../../navigation/types';
 import { useMatchPopup } from '../../store/matchPopup';
 import { useAuthStore } from '../../store/auth';
@@ -59,8 +60,8 @@ export function DiscoveryScreen() {
     useSuperLikeAccess();
 
   const [deck, setDeck] = useState<FeedCandidate[]>([]);
-  /** Card bound to SwipeCard — stays pinned while the fly-out animation runs. */
-  const [renderCard, setRenderCard] = useState<FeedCandidate | null>(null);
+  /** Photo-only cover shown until the new top card image has decoded. */
+  const [coverCandidate, setCoverCandidate] = useState<FeedCandidate | null>(null);
   const [isRetrying, setIsRetrying] = useState(false);
   // Track in-flight super-like — the star button still waits for its API
   // response to update the quota badge. Regular like / pass are optimistic
@@ -77,8 +78,10 @@ export function DiscoveryScreen() {
   const pendingAction = pendingCount > 0;
   const deckRef = useRef(deck);
   deckRef.current = deck;
-  const renderCardRef = useRef(renderCard);
-  renderCardRef.current = renderCard;
+  const mainCardRef = useRef<SwipeCardHandle>(null);
+  const backScale = useSharedValue(BACK_SCALE_MIN);
+  const coverCandidateRef = useRef<FeedCandidate | null>(null);
+  coverCandidateRef.current = coverCandidate;
   /** Candidate id pinned when a gesture fly-out starts (handleSwipe guard). */
   const swipingIdRef = useRef<string | null>(null);
   /** Profiles already liked/passed/super-liked this session — never show again locally. */
@@ -90,9 +93,10 @@ export function DiscoveryScreen() {
 
   useEffect(() => {
     setDeck([]);
-    setRenderCard(null);
+    setCoverCandidate(null);
     setPendingCount(0);
     setCardAnimating(false);
+    backScale.value = BACK_SCALE_MIN;
     swipingIdRef.current = null;
     actionedIdsRef.current.clear();
     deckSeededRef.current = false;
@@ -124,14 +128,52 @@ export function DiscoveryScreen() {
   }, [data, pendingCount]);
 
   const top = deck[0];
-  const next = deck[1];
-  const visibleCard = cardAnimating ? renderCard : top;
+
+  const beginLikeRequest = (candidateId: string) => {
+    let pending = inflightLikesRef.current.get(candidateId);
+    if (!pending) {
+      pending = discoveryApi.like(candidateId);
+      inflightLikesRef.current.set(candidateId, pending);
+    }
+    return pending;
+  };
+
+  const handleDragProgress = useCallback(
+    (progress: number) => {
+      backScale.value = BACK_SCALE_MIN + progress * (1 - BACK_SCALE_MIN);
+    },
+    [backScale],
+  );
+
+  const handlePhotoLoad = useCallback(() => {
+    if (coverCandidateRef.current) {
+      setCoverCandidate(null);
+      backScale.value = BACK_SCALE_MIN;
+    }
+  }, [backScale]);
 
   useEffect(() => {
-    if (!cardAnimating && top) {
-      setRenderCard(top);
-    }
-  }, [top, cardAnimating]);
+    if (!coverCandidate) return;
+    const timer = setTimeout(() => {
+      setCoverCandidate(null);
+      backScale.value = BACK_SCALE_MIN;
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [coverCandidate, top?.id, backScale]);
+
+  const handleFlyStart = useCallback(
+    (dir: 'left' | 'right') => {
+      const current = deckRef.current[0];
+      if (!current) return;
+      swipingIdRef.current = current.id;
+      setCardAnimating(true);
+      backScale.value = withTiming(1, { duration: 120 });
+      if (dir === 'right') {
+        beginLikeRequest(current.id);
+      }
+    },
+    [backScale],
+  );
 
   const replenishIfNeeded = async (remainingCount: number) => {
     if (remainingCount > 3) return;
@@ -152,15 +194,6 @@ export function DiscoveryScreen() {
       return nextDeck;
     });
     return remaining;
-  };
-
-  const beginLikeRequest = (candidateId: string) => {
-    let pending = inflightLikesRef.current.get(candidateId);
-    if (!pending) {
-      pending = discoveryApi.like(candidateId);
-      inflightLikesRef.current.set(candidateId, pending);
-    }
-    return pending;
   };
 
   /**
@@ -220,10 +253,16 @@ export function DiscoveryScreen() {
     const actionId = swipingIdRef.current ?? candidateId;
     swipingIdRef.current = null;
     setCardAnimating(false);
+    const snapshot = deckRef.current;
     const candidate =
-      deckRef.current.find((c) => c.id === actionId) ??
-      (renderCardRef.current?.id === actionId ? renderCardRef.current : null);
+      snapshot.find((c) => c.id === actionId) ?? null;
     if (!candidate) return;
+
+    const incoming = snapshot[1];
+    if (incoming) {
+      setCoverCandidate(incoming);
+    }
+
     if (dir === 'right') {
       runLike(candidate);
     } else {
@@ -233,12 +272,12 @@ export function DiscoveryScreen() {
 
   const handleLikePress = () => {
     if (!top || cardAnimating || superLikeLoading) return;
-    runLike(top);
+    mainCardRef.current?.flyOut('right');
   };
 
   const handlePassPress = () => {
     if (!top || cardAnimating || superLikeLoading) return;
-    runPass(top);
+    mainCardRef.current?.flyOut('left');
   };
 
   const openCandidateProfile = (candidateId: string) => {
@@ -266,6 +305,8 @@ export function DiscoveryScreen() {
     try {
       const res = await discoveryApi.superLike(candidate.id);
       markActioned(candidate.id);
+      const incoming = deckRef.current[1];
+      if (incoming) setCoverCandidate(incoming);
       const remaining = advanceDeck();
       if (res.matched && res.matchId) {
         showMatchPopup({
@@ -300,12 +341,12 @@ export function DiscoveryScreen() {
       actionedIdsRef.current.clear();
       deckSeededRef.current = false;
       setDeck([]);
-      setRenderCard(null);
+      setCoverCandidate(null);
+      backScale.value = BACK_SCALE_MIN;
       const { data: users } = await refetch();
       if (users) {
         const seeded = filterActioned(users);
         setDeck(seeded);
-        setRenderCard(seeded[0] ?? null);
         deckSeededRef.current = true;
       }
     } catch {
@@ -322,7 +363,8 @@ export function DiscoveryScreen() {
           actionedIdsRef.current.clear();
           deckSeededRef.current = false;
           setDeck([]);
-          setRenderCard(null);
+          setCoverCandidate(null);
+          backScale.value = BACK_SCALE_MIN;
           void refetch();
         }}
       />
@@ -336,35 +378,22 @@ export function DiscoveryScreen() {
             <View className="flex-1 items-center justify-center">
               <Text className="text-ink-400">{t('discovery.loading')}</Text>
             </View>
-          ) : visibleCard ? (
+          ) : top ? (
             <View className="flex-1 items-center justify-center">
-              <View className="w-full max-w-md relative">
-                {next && !cardAnimating ? (
-                  <View
-                    className="absolute inset-0"
-                    style={{ zIndex: 1, elevation: 1, transform: [{ scale: 0.96 }] }}
-                    pointerEvents="none"
-                  >
-                    <DiscoveryCardPhotoPreview candidate={next} />
-                  </View>
-                ) : null}
-                <View style={{ zIndex: 2, elevation: 2 }}>
-                  <SwipeCard
-                    key={`top-${visibleCard.id}`}
-                    candidate={visibleCard}
-                    onSwipe={handleSwipe}
-                    onFlyStart={(dir) => {
-                      swipingIdRef.current = visibleCard.id;
-                      setCardAnimating(true);
-                      if (dir === 'right') {
-                        beginLikeRequest(visibleCard.id);
-                      }
-                    }}
-                    onInfoPress={() => openCandidateProfile(visibleCard.id)}
-                    onCardPress={() => openCandidateProfile(visibleCard.id)}
-                    swipeable={!superLikeLoading && !cardAnimating}
-                  />
-                </View>
+              <View className="w-full max-w-md">
+                <DiscoveryCardStack
+                  deck={deck}
+                  coverCandidate={coverCandidate}
+                  backScale={backScale}
+                  mainRef={mainCardRef}
+                  swipeable={!superLikeLoading && !cardAnimating}
+                  onSwipe={handleSwipe}
+                  onFlyStart={handleFlyStart}
+                  onDragProgress={handleDragProgress}
+                  onPhotoLoad={handlePhotoLoad}
+                  onInfoPress={openCandidateProfile}
+                  onCardPress={openCandidateProfile}
+                />
               </View>
 
               <DiscoveryActionButtons
