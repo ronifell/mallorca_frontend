@@ -3,7 +3,7 @@
     "name": "Citas Mallorca",
     "slug": "citas-mallorca",
     "scheme": "citasmallorca",
-    "version": "1.0.43",
+    "version": "1.0.44",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -26,7 +26,7 @@
     },
     "android": {
       "package": "es.citasmallorca.app",
-      "versionCode": 44,
+      "versionCode": 45,
       "usesCleartextTraffic": false,
       "softwareKeyboardLayoutMode": "pan",
       "intentFilters": [
