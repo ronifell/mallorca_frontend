@@ -1,6 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import React from 'react';
+import {
+  BottomTabNavigationOptions,
+  createBottomTabNavigator,
+} from '@react-navigation/bottom-tabs';
+import { RouteProp } from '@react-navigation/native';
+import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useChatSync } from '../hooks/useChatSync';
 import { DiscoveryScreen } from '../screens/discovery/DiscoveryScreen';
@@ -14,6 +18,14 @@ import { MainTabParamList } from './types';
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
+const TAB_LABEL_KEYS: Record<keyof MainTabParamList, string> = {
+  Discover: 'nav.discover',
+  Matches: 'nav.matches',
+  Chat: 'nav.chat',
+  Premium: 'nav.premium',
+  Profile: 'nav.profile',
+};
+
 function tabIcon(name: keyof typeof Ionicons.glyphMap, focused: boolean) {
   return (
     <Ionicons
@@ -25,13 +37,15 @@ function tabIcon(name: keyof typeof Ionicons.glyphMap, focused: boolean) {
 }
 
 export function MainTabs() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   useChatSync();
 
-  return (
-    <Tab.Navigator
-      tabBar={(props) => <MainTabBar {...props} />}
-      screenOptions={{
+  const screenOptions = useMemo(
+    (): ((props: {
+      route: RouteProp<MainTabParamList, keyof MainTabParamList>;
+    }) => BottomTabNavigationOptions) =>
+      ({ route }) => ({
+        headerShown: false,
         headerStyle: { backgroundColor: colors.cream[200] },
         headerTitleStyle: { fontWeight: '700', color: colors.ink[700] },
         headerShadowVisible: false,
@@ -47,14 +61,20 @@ export function MainTabs() {
           paddingTop: 6,
         },
         tabBarLabelStyle: { fontWeight: '600', fontSize: 11 },
-      }}
+        tabBarLabel: t(TAB_LABEL_KEYS[route.name]),
+      }),
+    [t, i18n.language],
+  );
+
+  return (
+    <Tab.Navigator
+      tabBar={(props) => <MainTabBar {...props} />}
+      screenOptions={screenOptions}
     >
       <Tab.Screen
         name="Discover"
         component={DiscoveryScreen}
         options={{
-          headerShown: false,
-          title: t('nav.discover'),
           tabBarIcon: ({ focused }) =>
             tabIcon(focused ? 'heart' : 'heart-outline', focused),
         }}
@@ -63,8 +83,6 @@ export function MainTabs() {
         name="Matches"
         component={MatchesScreen}
         options={{
-          headerShown: false,
-          title: t('nav.matches'),
           tabBarIcon: ({ focused }) =>
             tabIcon(focused ? 'people' : 'people-outline', focused),
         }}
@@ -73,8 +91,6 @@ export function MainTabs() {
         name="Chat"
         component={ChatListScreen}
         options={{
-          headerShown: false,
-          title: t('nav.chat'),
           tabBarIcon: ({ focused }) =>
             tabIcon(focused ? 'chatbubble' : 'chatbubble-outline', focused),
         }}
@@ -83,8 +99,6 @@ export function MainTabs() {
         name="Premium"
         component={PremiumScreen}
         options={{
-          headerShown: false,
-          title: t('nav.premium'),
           tabBarIcon: ({ focused }) =>
             tabIcon(focused ? 'ribbon' : 'ribbon-outline', focused),
         }}
@@ -93,8 +107,6 @@ export function MainTabs() {
         name="Profile"
         component={ProfileScreen}
         options={{
-          headerShown: false,
-          title: t('nav.profile'),
           tabBarIcon: ({ focused }) =>
             tabIcon(focused ? 'person' : 'person-outline', focused),
         }}

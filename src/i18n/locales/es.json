@@ -479,8 +479,8 @@
   },
   "nav": {
     "discover": "Descubrir",
-    "matches": "Matches",
-    "chat": "Chat",
+    "matches": "Coincidencias",
+    "chat": "Mensajes",
     "premium": "Premium",
     "profile": "Perfil"
   },

@@ -1,12 +1,16 @@
 import { BottomTabBar, BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import React, { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Platform, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '../theme/colors';
 
 /** Extends the tab bar background through the bottom safe area / home indicator zone. */
 export function MainTabBar(props: BottomTabBarProps) {
+  const { i18n } = useTranslation();
   const insets = useSafeAreaInsets();
+  // Re-render when the UI language changes so tab labels refresh immediately.
+  void i18n.language;
 
   useEffect(() => {
     if (Platform.OS !== 'android') return;
