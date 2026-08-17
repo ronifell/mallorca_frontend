@@ -1,9 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
-import React from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, Pressable, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Avatar } from '../Avatar';
+import { ChatSafetyModal } from './ChatSafetyModal';
 import { colors } from '../../theme/colors';
 
 interface Props {
@@ -27,19 +28,14 @@ export function ConversationHeader({
 }: Props) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+  const [safetyOpen, setSafetyOpen] = useState(false);
   const name = otherName ?? '—';
   const displayName = otherUserAge != null ? `${name}, ${otherUserAge}` : name;
 
-  const openSafetyMenu = () => {
-    Alert.alert(t('chat.safety'), otherName ?? undefined, [
-      { text: t('profile.reportUser'), onPress: onReport },
-      { text: t('profile.blockUser'), style: 'destructive', onPress: onBlock },
-      { text: t('matches.unmatch'), style: 'destructive', onPress: onUnmatch },
-      { text: t('common.cancel'), style: 'cancel' },
-    ]);
-  };
+  const openSafetyMenu = () => setSafetyOpen(true);
 
   return (
+    <>
     <View
       className="flex-row items-center px-4 pb-3 border-b border-cream-300 bg-cream-200"
       style={{ paddingTop: Math.max(insets.top, 8) }}
@@ -88,5 +84,15 @@ export function ConversationHeader({
         <Ionicons name="ellipsis-vertical" size={20} color={colors.ink[700]} />
       </Pressable>
     </View>
+
+    <ChatSafetyModal
+      visible={safetyOpen}
+      otherName={otherName}
+      onClose={() => setSafetyOpen(false)}
+      onReport={onReport}
+      onBlock={onBlock}
+      onUnmatch={onUnmatch}
+    />
+  </>
   );
 }

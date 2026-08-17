@@ -75,10 +75,16 @@ export function DiscoveryScreen() {
   // resolves and we can decide whether to replenish or truly show empty.
   const [pendingCount, setPendingCount] = useState(0);
   const pendingAction = pendingCount > 0;
-  /** Stable id of the visible top card for swipe / button race guards. */
-  const topIdRef = useRef<string | null>(null);
   const deckRef = useRef(deck);
   deckRef.current = deck;
+  const renderCardRef = useRef(renderCard);
+  renderCardRef.current = renderCard;
+  /** Candidate id pinned when a gesture fly-out starts (handleSwipe guard). */
+  const swipingIdRef = useRef<string | null>(null);
+  /** Profiles already liked/passed/super-liked this session — never show again locally. */
+  const actionedIdsRef = useRef(new Set<string>());
+  /** Whether the deck has been seeded from the feed query (avoid stale re-seed). */
+  const deckSeededRef = useRef(false);
   /** In-flight like requests keyed by candidate id (started on fly-out for snappier matches). */
   const inflightLikesRef = useRef<Map<string, ReturnType<typeof discoveryApi.like>>>(new Map());
 
@@ -87,21 +93,39 @@ export function DiscoveryScreen() {
     setRenderCard(null);
     setPendingCount(0);
     setCardAnimating(false);
+    swipingIdRef.current = null;
+    actionedIdsRef.current.clear();
+    deckSeededRef.current = false;
     inflightLikesRef.current.clear();
   }, [userId]);
 
+  const filterActioned = (candidates: FeedCandidate[]) =>
+    candidates.filter((c) => !actionedIdsRef.current.has(c.id));
+
+  const markActioned = (candidateId: string) => {
+    actionedIdsRef.current.add(candidateId);
+    qc.setQueryData<FeedCandidate[]>(['feed', userId], (old) =>
+      old?.filter((c) => c.id !== candidateId) ?? old,
+    );
+  };
+
   useEffect(() => {
-    // Only seed the deck from the server response when we don't have any
-    // cards locally. If the user has been swiping, we don't want the query
-    // refetching to reset their queue.
-    if (!data) return;
-    setDeck((prev) => (prev.length === 0 && pendingCount === 0 ? data : prev));
+    // Seed the deck once from the server. Never re-seed from stale cached `data`
+    // after swipes — that resurrected profiles the user had already passed.
+    if (!data?.length || deckSeededRef.current || pendingCount > 0) return;
+    setDeck((prev) => {
+      if (prev.length > 0) {
+        deckSeededRef.current = true;
+        return prev;
+      }
+      deckSeededRef.current = true;
+      return filterActioned(data);
+    });
   }, [data, pendingCount]);
 
   const top = deck[0];
   const next = deck[1];
   const visibleCard = cardAnimating ? renderCard : top;
-  topIdRef.current = visibleCard?.id ?? null;
 
   useEffect(() => {
     if (!cardAnimating && top) {
@@ -115,7 +139,7 @@ export function DiscoveryScreen() {
     if (!fresh?.length) return;
     setDeck((prev) => {
       const ids = new Set(prev.map((c) => c.id));
-      const append = fresh.filter((c: FeedCandidate) => !ids.has(c.id));
+      const append = filterActioned(fresh).filter((c: FeedCandidate) => !ids.has(c.id));
       return append.length ? [...prev, ...append] : prev;
     });
   };
@@ -146,6 +170,7 @@ export function DiscoveryScreen() {
    */
   const runLike = (candidate: FeedCandidate) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => undefined);
+    markActioned(candidate.id);
     const remaining = advanceDeck();
     setPendingCount((n) => n + 1);
     const likePromise = beginLikeRequest(candidate.id);
@@ -176,6 +201,7 @@ export function DiscoveryScreen() {
 
   const runPass = (candidate: FeedCandidate) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => undefined);
+    markActioned(candidate.id);
     const remaining = advanceDeck();
     setPendingCount((n) => n + 1);
     void (async () => {
@@ -191,10 +217,13 @@ export function DiscoveryScreen() {
   };
 
   const handleSwipe = (dir: 'left' | 'right', candidateId: string) => {
+    const actionId = swipingIdRef.current ?? candidateId;
+    swipingIdRef.current = null;
     setCardAnimating(false);
-    if (topIdRef.current !== candidateId) return;
-    const candidate = renderCard ?? deck.find((c) => c.id === candidateId) ?? top;
-    if (!candidate || candidate.id !== candidateId) return;
+    const candidate =
+      deckRef.current.find((c) => c.id === actionId) ??
+      (renderCardRef.current?.id === actionId ? renderCardRef.current : null);
+    if (!candidate) return;
     if (dir === 'right') {
       runLike(candidate);
     } else {
@@ -236,6 +265,7 @@ export function DiscoveryScreen() {
     setPendingCount((n) => n + 1);
     try {
       const res = await discoveryApi.superLike(candidate.id);
+      markActioned(candidate.id);
       const remaining = advanceDeck();
       if (res.matched && res.matchId) {
         showMatchPopup({
@@ -267,12 +297,16 @@ export function DiscoveryScreen() {
     setIsRetrying(true);
     try {
       await discoveryApi.resetFeed();
+      actionedIdsRef.current.clear();
+      deckSeededRef.current = false;
       setDeck([]);
       setRenderCard(null);
       const { data: users } = await refetch();
       if (users) {
-        setDeck(users);
-        setRenderCard(users[0] ?? null);
+        const seeded = filterActioned(users);
+        setDeck(seeded);
+        setRenderCard(seeded[0] ?? null);
+        deckSeededRef.current = true;
       }
     } catch {
       Alert.alert(t('common.error'), t('discovery.retryFailed'));
@@ -285,6 +319,8 @@ export function DiscoveryScreen() {
     <Screen padded={false}>
       <DiscoveryHeader
         onFiltersApplied={() => {
+          actionedIdsRef.current.clear();
+          deckSeededRef.current = false;
           setDeck([]);
           setRenderCard(null);
           void refetch();
@@ -318,6 +354,7 @@ export function DiscoveryScreen() {
                     candidate={visibleCard}
                     onSwipe={handleSwipe}
                     onFlyStart={(dir) => {
+                      swipingIdRef.current = visibleCard.id;
                       setCardAnimating(true);
                       if (dir === 'right') {
                         beginLikeRequest(visibleCard.id);
