@@ -1,40 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { ReactNode } from 'react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, Text, View } from 'react-native';
 import { colors } from '../../theme/colors';
-
-function CircleIconButton({
-  children,
-  onPress,
-  accessibilityLabel,
-  outlined,
-}: {
-  children: ReactNode;
-  onPress?: () => void;
-  accessibilityLabel: string;
-  outlined?: boolean;
-}) {
-  return (
-    <Pressable
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityLabel={accessibilityLabel}
-      className={`w-10 h-10 rounded-full items-center justify-center ${
-        outlined ? 'border-2 border-coral-500 bg-white' : 'bg-white border border-cream-300'
-      }`}
-      style={{
-        shadowColor: '#3D2618',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: outlined ? 0 : 0.08,
-        shadowRadius: 4,
-        elevation: 2,
-      }}
-    >
-      {children}
-    </Pressable>
-  );
-}
 
 interface Props {
   onRightPress?: () => void;
@@ -54,15 +22,17 @@ export function SocialBrandHeader({ onRightPress, showNotificationDot }: Props) 
       </View>
 
       <View>
-        <CircleIconButton
-          outlined
+        <Pressable
           onPress={onRightPress}
+          accessibilityRole="button"
           accessibilityLabel={t('matches.openMessages')}
+          hitSlop={8}
+          className="w-10 h-10 items-center justify-center"
         >
-          <Ionicons name="chatbubble-outline" size={18} color={colors.coral[500]} />
-        </CircleIconButton>
+          <Ionicons name="chatbubble-outline" size={22} color={colors.coral[500]} />
+        </Pressable>
         {showNotificationDot ? (
-          <View className="absolute top-0 right-0 w-2.5 h-2.5 rounded-full bg-coral-500 border-2 border-cream-200" />
+          <View className="absolute top-1.5 right-1.5 w-2.5 h-2.5 rounded-full bg-coral-500" />
         ) : null}
       </View>
     </View>
